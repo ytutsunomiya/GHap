@@ -1,0 +1,85 @@
+\name{ghap.froh}
+\alias{ghap.froh}
+
+\title{
+ Calculation of genomic inbreeding (FROH)
+}
+\description{
+  Given runs of homozygosity (ROH) obtained with the \code{\link{ghap.roh}} function, this function computes the proportion of the genome covered by ROHs (FROH) of certain lengths.
+}
+\usage{
+ ghap.froh(phase, roh, rohsizes=c(1,2,4,8,16),
+           only.active.markers = TRUE, ncores=1)
+}
+
+\arguments{
+  \item{phase}{
+   A GHap.phase object.
+  }
+  \item{roh}{
+   A data frame containing runs of homozygosity, such as supplied by the \code{\link{ghap.roh}} function.
+  }
+  \item{rohsizes}{
+   A numeric vector providing the minimum ROH length (in Mbp) to use in the calculation of ROH (default is 1, 2, 4, 8 and 16). 
+  }
+  \item{only.active.markers}{
+    A logical value specifying whether only active markers should be used in the calculation of genome size (default = TRUE).
+  }
+  \item{ncores}{
+   A numeric value specifying the number of cores to be used in parallel computing (default = 1).
+  }
+}
+
+\value{
+The function returns a dataframe the following columns:
+ \item{POP}{
+  Original population label.
+ }
+ \item{ID}{
+  Individual name.
+ }
+ \item{FROH...}{
+  A number of columns giving FROH calculated over runs of length greater than each of the sizes informed by the rohsize argument. Default values will retunr FROH1, FROH2, FROH4, FROH8 and FROH16.
+ }
+
+}
+
+\details{
+ This function takes runs of homozygosity obtained with \code{\link{ghap.roh}} and returns estimates of genomic inbreeding (FROH). The user can specify the minimum ROH length considered in the calculation using the rohsize argument. A vector of values will cause the function to add an extra column for each specified ROH size. Since the average size (measured in Morgans) of identical-by-descent segments after g generations of the inbreeding event is 1/2g, the default lengths 1, 2, 4, 8 adn 16 are proxies for inbreeding that occurred 50, 25, 13 6 and 3 generations in the past, respectively (assuming an average recombination rate of 1 Mbp ~ cM).
+}
+
+\author{
+Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
+}
+
+\examples{
+
+# #### DO NOT RUN IF NOT NECESSARY ###
+# 
+# # Copy the example data in the current working directory
+# exfiles <- ghap.makefile()
+# file.copy(from = exfiles, to = "./")
+# 
+# # Compress phase data
+# ghap.compress(input.file = "human", out.file = "human")
+# 
+# # Load phase data
+# phase <- ghap.loadphase(input.file = "human")
+# 
+# ### RUN ###
+# 
+# # ROH via the 'naive' method
+# roh <- ghap.roh(phase, method = "naive", ncores = 1)
+# froh <- ghap.froh(phase, roh, ncores = 1)
+# 
+# # ROH via the 'hmm' method
+# freq <- ghap.freq(phase, ncores = 1)
+# inbcoef <- froh$FROH1; names(inbcoef) <- froh$ID
+# roh <- ghap.roh(phase, method = "hmm", freq = freq,
+#                 inbcoef = inbcoef, ncores = 1)
+# froh <- ghap.froh(phase, roh, ncores = 1)
+}
+
+\seealso{
+ \code{\link{ghap.roh}}
+}

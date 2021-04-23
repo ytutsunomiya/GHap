@@ -1,0 +1,40 @@
+year <- sub("-.*", "", meta$Date)
+note <- sprintf("R package version %s", meta$Version)
+
+citEntry(entry = "Article",
+         title = "GHap: An R Package for Genome-wide Haplotyping",
+         author = c(person("Yuri Tani", "Utsunomiya"),
+                    person("Marco", "Milanesi"),
+                    person("Adam Taiti Harth", "Utsunomiya"),
+                    person("Paolo", "Ajmone-Marsan"),
+                    person("José Fernando", "Garcia")),
+         year = "2016",
+         journal = "Bioinformatics",
+         volume = "32",
+         number = "18",
+         pages = "2861-2862",
+         textVersion = "Authors: Utsunomiya YT, Milanesi M, Utsunomiya ATH, Ajmone-Marsan P and Garcia JF.
+   Title: GHap: An R package for Genome-wide Haplotyping.
+   Journal: Bioinformatics 2016, 32(18):2861-2862.
+   DOI: 10.1093/bioinformatics/btw356."
+)
+
+citEntry(entry = "Article",
+         title = "Unsupervised detection of ancestry tracks with the GHap R package",
+         author = c(person("Yuri Tani", "Utsunomiya"),
+                    person("Marco", "Milanesi"),
+		    person("Mario", "Barbato"),
+                    person("Adam Taiti Harth", "Utsunomiya"),
+                    person("Johann", "Sölkner"),
+                    person("Paolo", "Ajmone-Marsan"),
+                    person("José Fernando", "Garcia")),
+         year = "2020",
+         journal = "Methods in Ecology and Evolution",
+         volume = "",
+         number = "",
+         pages = "",
+         textVersion = "Authors: Utsunomiya YT, Milanesi M, Barbato M, Utsunomiya ATH, Sölkner J, Ajmone-Marsan P and Garcia JF.
+   Title: Unsupervised detection of ancestry tracks with the GHap R package.
+   Journal: Methods in Ecology and Evolution.
+   DOI: 10.1111/2041-210X.13467."
+)

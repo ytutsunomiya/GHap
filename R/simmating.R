@@ -1,0 +1,211 @@
+#Function: ghap.simmating
+#License: GPLv3 or later
+#Modification date: 19 Mar 2021
+#Written by: Yuri Tani Utsunomiya
+#Contact: ytutsunomiya@gmail.com
+#Description: Simulate individuals from specified matings
+
+ghap.simmating <- function(
+  phase,
+  n.individuals = 1,
+  parent1 = NULL,
+  parent2 = NULL,
+  model = "uniform",
+  out.file,
+  only.active.markers = TRUE,
+  ncores = 1,
+  verbose = TRUE
+){
+  
+  # Check if phase is a GHap.phase object-------------------------------------------------------------
+  if(class(phase) != "GHap.phase"){
+    stop("Argument phase must be a GHap.phase object.")
+  }
+  
+  # Check if inactive markers should be reactivated---------------------------------------------------
+  if(only.active.markers == FALSE){
+    phase$marker.in <- rep(TRUE,times=phase$nmarkers)
+    phase$nmarkers.in <- length(which(phase$marker.in))
+  }
+  
+  # Check if out file exist---------------------------------------------------------------------------
+  samples.file <- paste(out.file,"samples",sep=".")
+  phase.file <- paste(out.file,"phase",sep=".")
+  markers.file <- paste(out.file,"markers",sep=".")
+  pedigree.file <- paste(out.file,"pedigree",sep=".")
+  if(file.exists(samples.file) == TRUE | file.exists(markers.file) == TRUE | file.exists(markers.file) == TRUE){
+    stop("Output file already exists!")
+  }else{
+    rnumb <- runif(n = 1, min = 1, max = 1e+6)
+    rnumb <- ceiling(rnumb)
+    tmp.file <- paste(tempdir(),"/tmp",rnumb,sep="")
+    tmp.samples.file <- paste(tmp.file,"samples",sep=".")
+    tmp.pedigree.file <- paste(tmp.file,"pedigree",sep=".")
+    tmp.phase.file <- paste(tmp.file,"phase",sep=".")
+    tmp.markers.file <- paste(tmp.file,"markers",sep=".")
+  }
+  
+  # Check parent vectors------------------------------------------------------------------------------
+  if(is.null(parent1) | is.null(parent2)){
+    stop("Missing parents for mating simulations\n")
+  }
+  if(class(parent1) == "character"){
+    tmpprobs <- rep(1/length(parent1), times = length(parent1))
+    tmpnames <- parent1
+    parent1 <- tmpprobs
+    names(parent1) <- tmpnames
+  }
+  if(class(parent2) == "character"){
+    tmpprobs <- rep(1/length(parent2),times = length(parent2))
+    tmpnames <- parent2
+    parent2 <- tmpprobs
+    names(parent2) <- tmpnames
+  }
+  parent1ok <- which(names(parent1) %in% phase$id)
+  parent2ok <- which(names(parent2) %in% phase$id)
+  if(length(parent1ok) != length(parent1) | length(parent1ok) != length(parent1)){
+    stop("Some of the provided parent names were not found in the phase object\n")
+  }
+  if(verbose == TRUE){
+    cat("\n\nMating simulation started...\n")
+    cat("Number of parents in set 1: ", length(parent1), "\n", sep="")
+    cat("Number of parents in set 2: ", length(parent2), "\n", sep="")
+    cat("Number of progeny: ", n.individuals, "\n\n", sep="")
+  }
+  
+  # Get number of cores-------------------------------------------------------------------------------
+  if(Sys.info()["sysname"] == "Windows"){
+    if(ncores > 1 & verbose == TRUE){
+      cat("\nParallelization not supported yet under Windows (using a single core).")
+    }
+    ncores <- 1
+  }else{
+    ncores <- min(c(detectCores(), ncores))
+  }
+  
+  # Initialize lookup table----------------------------------------------------------------------------
+  lookup <- rep(NA,times=256)
+  lookup[1:2] <- c(0,1)
+  d <- 10
+  i <- 3
+  while(i <= 256){
+    b <- d + lookup[1:(i-1)]
+    lookup[i:(length(b)+i-1)] <- b
+    i <- i + length(b)
+    d <- d*10
+  }
+  lookup <- sprintf(fmt="%08d", lookup)
+  
+  # Function for individual simulation----------------------------------------------------------------
+  indbuild <- function(i){
+    crossovers1 <- rpois(n = 1, lambda = chrmean[chr])
+    crossovers2 <- rpois(n = 1, lambda = chrmean[chr])
+    if(crossovers1 > 0){
+      breakpoints1 <- sample(x = 1:m, size = crossovers1, replace = F)
+      breakpoints1 <- sort(breakpoints1)
+      parent1idx <- which(colnames(parenthap) == indtbl$parent1[i])
+      parent1idx <- sample(parent1idx, size=2, replace=F)
+      hap1idx1 <- c(1,breakpoints1+1)
+      hap1idx2 <- c(breakpoints1,m)
+      hap1idx1 <- hap1idx1[which(1:length(hap1idx1) %% 2 == 0)]
+      hap1idx2 <- hap1idx2[which(1:length(hap1idx2) %% 2 == 0)]
+      hap1 <- parenthap[,parent1idx[1]]
+      for(j in 1:length(hap1idx1)){
+        cropseg <- hap1idx1[j]:hap1idx2[j]
+        cropseg <- cropseg[which(cropseg < m)]
+        hap1[cropseg] <- parenthap[cropseg,parent1idx[2]]
+      }
+    }else{
+      parent1idx <- which(colnames(parenthap) == indtbl$parent1[i])
+      parent1idx <- sample(parent1idx, size=2, replace=F)
+      hap1 <- parenthap[,parent1idx[1]]
+    }
+    if(crossovers2 > 0){
+      breakpoints2 <- sample(x = 1:m, size = crossovers2, replace = F)
+      breakpoints2 <- sort(breakpoints2)
+      parent2idx <- which(colnames(parenthap) == indtbl$parent2[i])
+      parent2idx <- sample(parent2idx, size=2, replace=F)
+      hap2idx1 <- c(1,breakpoints2+1)
+      hap2idx2 <- c(breakpoints2,m)
+      hap2idx1 <- hap2idx1[which(1:length(hap2idx1) %% 2 == 0)]
+      hap2idx2 <- hap2idx2[which(1:length(hap2idx2) %% 2 == 0)]
+      hap2 <- parenthap[,parent2idx[1]]
+      for(j in 1:length(hap2idx1)){
+        cropseg <- hap2idx1[j]:hap2idx2[j]
+        cropseg <- cropseg[which(cropseg < m)]
+        hap2[cropseg] <- parenthap[cropseg,parent2idx[2]]
+      }
+    }else{
+      parent2idx <- which(colnames(parenthap) == indtbl$parent2[i])
+      parent2idx <- sample(parent2idx, size=2, replace=F)
+      hap2 <- parenthap[,parent2idx[1]]
+    }
+    return(c(hap1,hap2))
+  }
+  
+  # Simulate individuals------------------------------------------------------------------------------
+  nmkrchr <- table(phase$chr[which(phase$marker.in)])
+  idgen <- gsub(pattern = "( )|-|:", replacement = "", Sys.time())
+  idgen <- paste0("ID",idgen,
+                  sample(x = LETTERS, size = n.individuals, replace = TRUE),
+                  sprintf(fmt = paste0("%0",as.integer(log10(n.individuals))+1,".f"), 1:n.individuals))
+  indtbl <- data.frame(id = idgen,
+                       parent1 = sample(x = names(parent1), size = n.individuals, prob = parent1, replace = TRUE),
+                       parent2 = sample(x = names(parent2), size = n.individuals, prob = parent2, replace = TRUE),
+                       stringsAsFactors = FALSE)
+  write.table(x = indtbl, file = tmp.pedigree.file, col.names = FALSE, row.names = FALSE, sep = " ", quote = FALSE)
+  write.table(x = cbind("SIM",idgen), file = tmp.samples.file, col.names = FALSE, row.names = FALSE, sep = " ", quote = FALSE)
+  if(model == "proportional"){
+    chrsize <- rep(x = NA, times = length(unique(phase$chr)))
+    for(i in 1:length(chrsize)){
+      bp <- phase$bp[which(phase$chr == i)]
+      chrsize[i] <- as.numeric(sum(diff(bp)))
+    }
+    chrprop <- chrsize/sum(chrsize)
+    chrmean <- chrprop*length(chrsize)
+  }else if(model == "uniform"){
+    chrmean <- rep(1, times = length(nmkrchr))
+  }else{
+    stop("Argument model has to take value 'uniform' or 'proportional'")
+  }
+  for(chr in 1:length(nmkrchr)){
+    if(verbose == TRUE){
+      cat("Simulating crossing over events on chromosome", names(nmkrchr[chr]), "\r")
+    }
+    m <- nmkrchr[chr]
+    mkrsidx <- which(phase$marker.in & phase$chr == chr)
+    mkrs <- phase$marker[mkrsidx]
+    parenthap <- ghap.pslice(phase = phase, ids = unique(c(indtbl$parent1,indtbl$parent2)), markers = mkrs,
+                             lookup = lookup, ncores = ncores)
+    if(Sys.info()["sysname"] == "Windows"){
+      inds <- lapply(FUN = indbuild, X = 1:n.individuals)
+    }else{
+      inds <- mclapply(FUN = indbuild, X = 1:n.individuals, mc.cores = ncores)
+    }
+    inds <- matrix(data = unlist(inds), nrow = m, ncol = 2*n.individuals, byrow = F)
+    mkrmap <- data.frame(CHR = phase$chr[mkrsidx], MARKER = phase$marker[mkrsidx], POS = phase$bp[mkrsidx],
+                         A0 = phase$A0[mkrsidx], A1 = phase$A1[mkrsidx], stringsAsFactors = FALSE)
+    fwrite(x = as.data.table(mkrmap),
+           file = tmp.markers.file, col.names = FALSE, row.names = FALSE,
+           sep = " ", append = TRUE, nThread = ncores)
+    fwrite(x = as.data.table(inds), file = tmp.phase.file, quote = FALSE, col.names = FALSE, row.names = FALSE, sep = " ",
+           append = TRUE, nThread = ncores)
+  }
+  
+  # Get files----------------------------------------------------------------------------------------
+  if(verbose == TRUE){
+    cat("Copying output files to the working directory... ")
+  }
+  ok <- file.copy(from = tmp.phase.file, to = phase.file)
+  ok <- file.remove(tmp.phase.file)
+  ok <- file.copy(from = tmp.markers.file, to = markers.file)
+  ok <- file.remove(tmp.markers.file)
+  ok <- file.copy(from = tmp.samples.file, to = samples.file)
+  ok <- file.remove(tmp.samples.file)
+  ok <- file.copy(from = tmp.pedigree.file, to = pedigree.file)
+  ok <- file.remove(tmp.pedigree.file)
+  if(verbose == TRUE){
+    cat("Done.\n\n")
+  }
+  
+}
