@@ -77,7 +77,7 @@ ghap.oxford2phase <- function(
       }
     }
   }
-  fwrite(x = mysamp, file = tmp.samples.file, col.names = FALSE, row.names = FALSE, sep = " ")
+  fwrite(x = mysamp[,1:2], file = tmp.samples.file, col.names = FALSE, row.names = FALSE, sep = " ")
   
   # Convert haps files
   nids <- nrow(mysamp)
@@ -86,7 +86,7 @@ ghap.oxford2phase <- function(
     cat("\nConverting Oxford files to the GHap phase format.\n")
   }
   for(i in 1:length(haps.files)){
-    myfile <- fread(file = haps.files[i], header = FALSE, verbose = FALSE)
+    myfile <- fread(file = haps.files[i], header = FALSE, verbose = FALSE, showProgress = FALSE)
     if(ncol(myfile) != expcols){
       emsg <- paste("Expected 5 + 2*",nids," = ",expcols,
                     " columns in file ",haps.files[i]," but found ", ncol(myfile), "!", sep="")
