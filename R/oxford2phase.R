@@ -1,6 +1,6 @@
 #Function: ghap.oxford2phase
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 24 Apr 2021
 #Written by: Mario Barbato & Yuri Utsunomiya
 #Contact: mario.barbato@unicatt.it, ytutsunomiya@gmail.com
 #Description: Convert an Oxford HAPS/SAMPLE file to the GHap phase format
@@ -78,7 +78,7 @@ ghap.oxford2phase <- function(
     }
   }
   fwrite(x = mysamp, file = tmp.samples.file, col.names = FALSE, row.names = FALSE, sep = " ")
-
+  
   # Convert haps files
   nids <- nrow(mysamp)
   expcols <- 2*nids + 5
@@ -86,7 +86,7 @@ ghap.oxford2phase <- function(
     cat("\nConverting Oxford files to the GHap phase format.\n")
   }
   for(i in 1:length(haps.files)){
-    myfile <- fread(file = haps.files[i], header = FALSE)
+    myfile <- fread(file = haps.files[i], header = FALSE, verbose = FALSE)
     if(ncol(myfile) != expcols){
       emsg <- paste("Expected 5 + 2*",nids," = ",expcols,
                     " columns in file ",haps.files[i]," but found ", ncol(myfile), "!", sep="")
