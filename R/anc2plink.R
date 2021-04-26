@@ -1,6 +1,6 @@
 #Function: ghap.anc2plink
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 26 Apr 2020
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Output ancestry genotype matrix
@@ -106,12 +106,6 @@ ghap.anc2plink <- function(
     }
   }
   
-  # Windows warning
-  ncores <- min(c(detectCores(), ncores))
-  if(Sys.info()["sysname"] == "Windows" & ncores > 1 & verbose == TRUE){
-    cat("\nParallelization not supported yet under Windows (using a single core).\n")
-  }
-  
   # Initialize lookup table for output
   lookup2 <- rep(NA,times=256)
   lookup2[1:2] <- c(0,1)
@@ -195,8 +189,11 @@ ghap.anc2plink <- function(
     idx <- snp[id1[i]:id2[i]]
     
     #Compute markers
+    ncores <- min(c(detectCores(), ncores))
     if(Sys.info()["sysname"] == "Windows"){
-      mylines <- unlist(lapply(FUN = marker.iter.FUN, X = idx))
+      cl <- makeCluster(ncores)
+      mylines <- unlist(parLapply(cl = cl, fun = marker.iter.FUN, X =idx))
+      stopCluster(cl)
     }else{
       mylines <- unlist(mclapply(FUN = marker.iter.FUN, X = idx, mc.cores = ncores))
     }
