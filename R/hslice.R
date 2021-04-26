@@ -1,6 +1,6 @@
 #Function: ghap.hslice
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 26 Sep 2020
 #Written by: Yuri Tani Utsunomiya & Marco Milanesi
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Get a slice of the haplo object
@@ -108,10 +108,9 @@ ghap.hslice <- function(
   }
   ncores <- min(c(detectCores(), ncores))
   if (Sys.info()["sysname"] == "Windows") {
-    if(ncores > 1 & verbose == TRUE){
-      cat("\nParallelization not supported yet under Windows (using a single core).\n")
-    }
-    X <- unlist(lapply(X = 1:length(aidx), FUN = getBitFun))
+    cl <- makeCluster(ncores) 
+    X <- unlist(parLapply(cl = cl, fun = getBitFun, X = 1:length(aidx)))
+    stopCluster(cl)
     X <- matrix(data = X, nrow = length(aidx), ncol = length(iidx), byrow = TRUE)
   }else{
     X <- unlist(mclapply(X = 1:length(aidx), FUN = getBitFun, mc.cores = ncores))
