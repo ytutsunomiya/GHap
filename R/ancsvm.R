@@ -1,6 +1,6 @@
 #Function: ghap.ancsvm
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 26 Apr 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Predict ancestry of haplotypes using machine learning
@@ -60,16 +60,6 @@ ghap.ancsvm <- function(
   if(verbose == TRUE){
     printparams <- paste(names(param), "=", param, collapse=", ")
     cat("\nUsing svm with parameters:\n[", printparams, "]\n", sep="")
-  }
-  
-  # Get number of cores-------------------------------------------------------------------------------
-  if(Sys.info()["sysname"] == "Windows"){
-    if(ncores > 1 & verbose == TRUE){
-      cat("\nParallelization not supported yet under Windows (using a single core).")
-    }
-    ncores <- 1
-  }else{
-    ncores <- min(c(detectCores(), ncores))
   }
   
   # Initialize lookup table----------------------------------------------------------------------------
@@ -135,52 +125,52 @@ ghap.ancsvm <- function(
   }
   
   # Tuning for svm ----------------------------------------------------------------------------------
-    if(tune == TRUE){
-      if(verbose == TRUE){
-        cat("\nPerforming 5-fold cross-validation... ")
-      }
-      test.old <- test
-      train.old <- train
-      param.old <- param
-      groups <- as.character(1:5)
-      train.group <- sample(x = groups, size = length(train.old), replace = TRUE)
-      acc <- matrix(data = NA, nrow = length(param.old$cost)*length(param.old$gamma), ncol = 3)
-      acc <- as.data.frame(acc)
-      colnames(acc) <- c("cost", "gamma", "accuracy")
-      l <- 1
-      for(j in 1:length(param.old$cost)){
-        for(k in 1:length(param.old$gamma)){
-          perc <- rep(NA, times = 5)
-          param$cost <- param.old$cost[j]
-          param$gamma <- param.old$gamma[k]
-          for(g in 1:length(groups)){
-            train <- train.old[which(train.group != groups[g])]
-            train.idx <- which(phase$id %in% train)
-            train.pop <- phase$pop[train.idx]
-            y <- phase$pop[train.idx]
-            y <- as.factor(y)
-            test <- train.old[which(train.group == groups[g])]
-            test.idx <- which(phase$id %in% test)
-            if(Sys.info()["sysname"] == "Windows"){
-              results <- lapply(FUN = blockfun, X = 1:nrow(blocks))
-            }else{
-              results <- mclapply(FUN = blockfun, X = 1:nrow(blocks), mc.cores = ncores)
-            }
-            results <- data.frame(matrix(unlist(results), ncol=8, byrow=TRUE), stringsAsFactors = F)
-            colnames(results) <- c("BLOCK","CHR","BP1","BP2","POP","ID","HAP1","HAP2")
-            results$BP1 <- as.numeric(results$BP1)
-            results$BP2 <- as.numeric(results$BP2)
-            perc[g] <- length(which(results$POP == results$HAP1)) + length(which(results$POP == results$HAP2))
-            perc[g] <- 100*perc[g]/(2*nrow(results))
+  if(tune == TRUE){
+    if(verbose == TRUE){
+      cat("\nPerforming 5-fold cross-validation... ")
+    }
+    test.old <- test
+    train.old <- train
+    param.old <- param
+    groups <- as.character(1:5)
+    train.group <- sample(x = groups, size = length(train.old), replace = TRUE)
+    acc <- matrix(data = NA, nrow = length(param.old$cost)*length(param.old$gamma), ncol = 3)
+    acc <- as.data.frame(acc)
+    colnames(acc) <- c("cost", "gamma", "accuracy")
+    l <- 1
+    for(j in 1:length(param.old$cost)){
+      for(k in 1:length(param.old$gamma)){
+        perc <- rep(NA, times = 5)
+        param$cost <- param.old$cost[j]
+        param$gamma <- param.old$gamma[k]
+        for(g in 1:length(groups)){
+          train <- train.old[which(train.group != groups[g])]
+          train.idx <- which(phase$id %in% train)
+          train.pop <- phase$pop[train.idx]
+          y <- phase$pop[train.idx]
+          y <- as.factor(y)
+          test <- train.old[which(train.group == groups[g])]
+          test.idx <- which(phase$id %in% test)
+          if(Sys.info()["sysname"] == "Windows"){
+            results <- lapply(FUN = blockfun, X = 1:nrow(blocks))
+          }else{
+            results <- mclapply(FUN = blockfun, X = 1:nrow(blocks), mc.cores = ncores)
           }
-          acc$cost[l] <- param$cost
-          acc$gamma[l] <- param$gamma
-          acc$accuracy[l] <- mean(perc)
-          l <- l + 1
+          results <- data.frame(matrix(unlist(results), ncol=8, byrow=TRUE), stringsAsFactors = F)
+          colnames(results) <- c("BLOCK","CHR","BP1","BP2","POP","ID","HAP1","HAP2")
+          results$BP1 <- as.numeric(results$BP1)
+          results$BP2 <- as.numeric(results$BP2)
+          perc[g] <- length(which(results$POP == results$HAP1)) + length(which(results$POP == results$HAP2))
+          perc[g] <- 100*perc[g]/(2*nrow(results))
         }
+        acc$cost[l] <- param$cost
+        acc$gamma[l] <- param$gamma
+        acc$accuracy[l] <- mean(perc)
+        l <- l + 1
       }
     }
-
+  }
+  
   
   # Check whether ancestries should be computed-------------------------------------------------------
   comp <- TRUE
@@ -197,8 +187,11 @@ ghap.ancsvm <- function(
     if(verbose == TRUE){
       cat("\nPredicting ancestry of haplotypes... ")
     }
+    ncores <- min(c(detectCores(), ncores))
     if(Sys.info()["sysname"] == "Windows"){
-      results <- lapply(FUN = blockfun, X = 1:nrow(blocks))
+      cl <- makeCluster(ncores)
+      results <- unlist(parLapply(cl = cl, fun = blockfun, X = 1:nrow(blocks)))
+      stopCluster(cl)
     }else{
       results <- mclapply(FUN = blockfun, X = 1:nrow(blocks), mc.cores = ncores)
     }
