@@ -1,6 +1,6 @@
 #Function: ghap.blup
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 26 Apr 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: calculate GBLUP solution for each haplotype allele
@@ -52,16 +52,6 @@ ghap.blup<-function(
   }
   names(gebvsweights) <- names(gebvs)
   k <- invcov%*%Diagonal(x=gebvsweights/mean(gebvsweights))%*%gebvs
-  
-  # Get number of cores
-  if(Sys.info()["sysname"] == "Windows"){
-    if(ncores > 1 & verbose == TRUE){
-      cat("\nParallelization not supported yet under Windows (using a single core).")
-    }
-    ncores <- 1
-  }else{
-    ncores <- min(c(detectCores(), ncores))
-  }
   
   # Generate lookup table
   lookup <- rep(NA,times=256)
@@ -133,6 +123,7 @@ ghap.blup<-function(
   hapreg$SCALE <- rep(NA, times=haplo$nalleles.in)
   sumalleles <- 0
   sumvar <- 0
+  ncores <- min(c(detectCores(), ncores))
   for(i in 1:nbatches){
     idx <- which(batch == mybatch[i])
     slice <- activealleles[idx]
@@ -141,7 +132,9 @@ ghap.blup<-function(
     if(Sys.info()["sysname"] == "Windows"){
       sumvar <- sumvar + sum(unlist(lapply(X = 1:nrow(hap.geno), FUN = varfun)))
       hapreg$FREQ[idx] <- unlist(lapply(X = 1:nrow(hap.geno), FUN = freqfun))
-      a <- unlist(lapply(X = 1:nrow(hap.geno), FUN = gblup.FUN))
+      cl <- makeCluster(ncores)
+      a <- unlist(parLapply(cl = cl, fun = gblup.FUN, X = 1:nrow(hap.geno)))
+      stopCluster(cl)
       a <- data.frame(matrix(a, nrow=nrow(hap.geno), byrow=TRUE))
       hapreg$SCORE[idx] <- a[,1]
       hapreg$VAR[idx] <- a[,2]
