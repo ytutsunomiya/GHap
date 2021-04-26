@@ -1,6 +1,6 @@
 #Function: ghap.freq
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 26 Apr 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute marker allele frequencies
@@ -65,12 +65,6 @@ ghap.freq <- function(
     id1 <- id1[-length(id1)]; id2 <- id2[-length(id2)]
   }
   
-  #Windows warning
-  ncores <- min(c(detectCores(), ncores))
-  if(Sys.info()["sysname"] == "Windows" & ncores > 1 & verbose == TRUE){
-    cat("\nParallelization not supported yet under Windows (using a single core).\n")
-  }
-  
   #Frequency function
   freq.fun <- function(i){
     x <- X[i,]
@@ -82,6 +76,7 @@ ghap.freq <- function(
   ids.in <- which(phase$id.in)
   snps.in <- which(phase$marker.in)
   freq <- rep(NA, times=phase$nmarkers.in)
+  ncores <- min(c(detectCores(), ncores))
   for(i in 1:length(id1)){
     X <- ghap.pslice(phase = phase,
                      ids = ids.in,
@@ -91,7 +86,9 @@ ghap.freq <- function(
                      ncores = ncores)
     #Compute blocks
     if(Sys.info()["sysname"] == "Windows"){
-      p <- unlist(lapply(FUN = freq.fun, X = 1:nrow(X)))
+      cl <- makeCluster(ncores)
+      p <- unlist(parLapply(cl = cl, fun = freq.fun, X = 1:nrow(X)))
+      stopCluster(cl)
     }else{
       p <- unlist(mclapply(FUN = freq.fun, X = 1:nrow(X), mc.cores = ncores))
     } 
