@@ -1,6 +1,6 @@
 #Function: ghap.haplotyping
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 26 Apr 2021
 #Written by: Yuri Tani Utsunomiya & Marco Milanesi
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Output haplotype genotype matrix for user-defined haplotype blocks
@@ -89,12 +89,6 @@ ghap.haplotyping <- function(
     for(i in 1:length(batch)){
       cat(batch[i]," batches of ",names(batch[i]),"\n",sep="")
     }
-  }
-  
-  #Windows warning
-  ncores <- min(c(detectCores(), ncores))
-  if(Sys.info()["sysname"] == "Windows" & ncores > 1 & verbose == TRUE){
-    cat("\nParallelization not supported yet under Windows (using a single core).\n")
   }
   
   # Initialize lookup table for input
@@ -216,11 +210,14 @@ ghap.haplotyping <- function(
   
   #Iterate blocks
   nblocks.done <- 0
+  ncores <- min(c(detectCores(), ncores))
   for(i in 1:length(id1)){
     
     #Compute blocks
     if(Sys.info()["sysname"] == "Windows"){
-      mylines <- unlist(lapply(FUN = block.iter.FUN, X = id1[i]:id2[i]))
+      cl <- makeCluster(ncores)
+      mylines <- unlist(parLapply(cl = cl, fun = block.iter.FUN, X = id1[i]:id2[i]))
+      stopCluster(cl)
     }else{
       mylines <- unlist(mclapply(FUN = block.iter.FUN, X = id1[i]:id2[i], mc.cores = ncores))
     }
@@ -238,7 +235,9 @@ ghap.haplotyping <- function(
       hapgenotypes.out <- mylines[1:length(mylines) %% 2 == 0]
       if(binary == TRUE){
         if(Sys.info()["sysname"] == "Windows"){
-          hapgenotypes.out <- unlist(lapply(FUN = toBitFUN, X = 1:length(hapgenotypes.out)))
+          cl <- makeCluster(ncores)
+          hapgenotypes.out <- unlist(parLapply(cl = cl, fun = toBitFUN, X = 1:length(hapgenotypes.out)))
+          stopCluster(cl)
         }else{
           hapgenotypes.out <- unlist(mclapply(FUN = toBitFUN, X = 1:length(hapgenotypes.out), mc.cores = ncores))
         }
