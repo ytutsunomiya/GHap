@@ -1,6 +1,6 @@
 #Function: ghap.anctrain
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 26 Apr 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Create prototype alleles for ancestry predictions
@@ -54,7 +54,7 @@ ghap.anctrain <- function(
     y <- phase$pop[train.idx]
     y <- as.factor(y)
   }
-
+  
   # Map parameters to use ----------------------------------------------------------------------------
   if(method == "unsupervised"){
     param <- list(K = K, iter.max = iter.max, nstart = nstart, nmarkers = nmarkers, tune = tune)
@@ -71,16 +71,6 @@ ghap.anctrain <- function(
       printparams <- paste(names(param), " [n = ", param, "]", sep="", collapse="\n")
       cat("\nUsing method 'supervised' with reference haplotypes:\n", printparams, "\n", sep="")
     }
-  }
-  
-  # Get number of cores-------------------------------------------------------------------------------
-  if(Sys.info()["sysname"] == "Windows"){
-    if(ncores > 1 & verbose == TRUE){
-      cat("\nParallelization not supported yet under Windows (using a single core).")
-    }
-    ncores <- 1
-  }else{
-    ncores <- min(c(detectCores(), ncores))
   }
   
   # Initialize lookup table----------------------------------------------------------------------------
@@ -112,8 +102,11 @@ ghap.anctrain <- function(
       if(verbose == TRUE){
         cat("\nQuantifying within-cluster dispersion from K = 1 to K = ", param$K, "... ", sep="")
       }
+      ncores <- min(c(detectCores(), ncores))
       if(Sys.info()["sysname"] == "Windows"){
-        clout <- unlist(lapply(X = 1:param$K, FUN = tune.FUN))
+        cl <- makeCluster(ncores)
+        clout <- unlist(parLapply(cl = cl, fun = tune.FUN, X = 1:param$K))
+        stopCluster(cl)
         clout <- as.data.frame(matrix(data = clout, ncol = 2, byrow = T))
         colnames(clout) <- c("chi","sst")
         clout$chi[1] <- 0
@@ -206,8 +199,11 @@ ghap.anctrain <- function(
                        lookup = lookup,
                        ncores = ncores)
       #Compute blocks
+      ncores <- min(c(detectCores(), ncores))
       if(Sys.info()["sysname"] == "Windows"){
-        p <- unlist(lapply(FUN = proto.fun, X = 1:nrow(X)))
+        cl <- makeCluster(ncores)
+        p <- unlist(parLapply(cl = cl, fun = proto.fun, X = 1:nrow(X)))
+        stopCluster(cl)
       }else{
         p <- unlist(mclapply(FUN = proto.fun, X = 1:nrow(X), mc.cores = ncores))
       }
