@@ -1,6 +1,6 @@
 #Function: ghap.froh
 #License: GPLv3 or later
-#Modification date: 07 Feb 2021
+#Modification date: 26 Apr 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Computation of genomic inbreeding from runs of homozygosity
@@ -12,7 +12,7 @@ ghap.froh<-function(
   only.active.markers = TRUE,
   ncores=1
 ){
-
+  
   # Check if phase is a GHap.phase object-------------------------------------------------------------
   if(class(phase) != "GHap.phase"){
     stop("Argument phase must be a GHap.phase object.")
@@ -42,8 +42,11 @@ ghap.froh<-function(
   
   # Compute genomic inbreeding------------------------------------------------------------------------
   id <- unique(roh[,c("POP","ID")])
+  ncores <- min(c(detectCores(), ncores))
   if(Sys.info()["sysname"] == "Windows"){
-    inb <- lapply(FUN = rohsum, X = 1:nrow(id))
+    cl <- makeCluster(ncores)
+    inb <- unlist(parLapply(cl = cl, fun = rohsum, X = 1:nrow(id)))
+    stopCluster(cl)
   }else{
     inb <- mclapply(FUN = rohsum, X = 1:nrow(id), mc.cores = ncores)
   }
@@ -54,5 +57,5 @@ ghap.froh<-function(
   }
   colnames(froh) <- c("POP","ID",paste0("FROH",rohsizes))
   return(froh)
-
+  
 }
