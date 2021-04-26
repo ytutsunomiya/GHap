@@ -1,11 +1,11 @@
 #Function: ghap.compress
 #License: GPLv3 or later
-#Modification date: 24 Apr 2021
+#Modification date: 26 Apr 2021
 #Written by: Yuri Tani Utsunomiya & Marco Milanesi
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Compress phased data into GHap binary
 
-ghap.compress <- function(
+ghap.compress2 <- function(
   input.file=NULL,
   out.file,
   samples.file=NULL,
@@ -211,8 +211,11 @@ ghap.compress <- function(
     }
     
     # Transform lines
+    ncores <- min(c(detectCores(), ncores))
     if(Sys.info()["sysname"] == "Windows"){
-      results <- unlist(lapply(FUN = lineprocess, X = 1:length(batchline)))
+      cl <- makeCluster(ncores)
+      results <- unlist(parLapply(cl = cl, fun = lineprocess, X = 1:length(batchline)))
+      stopCluster(cl)
     }else{
       results <- unlist(mclapply(FUN = lineprocess, X = 1:length(batchline), mc.cores = ncores))
     }
