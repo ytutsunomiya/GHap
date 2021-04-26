@@ -1,6 +1,6 @@
 #Function: ghap.pslice
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 26 Apr 2021
 #Written by: Yuri Tani Utsunomiya & Marco Milanesi
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Get a slice of the phase object
@@ -107,10 +107,9 @@ ghap.pslice <- function(
   }
   ncores <- min(c(detectCores(), ncores))
   if (Sys.info()["sysname"] == "Windows") {
-    if(ncores > 1 & verbose == TRUE){
-      cat("\nParallelization not supported yet under Windows (using a single core).\n")
-    }
-    X <- unlist(lapply(X = 1:length(midx), FUN = getBitFun))
+    cl <- makeCluster(ncores)
+    X <- unlist(parLapply(cl = cl, fun = getBitFun, X = 1:length(midx)))
+    stopCluster(cl)
     X <- matrix(data = X, nrow = length(midx), ncol = length(iidx), byrow = TRUE)
   }else{
     X <- unlist(mclapply(X = 1:length(midx), FUN = getBitFun, mc.cores = ncores))
