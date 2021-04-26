@@ -1,6 +1,6 @@
 #Function: ghap.anctest
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 26 Apr 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Predict ancestry of haplotypes
@@ -43,19 +43,9 @@ ghap.anctest <- function(
     prototypes <- prototypes[order(prototypes$IDX),-2]
     phase$marker.in <- phase$marker %in% protmrk & phase$marker.in == TRUE
   }
-
+  
   # Map test samples----------------------------------------------------------------------------------
   test.idx <- which(phase$id %in% test & phase$id.in == TRUE)
-  
-  # Get number of cores-------------------------------------------------------------------------------
-  if(Sys.info()["sysname"] == "Windows"){
-    if(ncores > 1 & verbose == TRUE){
-      cat("\nParallelization not supported yet under Windows (using a single core).")
-    }
-    ncores <- 1
-  }else{
-    ncores <- min(c(detectCores(), ncores))
-  }
   
   # Initialize lookup table----------------------------------------------------------------------------
   lookup <- rep(NA,times=256)
@@ -78,9 +68,9 @@ ghap.anctest <- function(
     
     #SNPs in the block
     snps <- which(phase$chr == block.info$CHR &
-                  phase$bp >= block.info$BP1 &
-                  phase$bp <= block.info$BP2 &
-                  phase$marker.in == TRUE)
+                    phase$bp >= block.info$BP1 &
+                    phase$bp <= block.info$BP2 &
+                    phase$marker.in == TRUE)
     blocksize <- length(snps)
     
     #Get test haplotypes
@@ -121,8 +111,11 @@ ghap.anctest <- function(
   if(verbose == TRUE){
     cat("\nPredicting ancestry of haplotypes... ")
   }
+  ncores <- min(c(detectCores(), ncores))
   if(Sys.info()["sysname"] == "Windows"){
-    results <- lapply(FUN = blockfun, X = 1:nrow(blocks))
+    cl <- makeCluster(ncores)
+    results <- unlist(parLapply(cl = cl, fun = blockfun, X = 1:nrow(blocks)))
+    stopCluster(cl)
   }else{
     results <- mclapply(FUN = blockfun, X = 1:nrow(blocks), mc.cores = ncores)
   }
