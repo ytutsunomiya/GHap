@@ -1,6 +1,6 @@
 #Function: ghap.ancsmooth
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 26 Apr 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Smoothing for predictions of haplotype ancestry
@@ -84,19 +84,12 @@ ghap.ancsmooth<-function(
     return(out)
   }
   
-  # Get number of cores-------------------------------------------------------------------------------
-  if(Sys.info()["sysname"] == "Windows"){
-    if(ncores > 1 & verbose == TRUE){
-      cat("\nParallelization not supported yet under Windows (using a single core).")
-    }
-    ncores <- 1
-  }else{
-    ncores <- min(c(detectCores(), ncores))
-  }
-  
   # Compute runs of ancestry--------------------------------------------------------------------------
+  ncores <- min(c(detectCores(), ncores))
   if(Sys.info()["sysname"] == "Windows"){
-    results <- lapply(FUN = smooth.fun, X = 1:length(test))
+    cl <- makeCluster(ncores)
+    results <- unlist(parLapply(cl = cl, fun = smooth.fun, X = 1:length(test)))
+    stopCluster(cl)
   }else{
     results <- mclapply(FUN = smooth.fun, X = 1:length(test), mc.cores = ncores)
   }
