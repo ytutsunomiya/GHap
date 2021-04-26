@@ -1,6 +1,6 @@
 #Function: ghap.hapstats
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 26 Apr 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Summary statistics for haplotype alleles
@@ -29,16 +29,6 @@ ghap.hapstats<-function(
   if(only.active.samples == FALSE){
     haplo$id.in <- rep(TRUE,times=haplo$nsamples)
     haplo$nsamples.in <- length(which(haplo$id.in))
-  }
-  
-  # Get number of cores
-  if(Sys.info()["sysname"] == "Windows"){
-    if(ncores > 1 & verbose == TRUE){
-      cat("\nParallelization not supported yet under Windows (using a single core).")
-    }
-    ncores <- 1
-  }else{
-    ncores <- min(c(detectCores(), ncores))
   }
   
   # Generate lookup table
@@ -87,6 +77,7 @@ ghap.hapstats<-function(
   }
   
   #Iterate batches
+  ncores <- min(c(detectCores(), ncores))
   hapstats <- NULL
   hapstats$BLOCK <- haplo$block[haplo$allele.in]
   hapstats$CHR <- haplo$chr[haplo$allele.in]
@@ -104,7 +95,9 @@ ghap.hapstats<-function(
     hap.geno <- ghap.hslice(haplo = haplo, ids = which(haplo$id.in), alleles = slice,
                             index = TRUE, lookup = lookup, ncores = ncores)
     if(Sys.info()["sysname"] == "Windows"){
-      a <- lapply(X = which(haplo$allele.in), FUN = hapstats.FUN)
+      cl <- makeCluster(ncores)
+      a <- unlist(parLapply(cl = cl, fun = hapstats.FUN, X = 1:nrow(hap.geno)))
+      stopCluster(cl)
     }else{
       a <- mclapply(FUN=hapstats.FUN, X=1:nrow(hap.geno), mc.cores = ncores)
     }
