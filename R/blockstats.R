@@ -1,6 +1,6 @@
 #Function: ghap.blockstats
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 26 Apr 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Calculate block summary statistics
@@ -28,10 +28,9 @@ ghap.blockstats <- function(
   #Calculation of expected heterozygosity
   ncores <- min(c(detectCores(),ncores))
   if(Sys.info()["sysname"] == "Windows"){
-    if(ncores > 1 & verbose == TRUE){
-      cat("\nParallelization not supported yet under Windows (using a single core).\n") 
-    }
-    temp <- unlist(lapply(FUN = het.fun, X = blocks$BLOCK))
+    cl <- makeCluster(ncores)
+    temp <- unlist(parLapply(cl = cl, fun = het.fun, X = blocks$BLOCK))
+    stopCluster(cl)
   }else{
     temp <- unlist(mclapply(FUN = het.fun, X = blocks$BLOCK, mc.cores = ncores))
   }
