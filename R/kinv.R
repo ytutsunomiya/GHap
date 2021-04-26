@@ -1,6 +1,6 @@
 #Function: ghap.kinv
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 26 Sep 2020
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Inverse kinship matrix
@@ -48,10 +48,9 @@ ghap.kinv<-function(
     }
     ncores <- min(c(detectCores(),ncores))
     if(Sys.info()["sysname"] == "Windows"){
-      if(ncores > 1 & verbose == TRUE){
-        cat("\nParallelization not supported yet under Windows (using a single core).\n")
-      }
-      Jnni <- Diagonal(x = 1/unlist(lapply(X = nonproven,FUN = dFUN)))
+      cl <- makeCluster(ncores)
+      Jnni <- Diagonal(x = 1/unlist(parLapply(cl = cl, fun = dFUN, X = nonproven)))
+      stopCluster(cl)
     }else{
       Jnni <- Diagonal(x = 1/unlist(mclapply(X = nonproven,FUN = dFUN, mc.cores = ncores)))
     }
