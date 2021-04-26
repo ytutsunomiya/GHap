@@ -9,7 +9,8 @@
 }
 \usage{
   ghap.compress(input.file = NULL, out.file, samples.file = NULL,
-                markers.file = NULL, phase.file = NULL, verbose = TRUE)
+                markers.file = NULL, phase.file = NULL,
+                batchsize = NULL, ncores = 1, verbose = TRUE)
 }
 
 \arguments{
@@ -35,8 +36,14 @@
     Phased genotype matrix.
   }
   
-  To turn compression progress-tracking on or off please use:
+  To turn compression progress-tracking on or off, or to control parallelization of the task please use:
   
+  \item{batchsize}{
+   A numeric value controlling the number of markers to be compressed and written to output at a time (default = nmarkers/10).
+  }
+  \item{ncores}{
+   A numeric value specifying the number of cores to be used in parallel computing (default = 1).
+  }
   \item{verbose}{
     A logical value specfying whether log messages should be printed (default = TRUE).
   }
@@ -67,12 +74,13 @@
 # ### RUN ###
 # 
 # # Compress phase data using prefix
-# ghap.compress(input.file = "human", out.file = "human")
+# ghap.compress(input.file = "human", out.file = "human", ncores = 1)
 #
 # # Compress phase data using file names
 # ghap.compress(samples.file = "human.samples",
 #               markers.file = "human.markers",
 #               phase.file = "human.phase",
-#               out.file = "human")
+#               out.file = "human",
+#               ncores = 1)
 
 }
