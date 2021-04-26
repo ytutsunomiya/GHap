@@ -5,7 +5,7 @@
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Compress phased data into GHap binary
 
-ghap.compress2 <- function(
+ghap.compress <- function(
   input.file=NULL,
   out.file,
   samples.file=NULL,
