@@ -1,6 +1,6 @@
 #Function: ghap.profile
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 26 Apr 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute individual profiles based on HapAllele scores
@@ -38,16 +38,6 @@ ghap.profile <- function(
   #Log message
   if(nrow(haps) != nrow(score)){
     stop("From ",nrow(score)," HapAlleles declared but ",nrow(haps)," were found.\n")
-  }
-  
-  # Get number of cores
-  if(Sys.info()["sysname"] == "Windows"){
-    if(ncores > 1 & verbose == TRUE){
-      cat("\nParallelization not supported yet under Windows (using a single core).")
-    }
-    ncores <- 1
-  }else{
-    ncores <- min(c(detectCores(), ncores))
   }
   
   # Generate lookup table
@@ -95,6 +85,7 @@ ghap.profile <- function(
   }
   
   #Iterate batches
+  ncores <- min(c(detectCores(), ncores))
   out <- NULL
   out$POP <- haplo$pop[haplo$id.in]
   out$ID <- haplo$id[haplo$id.in]
@@ -106,7 +97,9 @@ ghap.profile <- function(
     hap.geno <- ghap.hslice(haplo = haplo, ids = which(haplo$id.in), alleles = slice,
                             index = TRUE, lookup = lookup, ncores = ncores)
     if(Sys.info()["sysname"] == "Windows"){
-      a <- unlist(lapply(X = 1:nrow(hap.geno), FUN = score.FUN))
+      cl <- makeCluster(ncores)
+      a <- unlist(parLapply(cl = cl, fun = score.FUN, X = 1:nrow(hap.geno)))
+      stopCluster(cl)
       a <- data.frame(matrix(a, nrow=nrow(hap.geno), byrow=TRUE))
       a <- colSums(a)
       out$SCORE <- out$SCORE + a
