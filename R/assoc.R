@@ -1,6 +1,6 @@
 #Function: ghap.assoc
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 26 Apr 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: fit ordinary least squares for each haplotype allele
@@ -38,16 +38,6 @@ ghap.assoc<-function(
   if(is.null(weights)==FALSE){
     w <- sqrt(weights/mean(weights))
     response <- w*response
-  }
-  
-  # Get number of cores
-  if(Sys.info()["sysname"] == "Windows"){
-    if(ncores > 1 & verbose == TRUE){
-      cat("\nParallelization not supported yet under Windows (using a single core).")
-    }
-    ncores <- 1
-  }else{
-    ncores <- min(c(detectCores(), ncores))
   }
   
   # Generate lookup table
@@ -120,9 +110,12 @@ ghap.assoc<-function(
     idx <- which(batch == mybatch[i])
     slice <- activealleles[idx]
     hap.geno <- ghap.hslice(haplo = haplo, ids = ids, alleles = slice,
-                     index = FALSE, lookup = lookup, ncores = ncores)
+                            index = FALSE, lookup = lookup, ncores = ncores)
+    ncores <- min(c(detectCores(), ncores))
     if(Sys.info()["sysname"] == "Windows"){
-      a <- lapply(X = 1:nrow(hap.geno), FUN = ols.FUN)
+      cl <- makeCluster(ncores)
+      a <- unlist(parLapply(cl = cl, fun = ols.FUN, X = 1:nrow(hap.geno)))
+      stopCluster(cl)
     }else{
       a <- mclapply(FUN=ols.FUN, X=1:nrow(hap.geno), mc.cores = ncores)
     }
@@ -146,7 +139,7 @@ ghap.assoc<-function(
   }
   hapreg$logP <- -1*pchisq(q = hapreg$CHISQ.OBS, df = 1, lower.tail=FALSE, log.p = TRUE)/log(10)
   hapreg <- data.frame(hapreg,stringsAsFactors = FALSE)
-
+  
   #Return object
   return(hapreg)
   
