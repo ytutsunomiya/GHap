@@ -37,17 +37,7 @@ ghap.kinship<-function(
   if (length(weights) != haplo$nalleles.in) {
     stop("Vector of weights must have the same length as the number of haplotype alleles.")
   }
-  
-  # Get number of cores
-  if(Sys.info()["sysname"] == "Windows"){
-    if(ncores > 1 & verbose == TRUE){
-      cat("\nParallelization not supported yet under Windows (using a single core).")
-    }
-    ncores <- 1
-  }else{
-    ncores <- min(c(detectCores(), ncores))
-  }
-  
+ 
   # Generate lookup table
   lookup <- rep(NA,times=256)
   lookup[1:2] <- c(0,1)
@@ -91,6 +81,7 @@ ghap.kinship<-function(
   K <- as(as(K,"dsyMatrix"),"dspMatrix")
   
   #Kinship iterate function
+  ncores <- min(c(detectCores(), ncores))
   kinship.FUN<-function(i){
     slice <- activealleles[batch == mybatch[i]]
     hap.geno <- ghap.hslice(haplo = haplo, ids = which(haplo$id.in), alleles = slice,
