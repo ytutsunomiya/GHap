@@ -1,6 +1,6 @@
 #Function: ghap.simmating
 #License: GPLv3 or later
-#Modification date: 19 Mar 2021
+#Modification date: 27 Apr 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Simulate individuals from specified matings
@@ -73,16 +73,6 @@ ghap.simmating <- function(
     cat("Number of progeny: ", n.individuals, "\n\n", sep="")
   }
   
-  # Get number of cores-------------------------------------------------------------------------------
-  if(Sys.info()["sysname"] == "Windows"){
-    if(ncores > 1 & verbose == TRUE){
-      cat("\nParallelization not supported yet under Windows (using a single core).")
-    }
-    ncores <- 1
-  }else{
-    ncores <- min(c(detectCores(), ncores))
-  }
-  
   # Initialize lookup table----------------------------------------------------------------------------
   lookup <- rep(NA,times=256)
   lookup[1:2] <- c(0,1)
@@ -144,6 +134,7 @@ ghap.simmating <- function(
   }
   
   # Simulate individuals------------------------------------------------------------------------------
+  ncores <- min(c(detectCores(), ncores))
   nmkrchr <- table(phase$chr[which(phase$marker.in)])
   idgen <- gsub(pattern = "( )|-|:", replacement = "", Sys.time())
   idgen <- paste0("ID",idgen,
@@ -178,7 +169,9 @@ ghap.simmating <- function(
     parenthap <- ghap.pslice(phase = phase, ids = unique(c(indtbl$parent1,indtbl$parent2)), markers = mkrs,
                              lookup = lookup, ncores = ncores)
     if(Sys.info()["sysname"] == "Windows"){
-      inds <- lapply(FUN = indbuild, X = 1:n.individuals)
+      cl <- makeCluster(ncores)
+      inds <- parLapply(cl = cl, fun = indbuild, X = 1:n.individuals)
+      stopCluster(cl)
     }else{
       inds <- mclapply(FUN = indbuild, X = 1:n.individuals, mc.cores = ncores)
     }
