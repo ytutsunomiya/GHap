@@ -11,8 +11,8 @@ ghap.fast2phase <- function(
   map.files = NULL,
   fam.file = NULL,
   out.file = NULL,
-  verbose = TRUE,
-  overwrite = FALSE
+  overwrite = FALSE,
+  verbose = TRUE
 ){
   
   # Check input file prefix
