@@ -1,6 +1,6 @@
 #Function: ghap.simmating
 #License: GPLv3 or later
-#Modification date: 27 Apr 2021
+#Modification date: 28 Apr 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Simulate individuals from specified matings
@@ -135,7 +135,16 @@ ghap.simmating <- function(
   
   # Simulate individuals------------------------------------------------------------------------------
   ncores <- min(c(detectCores(), ncores))
-  nmkrchr <- table(phase$chr[which(phase$marker.in)])
+  uniqchr <- unique(phase$chr)
+  chrsize <- rep(x = NA, times = length(uniqchr))
+  names(chrsize) <- uniqchr
+  nmkrchr <- chrsize
+  for(i in 1:length(chrsize)){
+    idx <- which(phase$chr == uniqchr[i])
+    bp <- phase$bp[idx]
+    chrsize[i] <- as.numeric(sum(diff(bp)))
+    nmkrchr[i] <- length(idx)
+  }
   idgen <- gsub(pattern = "( )|-|:", replacement = "", Sys.time())
   idgen <- paste0("ID",idgen,
                   sample(x = LETTERS, size = n.individuals, replace = TRUE),
@@ -147,19 +156,15 @@ ghap.simmating <- function(
   write.table(x = indtbl, file = tmp.pedigree.file, col.names = FALSE, row.names = FALSE, sep = " ", quote = FALSE)
   write.table(x = cbind("SIM",idgen), file = tmp.samples.file, col.names = FALSE, row.names = FALSE, sep = " ", quote = FALSE)
   if(model == "proportional"){
-    chrsize <- rep(x = NA, times = length(unique(phase$chr)))
-    for(i in 1:length(chrsize)){
-      bp <- phase$bp[which(phase$chr == i)]
-      chrsize[i] <- as.numeric(sum(diff(bp)))
-    }
     chrprop <- chrsize/sum(chrsize)
     chrmean <- chrprop*length(chrsize)
   }else if(model == "uniform"){
-    chrmean <- rep(1, times = length(nmkrchr))
+    chrmean <- nmkrchr
+    chrmean[1:length(chrmean)] <- 1
   }else{
     stop("Argument model has to take value 'uniform' or 'proportional'")
   }
-  for(chr in 1:length(nmkrchr)){
+  for(chr in uniqchr){
     if(verbose == TRUE){
       cat("Simulating crossing over events on chromosome", names(nmkrchr[chr]), "\r")
     }
