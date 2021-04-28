@@ -6,7 +6,7 @@ import("data.table")
 importFrom("methods","as")
 importFrom("e1071","svm")
 importFrom("grDevices", "hsv")
-importFrom("utils", "download.file", "unzip")
+importFrom("utils", "download.file", "unzip", "write.table")
 importFrom("graphics", "axis", "barplot", "par", "plot", "rect",
            "segments", "text", "abline", "layout", "legend", "points")
 importFrom("lme4","VarCorr","findbars","fixef","mkLmerDevfun","mkMerMod",
@@ -14,9 +14,7 @@ importFrom("lme4","VarCorr","findbars","fixef","mkLmerDevfun","mkMerMod",
            "mkGlmerDevfun","ranef","subbars")
 importFrom("stats", "as.formula", "lm", "lm.fit", "model.frame",
            "model.matrix", "model.response", "na.omit", "pbinom",
-           "pchisq", "pf", "pnorm", "ppois", "qchisq", "qnorm",
+           "pchisq", "pf", "pnorm", "ppois", "rpois", "qchisq", "qnorm",
            "rchisq", "rnorm", "runif", "sd", "var","terms",
            "na.exclude","residuals","family","predict",
            "aggregate", "kmeans", "median")
-
-
