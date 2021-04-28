@@ -1,6 +1,6 @@
 #Function: ghap.kinship
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 28 Apr 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute haplotype covariance matrix
@@ -77,7 +77,7 @@ ghap.kinship<-function(
   if(verbose == TRUE){
     cat("Preparing",haplo$nsamples.in,"x",haplo$nsamples.in,"kinship matrix.\n")
   }
-  K <- Matrix(data = 0, nrow = haplo$nsamples.in, ncol = haplo$nsamples.in, doDiag=F)
+  K <- Matrix(data = 0, nrow = haplo$nsamples.in, ncol = haplo$nsamples.in, doDiag = F)
   K <- as(as(K,"dsyMatrix"),"dspMatrix")
   
   #Kinship iterate function
