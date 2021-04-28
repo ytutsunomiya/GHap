@@ -9,7 +9,7 @@
 }
 \usage{
  ghap.roh(phase, minroh=1e+6, method="hmm", freq=NULL,
-          inbcoef=NULL, error=0.001, only.active.samples = TRUE,
+          inbcoef=NULL, error=0.25/100, only.active.samples = TRUE,
           only.active.markers = TRUE, ncores = 1, verbose = TRUE)
 }
 
