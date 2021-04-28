@@ -74,6 +74,7 @@ ghap.ancsvm <- function(
     d <- d*10
   }
   lookup <- sprintf(fmt="%08d", lookup)
+  ncores <- min(c(detectCores(), ncores))
   
   # Initialize block iteration function---------------------------------------------------------------
   blockfun <- function(b){
@@ -152,7 +153,9 @@ ghap.ancsvm <- function(
           test <- train.old[which(train.group == groups[g])]
           test.idx <- which(phase$id %in% test)
           if(Sys.info()["sysname"] == "Windows"){
-            results <- lapply(FUN = blockfun, X = 1:nrow(blocks))
+            cl <- makeCluster(ncores)
+            results <- unlist(parLapply(cl = cl, fun = blockfun, X = 1:nrow(blocks)))
+            stopCluster(cl)
           }else{
             results <- mclapply(FUN = blockfun, X = 1:nrow(blocks), mc.cores = ncores)
           }
@@ -187,7 +190,6 @@ ghap.ancsvm <- function(
     if(verbose == TRUE){
       cat("\nPredicting ancestry of haplotypes... ")
     }
-    ncores <- min(c(detectCores(), ncores))
     if(Sys.info()["sysname"] == "Windows"){
       cl <- makeCluster(ncores)
       results <- unlist(parLapply(cl = cl, fun = blockfun, X = 1:nrow(blocks)))
