@@ -77,7 +77,7 @@ ghap.kinship<-function(
   if(verbose == TRUE){
     cat("Preparing",haplo$nsamples.in,"x",haplo$nsamples.in,"kinship matrix.\n")
   }
-  K <- Matrix(data = 0, nrow = haplo$nsamples.in, ncol = haplo$nsamples.in)
+  K <- Matrix(data = 0, nrow = haplo$nsamples.in, ncol = haplo$nsamples.in, doDiag=F)
   K <- as(as(K,"dsyMatrix"),"dspMatrix")
   
   #Kinship iterate function
