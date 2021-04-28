@@ -1,17 +1,21 @@
 #Function: ghap.makefile
 #License: GPLv3 or later
-#Modification date: 26 Apr 2021
+#Modification date: 28 Apr 2021
 #Written by: Yuri Tani Utsunomiya & Marco Milanesi
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Create a copy of the example file in a temporary directory
 
-ghap.makefile<-function(verbose = TRUE){
+ghap.makefile <- function(verbose = TRUE){
   
   #Download files to temporary directory
   tmpdir <- tempdir()
   tmpfile <- tempfile("HapMap3_chr2", fileext = ".zip")
   urlfile <- "https://github.com/ytutsunomiya/GHap/blob/main/HapMap3_chr2.zip?raw=true"
-  cpfile <- download.file(url = urlfile, destfile = tmpfile, quiet = TRUE)
+  if(Sys.info()["sysname"] == "Windows"){
+    cpfile <- download.file(url = urlfile, destfile = tmpfile, quiet = TRUE, mode = "wb")
+  }else{
+    cpfile <- download.file(url = urlfile, destfile = tmpfile, quiet = TRUE)
+  }
   unzip(zipfile = tmpfile, exdir = tmpdir)
   rfile <- file.remove(tmpfile)
   
