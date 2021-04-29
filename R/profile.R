@@ -5,7 +5,7 @@
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute individual profiles based on HapAllele or marker scores
 
-ghap.profile <- function(
+ghap.profile2 <- function(
   phase = NULL,
   haplo = NULL,
   score,
@@ -176,10 +176,6 @@ ghap.profile <- function(
       stop(emsg)
     }
     
-    #Flip the sign of scores of A0 alleles
-    idx <- which(score$isA0 == 1)
-    score$SCORE[idx] <- -score$SCORE[idx]
-    
     # Initialize lookup table
     lookup <- rep(NA,times=256)
     lookup[1:2] <- c(0,1)
@@ -223,6 +219,12 @@ ghap.profile <- function(
       x <- phase.geno[j,]
       xname <- rownames(phase.geno)[j]
       row <- which(score$MARKER == xname)
+      if(score$isA0[row] == 1){
+        tmp <- x
+        tmp[which(x == 0)] <- 2
+        tmp[which(x == 2)] <- 0
+        x <- tmp
+      }
       x <- (x - score$CENTER[row])/score$SCALE[row]
       return(x*score$SCORE[row])
     }
@@ -240,14 +242,14 @@ ghap.profile <- function(
       if(Sys.info()["sysname"] == "Windows"){
         cl <- makeCluster(ncores)
         a <- unlist(parLapply(cl = cl, fun = score.FUN, X = 1:nrow(phase.geno),
-                              phase.geno = phase.geno, score = score))
+                              phase.geno = phase.geno, score = score[idx,]))
         stopCluster(cl)
         a <- data.frame(matrix(a, nrow=nrow(phase.geno), byrow=TRUE))
         a <- colSums(a)
         out$SCORE <- out$SCORE + a
       }else{
         a <- unlist(mclapply(X = 1:nrow(phase.geno), FUN = score.FUN, mc.cores = ncores,
-                             phase.geno = phase.geno, score = score))
+                             phase.geno = phase.geno, score = score[idx,]))
         a <- data.frame(matrix(a, nrow=nrow(phase.geno), byrow=TRUE))
         a <- colSums(a)
         out$SCORE <- out$SCORE + a
