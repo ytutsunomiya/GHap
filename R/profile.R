@@ -5,7 +5,7 @@
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute individual profiles based on HapAllele or marker scores
 
-ghap.profile2 <- function(
+ghap.profile <- function(
   phase = NULL,
   haplo = NULL,
   score,
