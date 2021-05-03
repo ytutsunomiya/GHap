@@ -1,6 +1,6 @@
 #Function: ghap.pslice
 #License: GPLv3 or later
-#Modification date: 26 Apr 2021
+#Modification date: 03 May 2021
 #Written by: Yuri Tani Utsunomiya & Marco Milanesi
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Get a slice of the phase object
@@ -11,17 +11,19 @@ ghap.pslice <- function(
   markers,
   index=FALSE,
   unphase=FALSE,
+  transposed=FALSE,
+  sparse=TRUE,
   lookup=NULL,
   ncores=1,
   verbose=TRUE
 ){
   
-  #Check if phase is a GHap.phase object
+  # Check if phase is a GHap.phase object --------------------------------------
   if(class(phase) != "GHap.phase"){
     stop("Argument phase must be a GHap.phase object.")
   }
   
-  # Generate lookup table
+  # Generate lookup table ------------------------------------------------------
   if(is.null(lookup)){
     lookup <- rep(NA,times=256)
     lookup[1:2] <- c(0,1)
@@ -36,14 +38,14 @@ ghap.pslice <- function(
     lookup <- sprintf(fmt="%08d", lookup)
   }
   
-  # Calculate offset and bitloss
+  # Calculate offset and bitloss -----------------------------------------------
   offset <- ceiling((2*phase$nsamples)/8)
   bitloss <- 8 - ((2*phase$nsamples) %% 8)
   if(bitloss == 8){
     bitloss <- 0
   }
   
-  # Get indices
+  # Get indices ----------------------------------------------------------------
   if(index == TRUE){
     
     # Retrieve indices
@@ -93,12 +95,14 @@ ghap.pslice <- function(
     
   }
   
-  # Get bits
+  # Get bits -------------------------------------------------------------------
   X <- matrix(data = NA, nrow = length(midx), ncol = length(iidx))
   getBitFun <- function(i){
     phase.con <- file(phase$phase, "rb")
-    a <- seek(con = phase.con, where =offset*(midx[i]-1), origin = 'start',rw = 'r')
-    geno <- readBin(phase.con, what=integer(), size = 1, n = offset, signed = FALSE)
+    a <- seek(con = phase.con, where = offset*(midx[i]-1),
+              origin = 'start',rw = 'r')
+    geno <- readBin(phase.con, what=integer(), size = 1,
+                    n = offset, signed = FALSE)
     geno <- paste(lookup[geno+1], collapse = "")
     geno <- unlist(strsplit(x = geno, split = ""))
     geno <- as.integer(geno[1:(length(geno)-bitloss)])
@@ -110,20 +114,29 @@ ghap.pslice <- function(
     cl <- makeCluster(ncores)
     X <- unlist(parLapply(cl = cl, fun = getBitFun, X = 1:length(midx)))
     stopCluster(cl)
-    X <- matrix(data = X, nrow = length(midx), ncol = length(iidx), byrow = TRUE)
   }else{
     X <- unlist(mclapply(X = 1:length(midx), FUN = getBitFun, mc.cores = ncores))
-    X <- matrix(data = X, nrow = length(midx), ncol = length(iidx), byrow = TRUE)
   }
-  colnames(X) <- names(iidx)
-  rownames(X) <- names(midx)
-  
-  # Unphase genotypes
-  if(unphase == TRUE){
-    cols <- 1:ncol(X) %% 2
-    X <- X[,which(cols == 1)] + X[,which(cols == 0)]
+  if(transposed == FALSE){
+    X <- Matrix(data = X, nrow = length(midx), ncol = length(iidx),
+                byrow = TRUE, sparse = sparse)
+    colnames(X) <- names(iidx)
+    rownames(X) <- names(midx)
+    if(unphase == TRUE){
+      cols <- 1:ncol(X) %% 2
+      X <- X[,which(cols == 1)] + X[,which(cols == 0)]
+    }
+  }else{
+    X <- Matrix(data = X, ncol = length(midx), nrow = length(iidx),
+                byrow = FALSE, sparse = sparse)
+    rownames(X) <- names(iidx)
+    colnames(X) <- names(midx)
+    if(unphase == TRUE){
+      rows <- 1:nrow(X) %% 2
+      X <- X[which(rows == 1),] + X[which(rows == 0),]
+    }
   }
-  
+
   # Return X
   return(X)
   
