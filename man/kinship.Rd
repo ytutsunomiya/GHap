@@ -8,8 +8,8 @@ Kinship matrix from haplotypes
 This function computes a HapAllele-based kinship matrix from a GHap.haplo object.
 }
 \usage{
-ghap.kinship(haplo, weights=NULL, batchsize=NULL, only.active.samples=TRUE,
-             only.active.alleles=TRUE, ncores=1, verbose=TRUE)
+ghap.kinship(haplo, weights = NULL, batchsize = NULL, only.active.samples = TRUE,
+             only.active.alleles = TRUE, ncores = 1, verbose = TRUE)
 }
 
 \arguments{
