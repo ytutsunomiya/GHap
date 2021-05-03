@@ -5,10 +5,10 @@
 Inverse of kinship matrix
 }
 \description{
-Inversion of the haplotype covariance matrix
+Inversion of the haplotype covariance matrix.
 }
 \usage{
-ghap.kinv(kinship,  method="nearPD", ncores=1, proven=NULL, verbose=TRUE)
+ghap.kinv(kinship,  method = "nearPD", ncores = 1, proven = NULL, verbose = TRUE)
 }
 
 \arguments{
@@ -63,7 +63,7 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # 
 # # Exclude minor alleles and singletons
 # hapstats <- ghap.hapstats(haplo, ncores = 1)
-# haplo <- ghap.subsethaplo(haplo,ids=ids, alleles = hapstats$TYPE %in% c("REGULAR","MAJOR"))
+# haplo <- ghap.subsethaplo(haplo, ids=ids, alleles = hapstats$TYPE %in% c("REGULAR", "MAJOR"))
 # 
 # # Compute Kinship matrix
 # K <- ghap.kinship(haplo, ncores = 1)
@@ -72,12 +72,12 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # ### RUN ###
 # 
 # # Common inverse
-# Kinv <- ghap.kinv(K, method="common")
+# Kinv <- ghap.kinv(K, method = "common")
 #
 # # Inverse of nearest positive definite matrix
-# Kinv <- ghap.kinv(K, method="nearPD")
+# Kinv <- ghap.kinv(K, method = "nearPD")
 #
 # # APY inverse
-# Kinv <- ghap.kinv(K, method="APY", proven=colnames(K)[1:500], ncores=1)
+# Kinv <- ghap.kinv(K, method = "APY", proven = colnames(K)[1:100], ncores = 1)
 
 }
