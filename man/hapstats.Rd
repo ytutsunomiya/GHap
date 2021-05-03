@@ -8,8 +8,8 @@ Haplotype allele statistics
 Summary statistics for HapAlleles.
 }
 \usage{
-ghap.hapstats(haplo, alpha=c(1,1), batchsize=NULL, only.active.samples=TRUE,
-              only.active.alleles=TRUE, ncores=1, verbose=TRUE)
+ghap.hapstats(haplo, alpha = c(1, 1), batchsize = NULL, only.active.samples = TRUE,
+              only.active.alleles = TRUE, ncores = 1, verbose = TRUE)
 }
 
 \arguments{
@@ -17,7 +17,7 @@ ghap.hapstats(haplo, alpha=c(1,1), batchsize=NULL, only.active.samples=TRUE,
     A GHap.haplo object.
   }
   \item{alpha}{
-   A numeric vector of size 2 specifying the shrinkage parameters for the expected-to-observed homozygotes ratio. Default is c(1,1).
+   A numeric vector of size 2 specifying the shrinkage parameters for the expected-to-observed homozygotes ratio. Default is c(1, 1).
   }
   \item{batchsize}{
    A numeric value controlling the number of HapAlleles to be processed at a time (default = nalleles/10).
