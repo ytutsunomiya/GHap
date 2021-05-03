@@ -8,10 +8,10 @@
  This function takes smoothed ancestry predictions obtained with the \code{\link{ghap.ancsmooth}} function and converts them to PLINK binary (bed/bim/fam) format.
 }
 \usage{
-ghap.anc2plink(phase, ancsmooth, ancestry, outfile, freq=c(0,1),
-               missingness=1, only.active.samples=TRUE,
-               only.active.markers=TRUE, batchsize=NULL,
-               binary=TRUE, ncores=1, verbose=TRUE)
+ghap.anc2plink(phase, ancsmooth, ancestry, outfile, freq = c(0, 1),
+               missingness = 1, only.active.samples = TRUE,
+               only.active.markers = TRUE, batchsize = NULL,
+               binary = TRUE, ncores = 1, verbose = TRUE)
 }
 
 \arguments{
