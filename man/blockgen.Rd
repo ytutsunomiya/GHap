@@ -13,7 +13,7 @@
 
 \arguments{
   \item{phase}{
-   A GHap.phase object
+   A GHap.phase object.
   }
   \item{windowsize}{
    A numeric value for the size of the window (default = 10).
