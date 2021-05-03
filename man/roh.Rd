@@ -5,11 +5,11 @@
  Detection of runs of homozygosity (ROH)
 }
 \description{
-  Map haplotype segments that are likely identical-by-descent
+  Map haplotype segments that are likely identical-by-descent.
 }
 \usage{
- ghap.roh(phase, minroh=1e+6, method="hmm", freq=NULL,
-          inbcoef=NULL, error=0.25/100, only.active.samples = TRUE,
+ ghap.roh(phase, minroh = 1e+6, method = "hmm", freq = NULL,
+          inbcoef = NULL, error = 0.25/100, only.active.samples = TRUE,
           only.active.markers = TRUE, ncores = 1, verbose = TRUE)
 }
 
@@ -99,7 +99,7 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 \references{
 V. Narasimhan et al. BCFtools/RoH: a hidden Markov model approach for detecting autozygosity from next-generation sequencing data. Bioinformatics. 2016. 32:1749-1751.
 
-T. Druet & M. Gautier. A model-based approach to characterize individual inbreeding at both global and local genomic scales. Molecular Ecology. 2017. 26:5820-5841
+T. Druet & M. Gautier. A model-based approach to characterize individual inbreeding at both global and local genomic scales. Molecular Ecology. 2017. 26:5820-5841.
 
 }
 
