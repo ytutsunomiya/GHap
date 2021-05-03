@@ -8,8 +8,8 @@
   Given runs of homozygosity (ROH) obtained with the \code{\link{ghap.roh}} function, this function computes the proportion of the genome covered by ROHs (FROH) of certain lengths.
 }
 \usage{
- ghap.froh(phase, roh, rohsizes=c(1,2,4,8,16),
-           only.active.markers = TRUE, ncores=1)
+ ghap.froh(phase, roh, rohsizes = c(1, 2, 4, 8, 16),
+           only.active.markers = TRUE, ncores = 1)
 }
 
 \arguments{
