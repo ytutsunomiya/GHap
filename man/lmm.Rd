@@ -8,8 +8,8 @@ Linear mixed model
 Linear mixed model fitting for fixed effects, random effects and variance components.
 }
 \usage{
-ghap.lmm(fixed, random, covmat = NULL, data, weights = NULL, family = "gaussian", 
-         REML = TRUE, verbose = TRUE)
+ghap.lmm(fixed, random, covmat = NULL, data, weights = NULL, 
+         family = "gaussian", REML = TRUE, verbose = TRUE)
 }
 
 \arguments{
@@ -128,7 +128,7 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # model$vcp/sum(model$vcp)
 # 
 # #True versus estimated breeding values
-# plot(model$random$individual,sim$u,xlab="Estimated BV",ylab="True BV"); abline(0,1)
+# plot(model$random$individual, sim$u, xlab = "Estimated BV", ylab = "True BV"); abline(0, 1)
 # summary(lm(sim$u ~ as.numeric(model$random$individual)))
 
 }
