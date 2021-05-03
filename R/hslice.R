@@ -1,6 +1,6 @@
 #Function: ghap.hslice
 #License: GPLv3 or later
-#Modification date: 26 Sep 2020
+#Modification date: 03 May 2021
 #Written by: Yuri Tani Utsunomiya & Marco Milanesi
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Get a slice of the haplo object
@@ -10,22 +10,24 @@ ghap.hslice <- function(
   ids,
   alleles,
   index=FALSE,
+  transposed=FALSE,
+  sparse=TRUE,
   lookup=NULL,
   ncores=1,
   verbose=TRUE
 ){
   
-  #Check if haplo is a GHap.haplo object
+  # Check if haplo is a GHap.haplo object --------------------------------------
   if(class(haplo) != "GHap.haplo"){
     stop("Argument haplo must be a GHap.haplo object.")
   }
   
-  #Check if alleles are indices
+  # Check if alleles are indices -----------------------------------------------
   if(is.numeric(alleles) == FALSE & is.integer(alleles) == FALSE){
     stop("Vector of alleles must be of class integer or numeric")
   }
   
-  # Generate lookup table
+  # Generate lookup table ------------------------------------------------------
   if(is.null(lookup)){
     lookup <- rep(NA,times=256)
     lookup[1:2] <- c(0,1)
@@ -41,14 +43,14 @@ ghap.hslice <- function(
     lookup <- sapply(lookup, function(i){intToUtf8(rev(utf8ToInt(i)))})
   }
   
-  # Calculate offset and bitloss
+  # Calculate offset and bitloss -----------------------------------------------
   offset <- ceiling((2*haplo$nsamples)/8)
   bitloss <- 8 - ((2*haplo$nsamples) %% 8)
   if(bitloss == 8){
     bitloss <- 0
   }
   
-  # Get indices
+  # Get indices ----------------------------------------------------------------
   if(index == TRUE){
     
     # Retrieve indices
@@ -65,7 +67,8 @@ ghap.hslice <- function(
     
     # Organize indices
     names(iidx) <- haplo$id[iidx]
-    names(aidx) <- as.character(aidx)
+    names(aidx) <- paste(haplo$block[aidx],haplo$bp1[aidx],
+                         haplo$bp2[aidx],haplo$allele[aidx], sep="_")
     
   }else{
     
@@ -85,12 +88,12 @@ ghap.hslice <- function(
     names(iidx) <- haplo$id[iidx]
     iidx <- iidx[ids]
     aidx <- alleles
-    names(aidx) <- as.character(aidx)
+    names(aidx) <- paste(haplo$block[aidx],haplo$bp1[aidx],
+                         haplo$bp2[aidx],haplo$allele[aidx], sep="_")
     
   }
   
-  # Get bits
-  X <- matrix(data = NA, nrow = length(aidx), ncol = length(iidx))
+  # Get bits -------------------------------------------------------------------
   getBitFun <- function(i){
     haplo.con <- file(haplo$genotypes, "rb")
     a <- seek(con = haplo.con, where = 3 + offset*(aidx[i]-1), origin = 'start',rw = 'r')
@@ -111,13 +114,20 @@ ghap.hslice <- function(
     cl <- makeCluster(ncores) 
     X <- unlist(parLapply(cl = cl, fun = getBitFun, X = 1:length(aidx)))
     stopCluster(cl)
-    X <- matrix(data = X, nrow = length(aidx), ncol = length(iidx), byrow = TRUE)
   }else{
     X <- unlist(mclapply(X = 1:length(aidx), FUN = getBitFun, mc.cores = ncores))
-    X <- matrix(data = X, nrow = length(aidx), ncol = length(iidx), byrow = TRUE)
   }
-  colnames(X) <- names(iidx)
-  rownames(X) <- names(aidx)
+  if(transposed == FALSE){
+    X <- Matrix(data = X, nrow = length(aidx), ncol = length(iidx),
+                byrow = TRUE, sparse = sparse)
+    colnames(X) <- names(iidx)
+    rownames(X) <- names(aidx)
+  }else{
+    X <- Matrix(data = X, ncol = length(aidx), nrow = length(iidx),
+                byrow = FALSE, sparse = sparse)
+    rownames(X) <- names(iidx)
+    colnames(X) <- names(aidx)
+  }
   return(X)
   
 }
