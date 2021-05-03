@@ -96,7 +96,6 @@ ghap.pslice <- function(
   }
   
   # Get bits -------------------------------------------------------------------
-  X <- matrix(data = NA, nrow = length(midx), ncol = length(iidx))
   getBitFun <- function(i){
     phase.con <- file(phase$phase, "rb")
     a <- seek(con = phase.con, where = offset*(midx[i]-1),
