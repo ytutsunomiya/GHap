@@ -8,7 +8,7 @@ HapBlock statistics
 Generate HapBlock summary statistics from pre-computed HapAlleles statistics.
 }
 \usage{
-ghap.blockstats(hapstats, ncores=1, verbose=TRUE)
+ghap.blockstats(hapstats, ncores = 1, verbose = TRUE)
 }
 
 \arguments{
