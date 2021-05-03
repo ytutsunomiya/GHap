@@ -8,8 +8,8 @@
   This function parses the binary phased genotype matrix and returns the slice as an R matrix.
 }
 \usage{
- ghap.pslice(phase, ids, markers, index=FALSE, unphase=FALSE, 
-             lookup=NULL, ncores=1, verbose=TRUE)
+ ghap.pslice(phase, ids, markers, index = FALSE, unphase = FALSE, 
+             lookup = NULL, ncores = 1, verbose = TRUE)
 }
 
 \arguments{
@@ -70,10 +70,11 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # # Get 1000 random markers for CEU individuals
 # ids <- unique(phase$id[which(phase$pop == "CEU")])
 # markers <- sample(phase$marker, size = 1000, replace = FALSE)
-# X <- ghap.pslice(phase = phase, ids = ids, markers = markers, index = FALSE)
+# X <- ghap.pslice(phase = phase, ids = ids, markers = markers, 
+#                  index = FALSE, ncores = 1)
 #
 # # Get the same data as before but unphased
 # X <- ghap.pslice(phase = phase, ids = ids, markers = markers,
-#                  index = FALSE, unphase = TRUE)
+#                  index = FALSE, unphase = TRUE, ncores = 1)
 
 }
