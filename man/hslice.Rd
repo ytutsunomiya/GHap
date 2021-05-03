@@ -8,8 +8,8 @@
   This function parses the binary HapGenotypes matrix and returns the slice as an R matrix.
 }
 \usage{
-ghap.hslice(haplo, ids, alleles, index=FALSE, lookup=NULL,
-            ncores=1, verbose=TRUE)
+ghap.hslice(haplo, ids, alleles, index = FALSE, lookup = NULL,
+            ncores = 1, verbose = TRUE)
 }
 
 \arguments{
