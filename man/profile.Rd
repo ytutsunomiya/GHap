@@ -9,8 +9,8 @@ Given a data.frame of user-defined marker or haplotype allele scores, compute in
 }
 \usage{
 ghap.profile(phase = NULL, haplo = NULL, score,
-             only.active.samples=TRUE, batchsize=NULL,
-             ncores=1, verbose=TRUE)
+             only.active.samples = TRUE, batchsize = NULL,
+             ncores = 1, verbose = TRUE)
 }
 
 \arguments{
