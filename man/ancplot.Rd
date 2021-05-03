@@ -8,9 +8,9 @@
   Given smoothed ancestry predictions obtained with the \code{\link{ghap.ancsmooth}} function, an admixture barplot is generated.
 }
 \usage{
- ghap.ancplot(ancsmooth, labels=TRUE, pop.ang=45, group.ang=0,
-              colors=NULL, pop.order=NULL, sortby=NULL,
-              use.unk=TRUE, legend=TRUE)
+ ghap.ancplot(ancsmooth, labels = TRUE, pop.ang = 45, group.ang = 0,
+              colors = NULL, pop.order = NULL, sortby = NULL,
+              use.unk = TRUE, legend = TRUE)
 }
 
 \arguments{
