@@ -8,8 +8,8 @@ Quantitative trait simulation using real HapGenotype data
 Simulates phenotypes from a quantitative trait with arbitrary major alleles.
 }
 \usage{
-ghap.simpheno(haplo, kinship, h2, g2, r2=0, nrep=1,
-              balanced=TRUE, major=NULL, seed=NULL, ncores=1)
+ghap.simpheno(haplo, kinship, h2, g2, r2 = 0, nrep = 1,
+              balanced = TRUE, major = NULL, seed = NULL, ncores = 1)
 }
 
 \arguments{
@@ -128,13 +128,13 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # ### RUN ###
 #
 # # Subset common haplotypes in Europeans
-# EUR.ids <- haplo$id[which(haplo$pop \%in\% c("TSI","CEU"))]
-# haplo <- ghap.subsethaplo(haplo,EUR.ids,haplo$allele.in)
+# EUR.ids <- haplo$id[which(haplo$pop \%in\% c("TSI", "CEU"))]
+# haplo <- ghap.subsethaplo(haplo, EUR.ids, haplo$allele.in)
 # hapstats <- ghap.hapstats(haplo, ncores = 1)
-# common <- hapstats$TYPE \%in\% c("REGULAR","MAJOR") &
+# common <- hapstats$TYPE \%in\% c("REGULAR", "MAJOR") &
 #  hapstats$FREQ > 0.05 &
 #  hapstats$FREQ < 0.95
-# haplo <- ghap.subsethaplo(haplo,EUR.ids,common)
+# haplo <- ghap.subsethaplo(haplo, EUR.ids, common)
 # 
 # #Compute relationship matrix
 # K <- ghap.kinship(haplo, ncores = 1)
@@ -148,7 +148,7 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # g2 <- runif(n = 2, min = 0, max = 1)
 # g2 <- (g2/sum(g2))*0.5
 # sim <- ghap.simpheno(haplo, kinship = K, h2 = 0.5, g2 = g2, nrep = 30,
-#                      balanced = FALSE, major = major, seed = myseed)
+#                      balanced = FALSE, major = major, seed = myseed, ncores = 1)
 
 
 }
