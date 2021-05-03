@@ -8,7 +8,7 @@ Association analysis for HapAlleles
 Given a GHap.lmm object (as supplied by the  \code{\link{ghap.lmm}} function), this function returns association statistics for HapAlleles.
 }
 \usage{
-ghap.assoc(response, haplo, weights=NULL, gc = TRUE, only.active.alleles = TRUE,
+ghap.assoc(response, haplo, weights = NULL, gc = TRUE, only.active.alleles = TRUE,
            batchsize = NULL, ncores = 1, verbose = TRUE)
 }
 
