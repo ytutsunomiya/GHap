@@ -1,6 +1,6 @@
 #Function: ghap.loadplink
 #License: GPLv3 or later
-#Modification date: 02 May 2021
+#Modification date: 03 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Build a GHap.plink object from PLINK binary files
@@ -10,6 +10,7 @@ ghap.loadplink<-function(
   bed.file = NULL,
   bim.file = NULL,
   fam.file = NULL,
+  ncores = 1,
   verbose = TRUE
 ){
   
@@ -27,7 +28,7 @@ ghap.loadplink<-function(
   }else if(is.null(fam.file)){
     stop("Please provide a plink fam file!")
   }
-
+  
   # Check if files exist -------------------------------------------------------
   if(file.exists(bed.file) == FALSE){
     stop("Could not find bed file")
@@ -40,10 +41,12 @@ ghap.loadplink<-function(
   }
   
   # Load bim file --------------------------------------------------------------
+  ncores <- min(c(detectCores(), ncores))
   if(verbose == TRUE){
     cat("\nReading in marker information... ")
   }
-  bim <- fread(bim.file, header=FALSE, colClasses = "character")
+  bim <- fread(bim.file, header = FALSE,
+               colClasses = "character", nThread = ncores)
   
   #Check if the bim file contains correct dimension
   if(ncol(bim) != 6){
@@ -133,7 +136,8 @@ ghap.loadplink<-function(
   if(verbose == TRUE){
     cat("Reading in sample information... ")
   }
-  fam <- fread(fam.file, header=FALSE, colClasses = "character")
+  fam <- fread(fam.file, header = FALSE,
+               colClasses = "character", nThread = ncores)
   
   # Check if the fam file contains correct dimension ---------------------------
   if(ncol(fam) != 6){
