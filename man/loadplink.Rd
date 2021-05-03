@@ -9,7 +9,7 @@
 }
 \usage{
   ghap.loadplink(input.file = NULL, bed.file = NULL, bim.file = NULL,
-                 fam.file = NULL, verbose = TRUE)
+                 fam.file = NULL, ncores = 1, verbose = TRUE)
 }
 
 \arguments{
@@ -32,7 +32,11 @@
     Pedigree (family) file.
   }
   
-  To turn loading progress-tracking on or off please use:
+  To turn loading progress-tracking on or off, or engage multiple cores, please use:
+  
+  \item{ncores}{
+    A numerical value specfying the number of cores to use while loading the input files (default = 1).
+  }
   
   \item{verbose}{
     A logical value specfying whether log messages should be printed (default = TRUE).
