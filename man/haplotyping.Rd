@@ -8,9 +8,9 @@ Haplotype genotypes
 Generate matrix of HapGenotypes for user-defined blocks.
 }
 \usage{
-ghap.haplotyping(phase, blocks, outfile, freq=c(0,1), drop.minor=FALSE,
-                 only.active.samples=TRUE, only.active.markers=TRUE,
-                 batchsize=NULL, binary=TRUE, ncores=1, verbose=TRUE)
+ghap.haplotyping(phase, blocks, outfile, freq = c(0, 1), drop.minor = FALSE,
+                 only.active.samples = TRUE, only.active.markers = TRUE,
+                 batchsize = NULL, binary = TRUE, ncores = 1, verbose = TRUE)
 
 }
 
