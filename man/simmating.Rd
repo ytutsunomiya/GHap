@@ -89,16 +89,16 @@
 # parent2 <- phase$id[3]
 # ghap.simmating(phase, n.individuals = 100,
 #                parent1 = parent1, parent2 = parent2,
-#                out.file = "sim1")
+#                out.file = "sim1", ncores = 1)
 #
 # # Simulation using candidates with unequal probabilities
 # parent1 <- c(0.5,0.25,0.25)
 # names(parent1) <- phase$id[c(1,3,5)]
-# parent1 <- c(0.7,0.2,0.1)
+# parent2 <- c(0.7,0.2,0.1)
 # names(parent2) <- phase$id[c(7,9,11)]
 # ghap.simmating(phase, n.individuals = 100,
 #                parent1 = parent1, parent2 = parent2,
-#                out.file = "sim2")
+#                out.file = "sim2", ncores = 1)
 
 
 
