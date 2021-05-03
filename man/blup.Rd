@@ -8,7 +8,7 @@ Convert breeding values into BLUP solutions of HapAllele effects
 Given genomic estimated breeding values (GEBVs), compute Best Linear Unbiased Predictor (BLUP) solutions for HapAllele effects.
 }
 \usage{
-ghap.blup(gebvs,haplo,invcov, gebvsweights = NULL, haploweights = NULL,
+ghap.blup(gebvs, haplo, invcov, gebvsweights = NULL, haploweights = NULL,
           only.active.alleles = TRUE, batchsize = NULL, ncores = 1, verbose = TRUE)
 }
 
@@ -160,19 +160,19 @@ I. Stranden and D.J. Garrick. Technical note: derivation of equivalent computing
 # Kinv <- ghap.kinv(K)
 # gwas.blup <- ghap.blup(gebvs = gebvs, haplo = haplo, gebvsweights = gebvsw,
 #                        ncores = 1, invcov = Kinv)
-# plot(gwas.blup$BP1/1e+6,gwas.blup$pVAR*100,pch=20,
-#      xlab="Position (in Mb)",ylab="Variance explained (%)")
-# abline(v=haplo$bp1[major]/1e+6)
+# plot(gwas.blup$BP1/1e+6, gwas.blup$pVAR*100,pch=20,
+#      xlab = "Position (in Mb)", ylab = "Variance explained (%)")
+# abline(v = haplo$bp1[major]/1e+6)
 # 
 # # BLUP with one update
 # w <- gwas.blup$VAR*nrow(gwas.blup)
-# K2 <- ghap.kinship(haplo=haplo, weights = w, ncores=4)
+# K2 <- ghap.kinship(haplo = haplo, weights = w, ncores = 4)
 # Kinv2 <- ghap.kinv(K2)
 # gwas.blup2 <- ghap.blup(gebvs = gebvs, haplo = haplo, invcov = Kinv2, ncores = 1,
 #                         gebvsweights = gebvsw, haploweights = w)
-# plot(gwas.blup2$BP1/1e+6,gwas.blup2$pVAR*100,pch=20,
-#      xlab="Position (in Mb)",ylab="Variance explained (%)")
-# abline(v=haplo$bp1[major]/1e+6)
+# plot(gwas.blup2$BP1/1e+6, gwas.blup2$pVAR*100, pch=20,
+#      xlab = "Position (in Mb)", ylab = "Variance explained (%)")
+# abline(v = haplo$bp1[major]/1e+6)
 
 
 }
