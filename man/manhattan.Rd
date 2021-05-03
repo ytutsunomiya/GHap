@@ -8,9 +8,9 @@
   Generate a Manhattan plot from a dataframe.
 }
 \usage{
- ghap.manhattan(data, chr, bp, y, colors=NULL, type="p", pch=20,
-                cex=1, lwd=1, ylim=NULL, ylab="", xlab="", main="",
-                backcolor="#F5EFE780", chr.ang=0, hlines = NULL,
+ ghap.manhattan(data, chr, bp, y, colors = NULL, type = "p", pch = 20,
+                cex = 1, lwd = 1, ylim = NULL, ylab = "", xlab = "", main = "",
+                backcolor = "#F5EFE780", chr.ang = 0, hlines = NULL,
                 hcolors = NULL, hlty = 1, hlwd = 1)
 }
 
@@ -40,7 +40,7 @@
    A numeric value for the relative point size (default = 1).
   }
   \item{lwd}{
-   A numeric value for the line width (default = 1). Only meaningful for type="l".
+   A numeric value for the line width (default = 1). Only meaningful for type = "l".
   }
   \item{ylim}{
    A numeric vector of size 2 containing the lower and upper limits of the y-axis.
