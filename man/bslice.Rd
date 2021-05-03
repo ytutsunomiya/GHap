@@ -8,9 +8,9 @@
   This function parses the binary genotype matrix from PLINK and returns the slice as an R matrix.
 }
 \usage{
- ghap.bslice(plink, ids, markers, index=FALSE,
-             transposed=FALSE, sparse=TRUE, impute=FALSE,
-             lookup=NULL, ncores=1, verbose=TRUE)
+ ghap.bslice(plink, ids, markers, index = FALSE,
+             transposed = FALSE, sparse = TRUE, impute = FALSE,
+             lookup = NULL, ncores = 1, verbose = TRUE)
 }
 
 \arguments{
