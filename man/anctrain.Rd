@@ -11,7 +11,7 @@
  ghap.anctrain(phase, train = NULL, method = "unsupervised",
                K = 2, iter.max = 10, nstart = 10, nmarkers = 5000,
                tune = FALSE, only.active.samples = TRUE,
-               only.active.markers = TRUE, batchsize=NULL,
+               only.active.markers = TRUE, batchsize = NULL,
                ncores = 1, verbose = TRUE)
 }
 
