@@ -88,7 +88,6 @@ ghap.bslice <- function(
   }
   
   # Get bits
-  X <- matrix(data = NA, nrow = length(midx), ncol = length(iidx))
   getBitFun <- function(i){
     plink.con <- file(plink$plink, "rb")
     a <- seek(con = plink.con, where = 3 + offset*(midx[i]-1), origin = 'start',rw = 'r')
