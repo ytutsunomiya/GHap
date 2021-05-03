@@ -9,7 +9,8 @@
 }
 \usage{
 ghap.hslice(haplo, ids, alleles, index = FALSE, lookup = NULL,
-            ncores = 1, verbose = TRUE)
+            transposed = FALSE, sparse = TRUE, ncores = 1, 
+            verbose = TRUE)
 }
 
 \arguments{
@@ -27,6 +28,12 @@ ghap.hslice(haplo, ids, alleles, index = FALSE, lookup = NULL,
   }
   \item{lookup}{
     A character vector containing the look up table to decode the binary file. Only meaningful for developers.
+  }
+  \item{transposed}{
+   A logical value specfying if genotypes should be transposed. If FALSE (default), the matrix is returned as markers x individuals. Otherwise, the retrieved matrix is organized as individuals x markers.
+  }
+  \item{sparse}{
+   A logical value specfying if the returned matrix should be formatted as a sparse matrix (default TRUE).
   }
   \item{ncores}{
    A numeric value specifying the number of cores to be used in parallel computations (default = 1).
@@ -76,6 +83,7 @@ ghap.hslice(haplo, ids, alleles, index = FALSE, lookup = NULL,
 #
 # ids <- sample(x = haplo$id, size = 10, replace = F)
 # alleles <- sample(x = 1:haplo$nalleles, size = 10, replace = F)
-# X <- ghap.hslice(haplo = haplo, ids = ids, alleles = alleles, index = F, ncores = 1)
+# X <- ghap.hslice(haplo = haplo, ids = ids, alleles = alleles, index = F, 
+#                  transposed = FALSE, sparse = TRUE, ncores = 1)
   
 }
