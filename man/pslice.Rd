@@ -9,7 +9,8 @@
 }
 \usage{
  ghap.pslice(phase, ids, markers, index = FALSE, unphase = FALSE, 
-             lookup = NULL, ncores = 1, verbose = TRUE)
+             transposed = FALSE, sparse = TRUE, lookup = NULL, ncores = 1, 
+             verbose = TRUE)
 }
 
 \arguments{
@@ -27,6 +28,12 @@
   }
   \item{unphase}{
    A logical value specfying if phased genotypes should be retrieved as unphased allele counts.
+  }
+  \item{transposed}{
+   A logical value specfying if genotypes should be transposed. If FALSE (default), the matrix is returned as markers x individuals. Otherwise, the retrieved matrix is organized as individuals x markers.
+  }
+  \item{sparse}{
+   A logical value specfying if the returned matrix should be formatted as a sparse matrix (default TRUE).
   }
   \item{lookup}{
    A character vector containing the look up table to decode the binary phase file. Only meaningful for developers.
@@ -70,8 +77,8 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # # Get 1000 random markers for CEU individuals
 # ids <- unique(phase$id[which(phase$pop == "CEU")])
 # markers <- sample(phase$marker, size = 1000, replace = FALSE)
-# X <- ghap.pslice(phase = phase, ids = ids, markers = markers, 
-#                  index = FALSE, ncores = 1)
+# X <- ghap.pslice(phase = phase, ids = ids, markers = markers, transposed = FALSE,
+#                  sparse = TRUE, index = FALSE, ncores = 1)
 #
 # # Get the same data as before but unphased
 # X <- ghap.pslice(phase = phase, ids = ids, markers = markers,
