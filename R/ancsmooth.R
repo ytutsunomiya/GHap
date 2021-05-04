@@ -1,6 +1,6 @@
 #Function: ghap.ancsmooth
 #License: GPLv3 or later
-#Modification date: 26 Apr 2021
+#Modification date: 04 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Smoothing for predictions of haplotype ancestry
@@ -88,6 +88,7 @@ ghap.ancsmooth<-function(
   ncores <- min(c(detectCores(), ncores))
   if(Sys.info()["sysname"] == "Windows"){
     cl <- makeCluster(ncores)
+    clusterExport(cl=cl, varlist = "phase")
     results <- unlist(parLapply(cl = cl, fun = smooth.fun, X = 1:length(test)))
     stopCluster(cl)
   }else{
