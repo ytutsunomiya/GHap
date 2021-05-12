@@ -8,13 +8,13 @@
   This function takes a GHap.phase object and computes the allele frequency for each marker.
 }
 \usage{
-  ghap.freq(phase, type = "maf", only.active.samples = TRUE, only.active.markers = TRUE,
+  ghap.freq(object, type = "maf", only.active.samples = TRUE, only.active.markers = TRUE,
            batchsize = NULL, ncores = 1, verbose = TRUE)
 }
 
 \arguments{
-  \item{phase}{
-    A GHap.phase object.
+  \item{object}{
+    A GHap object of type phase or plink.
   }
   \item{type}{
     A character value indicating which allele frequency to compute. Valid options are minor allele frequency ('maf', default), frequency of allele 0 ('A0') and frequency of allele 1 ('A1').
