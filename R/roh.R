@@ -1,6 +1,6 @@
 #Function: ghap.roh
 #License: GPLv3 or later
-#Modification date: 27 Apr 2021
+#Modification date: 05 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Map streches of homozygous genotypes
@@ -31,16 +31,6 @@ ghap.roh <- function(
   if(only.active.samples == FALSE){
     phase$id.in <- rep(TRUE,times=2*phase$nsamples)
     phase$nsamples.in <- length(which(phase$id.in))/2
-  }
-  
-    # Get number of cores-------------------------------------------------------------------------------
-  if(Sys.info()["sysname"] == "Windows"){
-    if(ncores > 1 & verbose == TRUE){
-      cat("\nParallelization not supported yet under Windows (using a single core).")
-    }
-    ncores <- 1
-  }else{
-    ncores <- min(c(detectCores(), ncores))
   }
   
   # Initialize lookup table----------------------------------------------------------------------------
@@ -171,6 +161,8 @@ ghap.roh <- function(
 
   
   # Find runs of homozygosity--------------------------------------------------------------------------
+  ncores <- min(c(detectCores(), ncores))
+  chr.in = unique(phase$chr[which(phase$marker.in == TRUE)])
   ids <- unique(phase$id[which(phase$id.in)])
   outruns <- NULL
   if(method == "hmm" & is.null(freq) == TRUE){
@@ -186,7 +178,7 @@ ghap.roh <- function(
     cat("Number of individuals to search:", phase$nsamples.in, "\n")
     cat("Number of markers to search:", phase$nmarkers.in,"\n\n")
   }
-  for(chr in unique(phase$chr)){
+  for(chr in chr.in){
     if(verbose == TRUE){
       cat("Finding runs of homozygosity on chromosome", chr, "\r")
     }
@@ -199,10 +191,13 @@ ghap.roh <- function(
     geno <- ghap.pslice(phase = phase, ids = ids, ncores = ncores,
                         markers = mkrs, unphase = TRUE, lookup = lookup)
     if(Sys.info()["sysname"] == "Windows"){
-      #cl <- makeCluster(ncores)
-      #segs <- parLapply(cl = cl, fun = rohfun, X = 1:length(ids))
-      #stopCluster(cl)
-      segs <- lapply(FUN = rohfun, X = 1:length(ids))
+      cl <- makeCluster(ncores)
+      clusterEvalQ(cl, library(Matrix))
+      if (method == "hmm"){
+        clusterExport(cl = cl, varlist = c("inbcoef"))
+      }
+      segs <- parLapply(cl = cl, fun = rohfun, X = 1:length(ids))
+      stopCluster(cl)
     }else{
       segs <- mclapply(FUN = rohfun, X = 1:length(ids), mc.cores = ncores)
     }
