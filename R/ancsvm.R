@@ -89,13 +89,21 @@ ghap.ancsvm <- function(
                     phase$marker.in == TRUE)
     blocksize <- length(snps)
     
+    # #Build model matrices
+    # Mtst <- ghap.pslice(phase = phase, ids = test.idx, markers = snps,
+    #                     index = TRUE, lookup = lookup, verbose = FALSE)
+    # Mref <- ghap.pslice(phase = phase, ids = train.idx, markers = snps,
+    #                     index = TRUE, lookup = lookup, verbose = FALSE)
+    # Mtst <- t(Mtst)
+    # Mref <- t(Mref)
+    
     #Build model matrices
-    Mtst <- ghap.pslice(phase = phase, ids = test.idx, markers = snps,
-                        index = TRUE, lookup = lookup, verbose = FALSE)
-    Mref <- ghap.pslice(phase = phase, ids = train.idx, markers = snps,
-                        index = TRUE, lookup = lookup, verbose = FALSE)
-    Mtst <- t(Mtst)
-    Mref <- t(Mref)
+    Mtst <- ghap.slice(object = phase, ids = test.idx, variants = snps,
+                       index = TRUE, transposed = TRUE, lookup = lookup,
+                       verbose = FALSE)
+    Mref <- ghap.slice(object = phase, ids = train.idx, variants = snps,
+                       index = TRUE, transposed = TRUE, lookup = lookup,
+                       verbose = FALSE)
     
     #Model training
     if(param$gamma == "1/blocksize"){
