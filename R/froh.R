@@ -1,34 +1,34 @@
 #Function: ghap.froh
 #License: GPLv3 or later
-#Modification date: 26 Apr 2021
+#Modification date: 12 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Computation of genomic inbreeding from runs of homozygosity
 
 ghap.froh<-function(
-  phase,
+  object,
   roh,
   rohsizes=c(1,2,4,8,16),
   only.active.markers = TRUE,
   ncores=1
 ){
   
-  # Check if phase is a GHap.phase object-------------------------------------------------------------
-  if(class(phase) != "GHap.phase"){
-    stop("Argument phase must be a GHap.phase object.")
+  # Check if input is a valid GHap object-------------------------------------------------------------
+  obtype <- c("GHap.phase","GHap.plink")
+  if(class(object) %in% obtype == FALSE){
+    stop("\nInput must be a valid GHap object.")
   }
   
-  # Check if inactive markers should be reactivated---------------------------------------------------
+  # Check if inactive markers should be reactivated---------------------------------------
   if(only.active.markers == FALSE){
-    phase$marker.in <- rep(TRUE,times=phase$nmarkers)
-    phase$nmarkers.in <- length(which(phase$marker.in))
+    object$marker.in <- rep(TRUE,times=object$nmarkers)
+    object$nmarkers.in <- length(which(object$marker.in))
   }
   
   # Compute genome size-------------------------------------------------------------------------------
-  mkrdist <- diff(phase$bp[which(phase$marker.in)])
+  mkrdist <- diff(object$bp[which(object$marker.in)])
   mkrdist <- mkrdist[which(mkrdist > 0)]
   genome <- sum(as.numeric(mkrdist))
-  
   
   # ROH sum function----------------------------------------------------------------------------------
   rohsum <- function(i){
