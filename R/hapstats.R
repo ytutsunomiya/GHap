@@ -1,11 +1,11 @@
 #Function: ghap.hapstats
 #License: GPLv3 or later
-#Modification date: 26 Apr 2021
+#Modification date: 12 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Summary statistics for haplotype alleles
 
-ghap.hapstats<-function(
+ghap.hapstats <- function(
   haplo,
   alpha=c(1,1),
   batchsize=NULL,
@@ -92,8 +92,8 @@ ghap.hapstats<-function(
   for(i in 1:nbatches){
     idx <- which(batch == mybatch[i])
     slice <- activealleles[idx]
-    hap.geno <- ghap.hslice(haplo = haplo, ids = which(haplo$id.in), alleles = slice,
-                            index = TRUE, lookup = lookup, ncores = ncores)
+    hap.geno <- ghap.slice(object = haplo, ids = which(haplo$id.in), variants = slice,
+                           index = TRUE, lookup = lookup, ncores = ncores)
     if(Sys.info()["sysname"] == "Windows"){
       cl <- makeCluster(ncores)
       a <- unlist(parLapply(cl = cl, fun = hapstats.FUN, X = 1:nrow(hap.geno)))
@@ -141,17 +141,17 @@ ghap.hapstats<-function(
       }
     }else if(sumfreq == 1 & nalleles == 1){
       type <- "SINGLETON"
-    # }else if(sumfreq != 1 & nalleles == 1){
-    #   type <- "REGULAR"
-    # }else{
-    #   type[which(freq == maxfreq)[1]] <- "MAJOR"
-    # }
+      # }else if(sumfreq != 1 & nalleles == 1){
+      #   type <- "REGULAR"
+      # }else{
+      #   type[which(freq == maxfreq)[1]] <- "MAJOR"
+      # }
     }else{
       type <- "REGULAR"
     }
     hapstats$TYPE[slice] <- type
   }
-
+  
   #Return object
   return(hapstats)
   
