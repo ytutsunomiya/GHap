@@ -1,6 +1,6 @@
 #Function: ghap.anctrain
 #License: GPLv3 or later
-#Modification date: 26 Apr 2021
+#Modification date: 12 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Create prototype alleles for ancestry predictions
@@ -89,8 +89,10 @@ ghap.anctrain <- function(
   # Seed and tuning for kmeans------------------------------------------------------------------------
   if(method == "unsupervised"){
     mkr <- sample(x = which(phase$marker.in), size = param$nmarkers, replace = FALSE)
-    Mkm <- ghap.pslice(phase = phase, ids = train.idx, markers = mkr,
-                       index = TRUE, lookup = lookup, ncores = ncores, verbose = FALSE)
+    # Mkm <- ghap.pslice(phase = phase, ids = train.idx, markers = mkr,
+    #                    index = TRUE, lookup = lookup, ncores = ncores, verbose = FALSE)
+    Mkm <- ghap.slice(object = phase, ids = train.idx, variants = mkr,
+                      index = TRUE, lookup = lookup, ncores = ncores, verbose = FALSE)
     if(tune == TRUE){
       tune.FUN <- function(i){
         cl <- kmeans(x = t(Mkm), centers = i,
@@ -192,12 +194,12 @@ ghap.anctrain <- function(
       cat("\nBuilding prototype alleles... ")
     }
     for(i in 1:length(id1)){
-      X <- ghap.pslice(phase = phase,
-                       ids = train.idx,
-                       markers = snps.in[id1[i]:id2[i]],
-                       index = TRUE,
-                       lookup = lookup,
-                       ncores = ncores)
+      X <- ghap.slice(object = phase,
+                      ids = train.idx,
+                      variants = snps.in[id1[i]:id2[i]],
+                      index = TRUE,
+                      lookup = lookup,
+                      ncores = ncores)
       #Compute blocks
       ncores <- min(c(detectCores(), ncores))
       if(Sys.info()["sysname"] == "Windows"){
