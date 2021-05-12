@@ -1,6 +1,6 @@
 #Function: ghap.freq
 #License: GPLv3 or later
-#Modification date: 26 Apr 2021
+#Modification date: 12 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute marker allele frequencies
@@ -78,12 +78,12 @@ ghap.freq <- function(
   freq <- rep(NA, times=phase$nmarkers.in)
   ncores <- min(c(detectCores(), ncores))
   for(i in 1:length(id1)){
-    X <- ghap.pslice(phase = phase,
-                     ids = ids.in,
-                     markers = snps.in[id1[i]:id2[i]],
-                     index = TRUE,
-                     lookup = lookup,
-                     ncores = ncores)
+    X <- ghap.slice(phase = phase,
+                    ids = ids.in,
+                    variants = snps.in[id1[i]:id2[i]],
+                    index = TRUE,
+                    lookup = lookup,
+                    ncores = ncores)
     #Compute blocks
     if(Sys.info()["sysname"] == "Windows"){
       cl <- makeCluster(ncores)
