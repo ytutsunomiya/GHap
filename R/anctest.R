@@ -1,6 +1,6 @@
 #Function: ghap.anctest
 #License: GPLv3 or later
-#Modification date: 26 Apr 2021
+#Modification date: 12 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Predict ancestry of haplotypes
@@ -73,9 +73,14 @@ ghap.anctest <- function(
                     phase$marker.in == TRUE)
     blocksize <- length(snps)
     
+    # #Get test haplotypes
+    # Mtst <- ghap.pslice(phase = phase, ids = test.idx, markers = snps,
+    #                     index = TRUE, lookup = lookup, verbose = FALSE)
+    # Mref <- prototypes[snps,-1]
+    
     #Get test haplotypes
-    Mtst <- ghap.pslice(phase = phase, ids = test.idx, markers = snps,
-                        index = TRUE, lookup = lookup, verbose = FALSE)
+    Mtst <- ghap.slice(object = phase, ids = test.idx, variants = snps,
+                       index = TRUE, lookup = lookup, verbose = FALSE)
     Mref <- prototypes[snps,-1]
     
     #Prediction
