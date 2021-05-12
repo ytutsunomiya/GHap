@@ -1,6 +1,6 @@
 #Function: ghap.kinship
 #License: GPLv3 or later
-#Modification date: 28 Apr 2021
+#Modification date: 12 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute haplotype covariance matrix
@@ -37,7 +37,7 @@ ghap.kinship<-function(
   if (length(weights) != haplo$nalleles.in) {
     stop("Vector of weights must have the same length as the number of haplotype alleles.")
   }
- 
+  
   # Generate lookup table
   lookup <- rep(NA,times=256)
   lookup[1:2] <- c(0,1)
@@ -84,8 +84,8 @@ ghap.kinship<-function(
   ncores <- min(c(detectCores(), ncores))
   kinship.FUN<-function(i){
     slice <- activealleles[batch == mybatch[i]]
-    hap.geno <- ghap.hslice(haplo = haplo, ids = which(haplo$id.in), alleles = slice,
-                            index = TRUE, lookup = lookup, ncores = ncores)
+    hap.geno <- ghap.slice(object = haplo, ids = which(haplo$id.in), variants = slice,
+                           index = TRUE, lookup = lookup, ncores = ncores)
     Ztmp <- as(hap.geno, "dgeMatrix")
     Ztmp.mean <- apply(X = Ztmp,MARGIN = 1,FUN = mean)
     Ztmp <- (Ztmp - Ztmp.mean)
