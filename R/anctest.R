@@ -73,11 +73,6 @@ ghap.anctest <- function(
                     phase$marker.in == TRUE)
     blocksize <- length(snps)
     
-    # #Get test haplotypes
-    # Mtst <- ghap.pslice(phase = phase, ids = test.idx, markers = snps,
-    #                     index = TRUE, lookup = lookup, verbose = FALSE)
-    # Mref <- prototypes[snps,-1]
-    
     #Get test haplotypes
     Mtst <- ghap.slice(object = phase, ids = test.idx, variants = snps,
                        index = TRUE, lookup = lookup, verbose = FALSE)
