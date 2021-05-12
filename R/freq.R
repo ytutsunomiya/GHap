@@ -6,7 +6,7 @@
 #Description: Compute marker allele frequencies
 
 ghap.freq <- function(
-  phase,
+  object,
   type="maf",
   only.active.samples=TRUE,
   only.active.markers=TRUE,
@@ -15,27 +15,30 @@ ghap.freq <- function(
   verbose=TRUE
 ){
   
-  #Check if phase is a GHap object
-  if(class(phase) != "GHap.phase"){
-    stop("Argument phase must be a GHap.phase object.")
+  # Check if input is a valid GHap object --------------------------------------
+  obtype <- c("GHap.phase","GHap.plink")
+  if(class(object) %in% obtype == FALSE){
+    stop("\nInput must be a valid GHap object.")
   }
+  fac <- c(2,1)
+  names(fac) <- obtype
   
-  #Check if inactive markers and samples should be reactived
+  # Check if inactive markers and samples should be reactived ------------------
   if(only.active.markers == FALSE){
-    phase$marker.in <- rep(TRUE,times=phase$nmarkers)
-    phase$nmarkers.in <- length(which(phase$marker.in))
+    object$marker.in <- rep(TRUE,times=object$nmarkers)
+    object$nmarkers.in <- length(which(object$marker.in))
   }
   if(only.active.samples == FALSE){
-    phase$id.in <- rep(TRUE,times=2*phase$nsamples)
-    phase$nsamples.in <- length(which(phase$id.in))/2
+    object$id.in <- rep(TRUE,times=fac[class(object)]*object$nsamples)
+    object$nsamples.in <- length(which(object$id.in))/fac[class(object)]
   }
   
-  #Check if type is valid
+  # Check if type is valid -----------------------------------------------------
   if(type %in% c("maf","A0","A1") == FALSE){
-    stop("Argument type must be 'maf', 'A0' or 'A1'.")
+    stop("\nArgument type must be 'maf', 'A0' or 'A1'.")
   }
   
-  # Initialize lookup table
+  # Initialize lookup table ----------------------------------------------------
   lookup <- rep(NA,times=256)
   lookup[1:2] <- c(0,1)
   d <- 10
@@ -47,56 +50,53 @@ ghap.freq <- function(
     d <- d*10
   }
   lookup <- sprintf(fmt="%08d", lookup)
+  if(class(object) != "GHap.phase"){
+    lookup <- sapply(lookup, function(i){intToUtf8(rev(utf8ToInt(i)))})
+  }
   
-  #Generate batch index
+  # Generate batch index -------------------------------------------------------
   if(is.null(batchsize) == TRUE){
-    batchsize <- ceiling(phase$nmarkers.in/10)
+    batchsize <- ceiling(object$nmarkers.in/10)
   }
-  if(batchsize > phase$nmarkers.in){
-    batchsize <- phase$nmarkers.in
+  if(batchsize > object$nmarkers.in){
+    batchsize <- object$nmarkers.in
   }
-  id1 <- seq(1,phase$nmarkers.in,by=batchsize)
+  id1 <- seq(1,object$nmarkers.in,by=batchsize)
   id2 <- (id1+batchsize)-1
-  id1 <- id1[id2<=phase$nmarkers.in]
-  id2 <- id2[id2<=phase$nmarkers.in]
+  id1 <- id1[id2<=object$nmarkers.in]
+  id2 <- id2[id2<=object$nmarkers.in]
   id1 <- c(id1,id2[length(id2)]+1)
-  id2 <- c(id2,phase$nmarkers.in)
-  if(id1[length(id1)] > phase$nmarkers.in){
+  id2 <- c(id2,object$nmarkers.in)
+  if(id1[length(id1)] > object$nmarkers.in){
     id1 <- id1[-length(id1)]; id2 <- id2[-length(id2)]
   }
   
-  #Frequency function
+  # Frequency function ---------------------------------------------------------
   freq.fun <- function(i){
     x <- X[i,]
-    p <- sum(x)/(2*phase$nsamples.in)
+    p <- sum(x)/(2*length(x))
     return(p)
   }
   
-  #Frequency calculation
-  ids.in <- which(phase$id.in)
-  snps.in <- which(phase$marker.in)
-  freq <- rep(NA, times=phase$nmarkers.in)
+  # Frequency calculation ------------------------------------------------------
+  ids.in <- which(object$id.in)
+  snps.in <- which(object$marker.in)
+  freq <- rep(NA, times=object$nmarkers.in)
   ncores <- min(c(detectCores(), ncores))
   for(i in 1:length(id1)){
-    X <- ghap.slice(phase = phase,
+    X <- ghap.slice(object = object,
                     ids = ids.in,
                     variants = snps.in[id1[i]:id2[i]],
                     index = TRUE,
+                    unphase = TRUE,
+                    impute = TRUE,
                     lookup = lookup,
                     ncores = ncores)
-    #Compute blocks
-    if(Sys.info()["sysname"] == "Windows"){
-      cl <- makeCluster(ncores)
-      p <- unlist(parLapply(cl = cl, fun = freq.fun, X = 1:nrow(X)))
-      stopCluster(cl)
-    }else{
-      p <- unlist(mclapply(FUN = freq.fun, X = 1:nrow(X), mc.cores = ncores))
-    } 
-    freq[id1[i]:id2[i]] <- unlist(p)
+    freq[id1[i]:id2[i]] <- rowSums(X)/(2*ncol(X))
   }
   
-  #Results
-  names(freq) <- phase$marker[snps.in]
+  # Results --------------------------------------------------------------------
+  names(freq) <- object$marker[snps.in]
   if(type == "maf"){
     freq <- pmin(freq,1-freq)
   }else if(type == "A0"){
