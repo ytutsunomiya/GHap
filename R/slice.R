@@ -193,7 +193,7 @@ ghap.slice <- function(
   ncores <- min(c(detectCores(), ncores))
   if(Sys.info()["sysname"] == "Windows"){
     cl <- makeCluster(ncores)
-    clusterExport(cl = cl, varlist = c("object"))
+    clusterExport(cl = cl, varlist = list("object"), envir=environment())
     X <- unlist(parLapply(cl = cl, fun = getBitFun, X = 1:length(vidx)))
     stopCluster(cl)
   }else{
