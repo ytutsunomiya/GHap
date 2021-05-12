@@ -1,6 +1,6 @@
 #Function: ghap.assoc
 #License: GPLv3 or later
-#Modification date: 26 Apr 2021
+#Modification date: 12 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: fit ordinary least squares for each haplotype allele
@@ -109,8 +109,8 @@ ghap.assoc<-function(
   for(i in 1:nbatches){
     idx <- which(batch == mybatch[i])
     slice <- activealleles[idx]
-    hap.geno <- ghap.hslice(haplo = haplo, ids = ids, alleles = slice,
-                            index = FALSE, lookup = lookup, ncores = ncores)
+    hap.geno <- ghap.slice(object = haplo, ids = ids, variants = slice,
+                           index = FALSE, lookup = lookup, ncores = ncores)
     ncores <- min(c(detectCores(), ncores))
     if(Sys.info()["sysname"] == "Windows"){
       cl <- makeCluster(ncores)
