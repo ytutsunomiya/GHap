@@ -1,6 +1,6 @@
 #Function: ghap.roh
 #License: GPLv3 or later
-#Modification date: 05 May 2021
+#Modification date: 12 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Map streches of homozygous genotypes
@@ -70,20 +70,20 @@ ghap.roh <- function(
       #Emission probabilities
       emiss.roh <- c(1-error,error)
       emiss.n <- list(freqchr^2 + (1-freqchr)^2, 2*freqchr*(1-freqchr))
-
+      
       #Transition probabilities
       expr <- exp(-2*(c(bps[1],diff(bps))/1e+6)/100)
       trans.roh2roh <- expr + (1-expr)*f
       trans.roh2n <- (1-expr)*(1-f)
       trans.n2n <- expr + (1-expr)*(1-f)
       trans.n2roh <- (1-expr)*f
-
+      
       #Build states vector
       v <- array(NA, c(2, m))
       dimnames(v) = list(states = states, marker = mkrs)
       v[1,1] <- log(start[1]*emiss.roh[x[1]])
       v[2,1] <- log(start[2]*emiss.n[[x[1]]][1])
-
+      
       #Get likelihood of states
       for (k in 2:m){
         maxi <- max(v[1,k-1] + log(trans.roh2roh[k]), v[2,k-1] + log(trans.n2roh[k]))
@@ -91,7 +91,7 @@ ghap.roh <- function(
         maxi <- max(v[1,k-1] + log(trans.roh2n[k]), v[2,k-1] + log(trans.n2n[k]))
         v[2,k] <- log(emiss.n[[x[k]]][k]) + maxi
       }
-
+      
       #Guess Viterbi path
       viterbiPath <- rep(NA, m)
       viterbiPath[m] <- states[which(v[,m] == max(v[,m]))]
@@ -103,7 +103,7 @@ ghap.roh <- function(
         }
         viterbiPath[k] <- states[which(L == max(L))]
       }
-
+      
       #Get runs
       runs <- rle(viterbiPath)
       runsum <- cumsum(runs$lengths)
@@ -126,7 +126,7 @@ ghap.roh <- function(
       return(out)
       
     }
-      
+    
   }else if(method == "naive"){
     rohfun <- function(i){
       if(is.vector(geno)){
@@ -158,7 +158,7 @@ ghap.roh <- function(
   }else{
     stop('The method argument has to be either "hmm" or "naive"')
   }
-
+  
   
   # Find runs of homozygosity--------------------------------------------------------------------------
   ncores <- min(c(detectCores(), ncores))
@@ -188,8 +188,8 @@ ghap.roh <- function(
     names(bps) <- phase$marker
     bps <- bps[mkrs]
     freqchr <- freq[mkrs]
-    geno <- ghap.pslice(phase = phase, ids = ids, ncores = ncores,
-                        markers = mkrs, unphase = TRUE, lookup = lookup)
+    geno <- ghap.slice(object = phase, ids = ids, ncores = ncores,
+                       variants = mkrs, unphase = TRUE, lookup = lookup)
     if(Sys.info()["sysname"] == "Windows"){
       cl <- makeCluster(ncores)
       clusterEvalQ(cl, library(Matrix))
@@ -203,7 +203,7 @@ ghap.roh <- function(
     }
     outruns <- c(outruns,unlist(segs))
   }
-
+  
   # Compile results------------------------------------------------------------------------------------
   if(verbose == TRUE){
     cat("\nCompiling results... ")
@@ -219,6 +219,6 @@ ghap.roh <- function(
     cat("Done.\n\n")
   }
   return(results)
-
+  
   
 }
