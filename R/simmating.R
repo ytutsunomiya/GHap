@@ -1,6 +1,6 @@
 #Function: ghap.simmating
 #License: GPLv3 or later
-#Modification date: 28 Apr 2021
+#Modification date: 12 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Simulate individuals from specified matings
@@ -171,8 +171,8 @@ ghap.simmating <- function(
     m <- nmkrchr[chr]
     mkrsidx <- which(phase$marker.in & phase$chr == chr)
     mkrs <- phase$marker[mkrsidx]
-    parenthap <- ghap.pslice(phase = phase, ids = unique(c(indtbl$parent1,indtbl$parent2)), markers = mkrs,
-                             lookup = lookup, ncores = ncores)
+    parenthap <- ghap.slice(phase = phase, ids = unique(c(indtbl$parent1,indtbl$parent2)),
+                            variants = mkrs, lookup = lookup, ncores = ncores)
     if(Sys.info()["sysname"] == "Windows"){
       cl <- makeCluster(ncores)
       inds <- parLapply(cl = cl, fun = indbuild, X = 1:n.individuals)
