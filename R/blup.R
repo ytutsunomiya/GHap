@@ -1,6 +1,6 @@
 #Function: ghap.blup
 #License: GPLv3 or later
-#Modification date: 26 Apr 2021
+#Modification date: 12 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: calculate GBLUP solution for each haplotype allele
@@ -127,8 +127,8 @@ ghap.blup<-function(
   for(i in 1:nbatches){
     idx <- which(batch == mybatch[i])
     slice <- activealleles[idx]
-    hap.geno <- ghap.hslice(haplo = haplo, ids = ids, alleles = slice,
-                            index = TRUE, lookup = lookup, ncores = ncores)
+    hap.geno <- ghap.slice(object = haplo, ids = ids, variants = slice,
+                           index = TRUE, lookup = lookup, ncores = ncores)
     if(Sys.info()["sysname"] == "Windows"){
       sumvar <- sumvar + sum(unlist(lapply(X = 1:nrow(hap.geno), FUN = varfun)))
       hapreg$FREQ[idx] <- unlist(lapply(X = 1:nrow(hap.geno), FUN = freqfun))
