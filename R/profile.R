@@ -1,6 +1,6 @@
 #Function: ghap.profile
 #License: GPLv3 or later
-#Modification date: 28 Apr 2021
+#Modification date: 12 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute individual profiles based on HapAllele or marker scores
@@ -107,8 +107,8 @@ ghap.profile <- function(
     for(i in 1:nbatches){
       idx <- which(batch == mybatch[i])
       slice <- activealleles[idx]
-      hap.geno <- ghap.hslice(haplo = haplo, ids = which(haplo$id.in), alleles = slice,
-                              index = TRUE, lookup = lookup, ncores = ncores)
+      hap.geno <- ghap.slice(object = haplo, ids = which(haplo$id.in), variants = slice,
+                             index = TRUE, lookup = lookup, ncores = ncores)
       if(Sys.info()["sysname"] == "Windows"){
         cl <- makeCluster(ncores)
         a <- unlist(parLapply(cl = cl, fun = score.FUN, X = 1:nrow(hap.geno)))
@@ -237,8 +237,8 @@ ghap.profile <- function(
     summarkers <- 0
     for(i in 1:nbatches){
       idx <- id1[i]:id2[i]
-      phase.geno <- ghap.pslice(phase = phase, ids = out$ID, markers = score$MARKER[idx],
-                                lookup = lookup, ncores = ncores, unphase = TRUE)
+      phase.geno <- ghap.slice(object = phase, ids = out$ID, variants = score$MARKER[idx],
+                               lookup = lookup, ncores = ncores, unphase = TRUE)
       if(Sys.info()["sysname"] == "Windows"){
         cl <- makeCluster(ncores)
         a <- unlist(parLapply(cl = cl, fun = score.FUN, X = 1:nrow(phase.geno),
