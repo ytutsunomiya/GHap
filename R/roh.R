@@ -6,7 +6,7 @@
 #Description: Map streches of homozygous genotypes
 
 ghap.roh <- function(
-  phase,
+  object,
   minroh=1e+6,
   method="hmm",
   freq=NULL,
@@ -18,19 +18,22 @@ ghap.roh <- function(
   verbose = TRUE
 ){
   
-  # Check if phase is a GHap.phase object-------------------------------------------------------------
-  if(class(phase) != "GHap.phase"){
-    stop("Argument phase must be a GHap.phase object.")
+  # Check if input is a valid GHap object-------------------------------------------------------------
+  obtype <- c("GHap.phase","GHap.plink")
+  if(class(object) %in% obtype == FALSE){
+    stop("\nInput must be a valid GHap object.")
   }
+  fac <- c(2,1)
+  names(fac) <- obtype
   
   # Check if inactive markers and samples should be reactivated---------------------------------------
   if(only.active.markers == FALSE){
-    phase$marker.in <- rep(TRUE,times=phase$nmarkers)
-    phase$nmarkers.in <- length(which(phase$marker.in))
+    object$marker.in <- rep(TRUE,times=object$nmarkers)
+    object$nmarkers.in <- length(which(object$marker.in))
   }
   if(only.active.samples == FALSE){
-    phase$id.in <- rep(TRUE,times=2*phase$nsamples)
-    phase$nsamples.in <- length(which(phase$id.in))/2
+    object$id.in <- rep(TRUE,times=fac[class(object)]*object$nsamples)
+    object$nsamples.in <- length(which(object$id.in))/fac[class(object)]
   }
   
   # Initialize lookup table----------------------------------------------------------------------------
@@ -45,6 +48,9 @@ ghap.roh <- function(
     d <- d*10
   }
   lookup <- sprintf(fmt="%08d", lookup)
+  if(class(object) != "GHap.phase"){
+    lookup <- sapply(lookup, function(i){intToUtf8(rev(utf8ToInt(i)))})
+  }
   
   # ROH function---------------------------------------------------------------------------------------
   if(method == "hmm"){
@@ -61,6 +67,9 @@ ghap.roh <- function(
       
       #Get inbreeding coefficient
       f <- inbcoef[ids[i]]
+      if(is.na(f)){
+        f <- 0
+      }
       
       #Starting state probabilities
       states <- c("ROH","N")
@@ -117,7 +126,7 @@ ghap.roh <- function(
       bp1 <- bp1[keep]
       bp2 <- bp2[keep]
       runs <- runs[keep]
-      pop <- unique(phase$pop[which(phase$id == ids[i])])
+      pop <- unique(object$pop[which(object$id == ids[i])])
       if(length(runs) == 0){
         out <- NULL
       }else{
@@ -147,7 +156,7 @@ ghap.roh <- function(
       bp1 <- bp1[keep]
       bp2 <- bp2[keep]
       runs <- runs[keep]
-      pop <- unique(phase$pop[which(phase$id == ids[i])])
+      pop <- unique(object$pop[which(object$id == ids[i])])
       if(length(runs) == 0){
         out <- NULL
       }else{
@@ -162,8 +171,9 @@ ghap.roh <- function(
   
   # Find runs of homozygosity--------------------------------------------------------------------------
   ncores <- min(c(detectCores(), ncores))
-  chr.in = unique(phase$chr[which(phase$marker.in == TRUE)])
-  ids <- unique(phase$id[which(phase$id.in)])
+  chr.in = unique(object$chr[which(object$marker.in == TRUE)])
+  chr.in <- chr.in[which(is.na(chr.in) == FALSE)]
+  ids <- unique(object$id[which(object$id.in)])
   outruns <- NULL
   if(method == "hmm" & is.null(freq) == TRUE){
     stop('\nMethod "hmm" requires reference allele frequencies.\n')
@@ -175,27 +185,26 @@ ghap.roh <- function(
   }
   if(verbose == TRUE){
     cat('\n\nSearching for runs of homozygosity using the "', method, '" method.\n', sep="")
-    cat("Number of individuals to search:", phase$nsamples.in, "\n")
-    cat("Number of markers to search:", phase$nmarkers.in,"\n\n")
+    cat("Number of individuals to search:", object$nsamples.in, "\n")
+    cat("Number of markers to search:", object$nmarkers.in,"\n\n")
   }
   for(chr in chr.in){
     if(verbose == TRUE){
       cat("Finding runs of homozygosity on chromosome", chr, "\r")
     }
-    mkrs <- phase$marker[which(phase$chr == chr & phase$marker.in == TRUE)]
+    mkrs <- object$marker[which(object$chr == chr & object$marker.in == TRUE)]
     m <- length(mkrs)
-    bps <- phase$bp
-    names(bps) <- phase$marker
+    bps <- object$bp
+    names(bps) <- object$marker
     bps <- bps[mkrs]
     freqchr <- freq[mkrs]
-    geno <- ghap.slice(object = phase, ids = ids, ncores = ncores,
-                       variants = mkrs, unphase = TRUE, lookup = lookup)
+    geno <- ghap.slice(object = object, ids = ids, ncores = ncores,
+                       variants = mkrs, unphase = TRUE, impute = TRUE, lookup = lookup)
     if(Sys.info()["sysname"] == "Windows"){
       cl <- makeCluster(ncores)
       clusterEvalQ(cl, library(Matrix))
-      if (method == "hmm"){
-        clusterExport(cl = cl, varlist = c("inbcoef"))
-      }
+      varlist <- list("inbcoef","geno","ids","freqchr","error","bps","m","mkrs","minroh","object","chr")
+      clusterExport(cl = cl, varlist = varlist, envir=environment())
       segs <- parLapply(cl = cl, fun = rohfun, X = 1:length(ids))
       stopCluster(cl)
     }else{
