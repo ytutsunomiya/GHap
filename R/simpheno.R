@@ -1,6 +1,6 @@
 #Function: ghap.simpheno
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 12 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Simulate phenotypes
@@ -73,8 +73,8 @@ ghap.simpheno<-function(
     ids <- 1:haplo$nsamples
     names(ids) <- haplo$id
     ids <- ids[colnames(kinship)]
-    X <- ghap.hslice(haplo = haplo, ids = ids, alleles = major,
-                     index = TRUE, lookup = lookup, ncores = ncores)
+    X <- ghap.slice(object = haplo, ids = ids, variants = major,
+                    index = TRUE, lookup = lookup, ncores = ncores)
     if(length(major) > 1){
       X <- scale(t(X))
       X <- scale(X)
