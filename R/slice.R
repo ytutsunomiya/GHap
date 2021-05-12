@@ -60,7 +60,7 @@ ghap.slice <- function(
     # Organize indices for ids
     if(max(iidx) > 2*object$nsamples & class(object) == "GHap.phase"){
       stop("Some of the provided ids are out of range")
-    }else if(max(iidx) > object$nsamples){
+    }else if(max(iidx) > object$nsamples & class(object) != "GHap.phase"){
       stop("Some of the provided ids are out of range")
     }
     names(iidx) <- object$id[iidx]
