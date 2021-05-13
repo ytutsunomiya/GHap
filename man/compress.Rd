@@ -52,8 +52,8 @@
 \details{
   The supported input format is composed of three files with suffix:
     \itemize{
-      \item \strong{.samples}: space-delimited file without header containing two columns: Population and ID. Please notice that the Population column serves solely for the purpose of grouping samples, so the user can define any arbitrary family/cluster/subgroup and use as a "population" tag. 
-      \item \strong{.markers}: space-delimited file without header containing five columns: Chromosome, Marker, Position (in bp), Reference Allele (A0) and Alternative Allele (A1). Markers should be sorted by chromosome and position. Repeated positions are not tolerated.
+      \item \strong{.samples}: space-delimited file without header containing two mandatory columns: Population and ID. Please notice that the Population column serves solely for the purpose of grouping samples, so the user can define any arbitrary family/cluster/subgroup and use as a "population" tag. This file may further contain three additional columns, which are optional: Sire, Dam and Sex (with code 1 = M and 2 = F). Values "0" and "NA" in these additional columns are treated as missing values. 
+      \item \strong{.markers}: space-delimited file without header containing five mandatory columns: Chromosome, Marker, Position (in bp), Reference Allele (A0) and Alternative Allele (A1). Markers should be sorted by chromosome and position. Repeated positions are tolerated, but the user is warned of their presence in the data. Optionally, the user may provide a file containing an additional column with genetic positions (in cM), which has to be placed between the base pair position and the reference allele columns.
       \item \strong{.phase}: space-delimited file without header containing the phased genotype matrix. The dimension of the matrix is expected to be \emph{m x 2n}, where \emph{m} is the number of markers and \emph{n} is the number of individuals (i.e., two columns per individual, representing the two phased chromosome alleles). Alleles must be coded as 0 or 1. No missing values are allowed, since imputation is assumed to be part of the phasing procedure.
     }
   The function outputs a binary file with suffix \strong{.phaseb}. Each allele is stored as a bit in that file. Bits for any given marker are arranged in a sequence of bytes. Since each marker requires storage of 2*nsamples bits, the number of bytes consumed by a single marker in the output file is ceiling(2*nsamples). If the number of alleles is not a multiple of 8, bits in the remainder of the last byte are filled with 0. All functions in GHap were carefully designed to decode the bytes of a marker in such a way that trailing bits are ignored if present.
@@ -64,23 +64,17 @@
 }
 
 \examples{
-
-# #### DO NOT RUN IF NOT NECESSARY ###
-# 
-# # Copy the example data in the current working directory
-# exfiles <- ghap.makefile()
-# file.copy(from = exfiles, to = "./")
-# 
+ 
 # ### RUN ###
 # 
 # # Compress phase data using prefix
-# ghap.compress(input.file = "human", out.file = "human", ncores = 1)
+# ghap.compress(input.file = "yourfile", out.file = "yourfile", ncores = 1)
 #
 # # Compress phase data using file names
-# ghap.compress(samples.file = "human.samples",
-#               markers.file = "human.markers",
-#               phase.file = "human.phase",
-#               out.file = "human",
+# ghap.compress(samples.file = "yourfile.samples",
+#               markers.file = "yourfile.markers",
+#               phase.file = "yourfile.phase",
+#               out.file = "yourfile",
 #               ncores = 1)
 
 }
