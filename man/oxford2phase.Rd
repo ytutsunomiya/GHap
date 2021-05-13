@@ -8,8 +8,9 @@
   This function takes phased genotype data in Oxford HAPS/SAMPLES format and converts them into the GHap phase format.
 }
 \usage{
-  ghap.oxford2phase(input.files = NULL, haps.files = NULL, sample.files = NULL,
-                    out.file, verbose = TRUE)
+  ghap.oxford2phase(input.files = NULL, haps.files = NULL,
+                    sample.files = NULL, out.file,
+                    ncores = 1, verbose = TRUE)
 }
 
 \arguments{
@@ -32,7 +33,11 @@
     Character vector containing the list of Oxford SAMPLES files.
   }
 
-  To turn conversion progress-tracking on or off please use:
+  To turn conversion progress-tracking on or off or use multiple cores please use:
+  
+  \item{ncores}{
+  	A numeric value specfying the number of cores to use (default = 1).
+  }
 
   \item{verbose}{
   	A logical value specfying whether log messages should be printed (default = TRUE).
