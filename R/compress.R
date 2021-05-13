@@ -1,6 +1,6 @@
 #Function: ghap.compress
 #License: GPLv3 or later
-#Modification date: 26 Apr 2021
+#Modification date: 13 May 2021
 #Written by: Yuri Tani Utsunomiya & Marco Milanesi
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Compress phased data into GHap binary
@@ -16,7 +16,7 @@ ghap.compress <- function(
   verbose=TRUE
 ){
   
-  # Check input file prefix
+  # Check input file prefix ----------------------------------------------------
   if(is.null(input.file) == FALSE){
     samples.file <- paste(input.file, "samples", sep=".")
     markers.file <- paste(input.file, "markers", sep=".")
@@ -53,97 +53,122 @@ ghap.compress <- function(
     tmp.file <- paste(tempdir(),"/tmp",rnumb,sep="")
   }
   
-  #Load marker map file
+  # Load marker map file -------------------------------------------------------
+  ncores <- min(c(detectCores(), ncores))
   if(verbose == TRUE){
     cat("\nReading in marker map information... ")
   }
-  marker <- fread(markers.file, header=FALSE, colClasses = "character")
+  marker <- fread(markers.file, header=FALSE,
+                  colClasses = "character", nThread = ncores)
   
-  #Check if the map file contains correct dimension
-  if(ncol(marker) != 5){
-    stop("[ERROR]\n\nMarker map contains wrong number of columns (expected 5)")
+  # Check if the map file contains correct dimension ---------------------------
+  if(ncol(marker) %in% c(5,6) == FALSE){
+    stop("\n\nMarker map contains wrong number of columns (expected 5 or 6)")
   }
   marker$V3 <- as.numeric(marker$V3)
-  
-  #Check if alleles are different
-  equalalleles <- length(which(marker$V4 == marker$V5))
-  if(equalalleles > 0){
-    stop("[ERROR]\n\n The map contains markers with A0 = A1!")
+  if(ncol(marker) == 5){
+    tmp <- as.data.frame(matrix(data = NA, nrow = nrow(marker),
+                                ncol = 6))
+    colnames(tmp) <- paste0("V",1:6)
+    tmp[,1:3] <- marker[,1:3]
+    idx <- which(is.na(tmp$V4))
+    tmp$V4[idx] <- as.numeric(tmp$V3[idx])/1e+6
+    tmp[,5:6] <- marker[,4:5]
+    marker <- tmp
+  }else{
+    marker$V4 <- as.numeric(marker$V4)
   }
   
-  #Check for duplicated marker ids
+  # Check if alleles are different ---------------------------------------------
+  equalalleles <- length(which(marker$V5 == marker$V6))
+  if(equalalleles > 0){
+    stop("\n\nThe map contains markers with A0 = A1!")
+  }
+  
+  # Check for duplicated marker ids --------------------------------------------
   dup <- which(duplicated(marker$V2))
   ndup <- length(dup)
   if(ndup > 0){
-    emsg <- paste("[ERROR]\n\nYour marker map file contains", ndup, "duplicated ids")
+    emsg <- paste("\n\nYour marker map file contains", ndup, "duplicated ids")
     stop(emsg)
   }
   
-  #Check if markers are sorted by bp
+  # Check if markers are sorted by bp ------------------------------------------
   chr <- unique(marker$V1)
   nchr <- length(chr)
   chrorder <- chr[order(nchar(chr),chr)]
   negpos <- diff(marker$V3)
   negpos <- length(which(negpos < 0)) + 1
   if(identical(chr,chrorder) == FALSE | negpos != nchr){
-    stop("[ERROR]\n\nMarkers are not sorted by chromosome and base pair position")
+    stop("\n\nMarkers are not sorted by chromosome and base pair position")
   }
   
-  #Check for duplicated bp
+  # Check for duplicated bp ----------------------------------------------------
   dup <- paste(marker$V1,marker$V3)
   dup <- which(duplicated(dup))
   ndup <- length(dup)
+  note <- NULL
   if(ndup > 0){
-    emsg <- paste("[ERROR]\n\nYour marker map file contains", ndup, "duplicated positions!")
-    stop(emsg)
+    note <- paste(note, "\n[NOTE] Found", ndup,
+                  "duplicated physical positions!")
   }
   
-  #Map passed checks
-  nmarkers <- nrow(marker)
-  percent <- round(nmarkers/20, digits = 0)
+  # Map passed checks ----------------------------------------------------------
   if(verbose == TRUE){
     cat("Done.\n")
-    cat(paste("A total of ", nmarkers,
+    cat(paste("A total of ", nrow(marker),
               " markers were found in ", nchr," chromosomes.\n",sep=""))
   }
   
-  #Load sample file
+  # Load sample file -----------------------------------------------------------
   if(verbose == TRUE){
     cat("Reading in sample information... ")
   }
-  sample <- fread(samples.file, header=FALSE, colClasses = "character")
+  sample <- fread(samples.file, header=FALSE,
+                  colClasses = "character", nThread = ncores)
+  sample <- as.data.frame(sample)
   
-  #Check if the sample file contains correct dimension
-  if(ncol(sample) != 2){
-    stop("[ERROR]\n\nSample file contains wrong number of columns (expected 2)")
+  # Check if the sample file contains correct dimension ------------------------
+  if(ncol(sample) %in% 2:5 == FALSE){
+    stop("\n\nSample file contains wrong number of columns (expected 2 to 5)")
   }
+  if(ncol(sample) < 5){
+    tmp <- as.data.frame(matrix(data = NA, nrow = nrow(sample), ncol = 5))
+    for(i in 1:ncol(sample)){
+      tmp[,i] <- sample[,i]
+    }
+    colnames(tmp) <- paste0("V",1:5)
+    sample <- tmp
+  }
+  sample$V3[which(sample$V3 == "0")] <- NA
+  sample$V4[which(sample$V4 == "0")] <- NA
+  sample$V5[which(is.na(sample$V5))] <- "0"
   
-  #Check for duplicated ids
+  # Check for duplicated ids ---------------------------------------------------
   dup <- which(duplicated(sample$V2))
   ndup <- length(dup)
   if(ndup > 0){
-    emsg <- paste("[ERROR]\n\nSample file contains", ndup, "duplicated ids!")
+    emsg <- paste("\n\nSample file contains", ndup, "duplicated ids!")
     stop(emsg)
   }
   
-  # Samples passed check
+  # Samples passed check -------------------------------------------------------
   pop <- rep(sample$V1,each=2)
   ids <- rep(sample$V2,each=2)
-  nsamples <- nrow(sample)
   if(verbose == TRUE){
     cat("Done.\n")
-    cat(paste("A total of ", nsamples, " individuals were found in ",
-              length(unique(pop)), " populations.\n\n",sep=""))
+    cat(paste("A total of ", nrow(sample), " individuals were found in ",
+              length(unique(pop)), " populations.\n",sep=""))
   }
   
-  # Compute bit loss
+  # Compute bit loss -----------------------------------------------------------
   bitloss <- 8 - ((2*nsamples) %% 8)
   if(bitloss == 8){
     bitloss <- 0
   }
   linelen <- 2*nsamples
   
-  # Generate batch index
+  # Generate batch index -------------------------------------------------------
   if(is.null(batchsize) == TRUE){
     batchsize <- ceiling(nmarkers/10)
   }
@@ -159,8 +184,6 @@ ghap.compress <- function(
   if(id1[length(id1)] > nmarkers){
     id1 <- id1[-length(id1)]; id2 <- id2[-length(id2)]
   }
-  
-  # Log message
   if(verbose == TRUE){
     cat("Processing ", nmarkers, " markers in:\n", sep="")
     batch <- table((id2-id1)+1)
@@ -169,7 +192,7 @@ ghap.compress <- function(
     }
   }
   
-  # Process line function
+  # Process line function ------------------------------------------------------
   lineprocess <- function(i){
     line <- scan(text=batchline[i], what = "character", sep=" ", quiet = TRUE)
     if(length(line) != linelen){
@@ -191,10 +214,8 @@ ghap.compress <- function(
     return(line)
   }
   
-  # Open connection with phase file
+  # Iterate batches ------------------------------------------------------------
   phase.con <- file(phase.file,"r")
-  
-  # Iterate batches
   nmarkers.done <- 0
   nlines.read <- id2-id1+1
   nlines.skip <- c(0,cumsum(nlines.read)[-length(nlines.read)])
@@ -233,7 +254,7 @@ ghap.compress <- function(
     
   }
   
-  # Last integrity check
+  # Last integrity check -------------------------------------------------------
   batchline <- readLines(con = phase.con, n = 1)
   if(length(batchline) != 0){
     emsg <- paste("\n\nExpected", nmarkers, "lines in",
@@ -241,19 +262,15 @@ ghap.compress <- function(
     stop(emsg)
   }
   
-  # Close connection with phase file
+  # Close connection with phase file -------------------------------------------
   close.connection(phase.con)
-  
-  # Log message
   if(verbose == TRUE){
     cat(nmarkers, "markers written to file\n\n")
   }
   
-  # Output results
+  # Output results -------------------------------------------------------------
   sup <- file.copy(from = tmp.file, to = paste(out.file,".phaseb",sep=""))
   sup <- file.remove(tmp.file)
-  
-  # Log message
   if(verbose == TRUE){
     cat("Phase file succesfully compressed.\n\n")
   }
