@@ -8,23 +8,32 @@
  Create example files to test the package.
 }
 \usage{
- ghap.makefile(verbose = TRUE) 
+ ghap.makefile(dataset = "human_hapmap3_chr2", format = "phase",
+               verbose = TRUE) 
 }
 \arguments{
+  \item{dataset}{
+    A character value specfying the name of the dataset.
+  }
+  \item{format}{
+    A character value specfying the format of the dataset.
+  }
   \item{verbose}{
     A logical value specfying whether log messages should be printed (default = TRUE).
   }
 }
 \details{
-This function downloads the following example files to the R temporary directory (requires internet connection):
+This function downloads example files to the R temporary directory (requires internet connection). The default dataset comprises the following group of files:
 
-\emph{human.phase} \cr
+\emph{human.phaseb} \cr
 \emph{human.markers} \cr
 \emph{human.samples} \cr
 
 For details about the format of these files, see \code{\link{ghap.compress}}. The dataset was extracted from the reference phased data available at the IMPUTE2 (Howie et al., 2009) software website (\url{https://mathgen.stats.ox.ac.uk/impute/impute_v2.html#reference}).
 
-The genotypes derive from the International HapMap Project Phase 3 (The International HapMap 3 Consortium, 2010), and comprise 1,011 subjects (from 11 populations) and 20,000 SNPs (randomly sampled from chromosome 2) mapped to the NCBI build 36 (hg18) assembly. The source link is (\url{https://mathgen.stats.ox.ac.uk/impute/impute_v2.html#reference})
+The genotypes derive from the International HapMap Project Phase 3 (The International HapMap 3 Consortium, 2010), and comprise 1,011 subjects (from 11 populations) and 20,000 SNPs (randomly sampled from chromosome 2) mapped to the NCBI build 36 (hg18) assembly. The source link is (\url{https://mathgen.stats.ox.ac.uk/impute/impute_v2.html#reference}).
+
+Since version 2.1.0, GHap maintains additional example files in its github repository (\url{https://github.com/ytutsunomiya/GHap}). In order to see which files are available, please see \code{\link{ghap.exfiles}}.
 
 }
 
@@ -34,7 +43,11 @@ Marco Milanesi <marco.milanesi.mm@gmail.com>
 }
 
 \examples{
-# # Copy the example data in the current working directory
+# # See list of example files
+# exlist <- ghap.exfiles()
+# View(exlist)
+#
+# # Copy an example dataset to the current working directory
 # exfiles <- ghap.makefile()
 # file.copy(from = exfiles, to = "./")
 }
