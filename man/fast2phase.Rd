@@ -11,7 +11,7 @@
   ghap.fast2phase(input.files = NULL, switchout.files = NULL,
                   map.files = NULL, fam.file = NULL,
                   out.file = NULL, overwrite = FALSE,
-                  verbose = TRUE)
+                  ncores = 1, verbose = TRUE)
 }
 
 \arguments{
@@ -43,7 +43,11 @@
   	A logical value controling if existing files with the same name as the selected output should be overwritten (default = FALSE).
   }
   
-  To turn conversion progress-tracking on or off please use:
+  To turn conversion progress-tracking on or off or set the number of cores please use:
+
+  \item{ncores}{
+  	A numeric value specfying the number of cores (default = 1).
+  }
 
   \item{verbose}{
   	A logical value specfying whether log messages should be printed (default = TRUE).
@@ -62,7 +66,7 @@ Scheet, P., Stephens, M., 2006. A Fast and Flexible Statistical Model for Large-
 }
 
 \author{
-Mario Barbato <mario.barbato@unicatt.it>, Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
+Mario Barbato <mario.barbato@unicatt.it>
 }
 
 \seealso{
