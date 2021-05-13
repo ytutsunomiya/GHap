@@ -1,0 +1,3 @@
+dataset format individuals variants zipsize
+human_hapmap3_chr2 phase 1011 20000 3520042
+human_hapmap3_chr2 plink 1011 20000 2658186
