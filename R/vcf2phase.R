@@ -10,6 +10,7 @@ ghap.vcf2phase <- function(
   vcf.files = NULL, 
   sample.files = NULL,
   out.file,
+  ncores = 1,
   verbose = TRUE
 ){
   
@@ -68,17 +69,19 @@ ghap.vcf2phase <- function(
   }
   
   # Convert sample files
-  mysamp <- fread(sample.files[1], header=FALSE)
+  ncores <- min(c(detectCores(), ncores))
+  mysamp <- fread(sample.files[1], header=FALSE, nThread = ncores)
   if(length(sample.files) > 1){
     for(i in 2:length(sample.files)){
-      tmp.mysamp <- fread(sample.files[i], header=FALSE)
+      tmp.mysamp <- fread(sample.files[i], header=FALSE, nThread = ncores)
       if(identical(tmp.mysamp,mysamp) == FALSE){
         stop("Sample files differ!")
       }
     }
   }
   mysamp$V2 <- as.character(mysamp$V2)
-  fwrite(x = mysamp, file = tmp.samples.file, col.names = FALSE, row.names = FALSE, sep = " ")
+  fwrite(x = mysamp, file = tmp.samples.file, col.names = FALSE,
+         row.names = FALSE, sep = " ", nThread = ncores)
   
   # Convert vcf files
   nids <- nrow(mysamp)
@@ -88,7 +91,7 @@ ghap.vcf2phase <- function(
     cat("Note: only bi-allelic variants will be processed.\n")
   }
   for(i in 1:length(vcf.files)){
-    myfile <- fread(file = vcf.files[i], header = TRUE)
+    myfile <- fread(file = vcf.files[i], header = TRUE, nThread = ncores)
     if(ncol(myfile) != expcols){
       emsg <- paste("Expected 9 + ",nids," = ",expcols,
                     " columns in file ",vcf.files[i]," but found ", ncol(myfile), "!", sep="")
@@ -124,7 +127,7 @@ ghap.vcf2phase <- function(
     }
     biallelic <- grep(pattern = ",", x = myfile$ALT, invert = TRUE)
     myfile <- myfile[biallelic,]
-    fwrite(x = myfile[,c(1,3,2,4,5)], file = tmp.markers.file,
+    fwrite(x = myfile[,c(1,3,2,4,5)], file = tmp.markers.file, nThread = ncores,
            col.names = FALSE, row.names = FALSE, sep = " ", append = TRUE)
     myfile <- myfile[, mysamp$V2, with=FALSE]
     myfile[ , (colnames(myfile)) := lapply(.SD, function(myfile) {gsub("\\:.+", "", myfile)}), .SDcols = colnames(myfile)]
@@ -138,7 +141,7 @@ ghap.vcf2phase <- function(
                     "!\nAre these genotypes really phased?", sep="")
       stop(emsg)
     }
-    fwrite(x = myfile, file = tmp.phase.file, quote = FALSE,
+    fwrite(x = myfile, file = tmp.phase.file, quote = FALSE, nThread = ncores,
            col.names = FALSE, row.names = FALSE, sep = " ", append = TRUE)
     if(verbose == TRUE){
       cat("Processed ",i," files of",length(vcf.files), "\r")
