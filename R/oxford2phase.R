@@ -1,6 +1,6 @@
 #Function: ghap.oxford2phase
 #License: GPLv3 or later
-#Modification date: 24 Apr 2021
+#Modification date: 13 May 2021
 #Written by: Mario Barbato & Yuri Utsunomiya
 #Contact: mario.barbato@unicatt.it, ytutsunomiya@gmail.com
 #Description: Convert an Oxford HAPS/SAMPLE file to the GHap phase format
@@ -10,6 +10,7 @@ ghap.oxford2phase <- function(
   haps.files = NULL, 
   sample.files = NULL,
   out.file,
+  ncores = 1,
   verbose = TRUE
 ){
   
@@ -68,16 +69,17 @@ ghap.oxford2phase <- function(
   }
   
   # Convert sample files
-  mysamp <- fread(file = sample.files[1], header = FALSE, skip = 2, drop = 3)
+  ncores <- min(c(detectCores(), ncores))
+  mysamp <- fread(file = sample.files[1], header = FALSE, skip = 2, drop = 3, nThread = ncores)
   if(length(sample.files) > 1){
     for(i in 2:length(sample.files)){
-      tmp.mysamp <- fread(file = sample.files[i], header = FALSE, skip = 2, drop = 3)
+      tmp.mysamp <- fread(file = sample.files[i], header = FALSE, skip = 2, drop = 3, nThread = ncores)
       if(identical(tmp.mysamp,mysamp) == FALSE){
         stop("Sample files differ!")
       }
     }
   }
-  fwrite(x = mysamp[,1:2], file = tmp.samples.file, col.names = FALSE, row.names = FALSE, sep = " ")
+  fwrite(x = mysamp[,1:2], file = tmp.samples.file, col.names = FALSE, row.names = FALSE, sep = " ", nThread = ncores)
   
   # Convert haps files
   nids <- nrow(mysamp)
@@ -86,15 +88,15 @@ ghap.oxford2phase <- function(
     cat("\nConverting Oxford files to the GHap phase format.\n")
   }
   for(i in 1:length(haps.files)){
-    myfile <- fread(file = haps.files[i], header = FALSE, verbose = FALSE, showProgress = FALSE)
+    myfile <- fread(file = haps.files[i], header = FALSE, verbose = FALSE, showProgress = FALSE, nThread = ncores)
     if(ncol(myfile) != expcols){
       emsg <- paste("Expected 5 + 2*",nids," = ",expcols,
                     " columns in file ",haps.files[i]," but found ", ncol(myfile), "!", sep="")
       stop(emsg)
     }
-    fwrite(x = myfile[,1:5], file = tmp.markers.file,
+    fwrite(x = myfile[,1:5], file = tmp.markers.file, nThread = ncores,
            col.names = FALSE, row.names = FALSE, sep = " ", append = TRUE)
-    fwrite(x = myfile[,-c(1:5)], file = tmp.phase.file,
+    fwrite(x = myfile[,-c(1:5)], file = tmp.phase.file, nThread = ncores,
            col.names = FALSE, row.names = FALSE, sep = " ", append = TRUE)
     if(verbose == TRUE){
       cat("Processed ",i," files of",length(haps.files), "\r")
