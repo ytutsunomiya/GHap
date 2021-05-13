@@ -1,6 +1,6 @@
 #Function: ghap.fast2phase
 #License: GPLv3 or later
-#Modification date: 18 Feb 2021
+#Modification date: 13 May 2021
 #Written by: Mario Barbato, Yuri Tani Utsunomiya
 #Contact: mario.barbato@unicatt.it, ytutsunomiya@gmail.com
 #Description: Converts fastPHASE to GHap phase format
@@ -12,6 +12,7 @@ ghap.fast2phase <- function(
   fam.file = NULL,
   out.file = NULL,
   overwrite = FALSE,
+  ncores = 1,
   verbose = TRUE
 ){
   
@@ -89,12 +90,13 @@ ghap.fast2phase <- function(
   }
   
   # Get fam info
-  samples.fam <- fread(fam.file, select = 1:2, colClasses = "character")
+  ncores <- min(c(detectCores(), ncores))
+  samples.fam <- fread(fam.file, select = 1:2, colClasses = "character", nThread = ncores)
   
   for(i in 1:length(switchout.files)){
     
     # Load marker map file
-    marker <- fread(map.files[i], header=FALSE, colClasses = "character")
+    marker <- fread(map.files[i], header=FALSE, colClasses = "character", nThread = ncores)
     
     # Check if the map file contains correct dimension
     if(ncol(marker) != 5){
@@ -139,7 +141,7 @@ ghap.fast2phase <- function(
     }
     
     # Load fastPHASE file
-    fp <- fread(switchout.files[i], fill = TRUE, header = FALSE)
+    fp <- fread(switchout.files[i], fill = TRUE, header = FALSE, nThread = ncores)
     
     # Map samples and haplotypes
     for(j in 1:nrow(fp)){if(fp[j] == "BEGIN GENOTYPES"){break()}}
@@ -184,9 +186,9 @@ ghap.fast2phase <- function(
     fp_split[fp_split != "0"] <- 1
     
     # Write to file
-    fwrite(x = marker, file = tmp.markers.file,
+    fwrite(x = marker, file = tmp.markers.file, nThread = ncores,
            col.names = FALSE, row.names = FALSE, sep = " ", append = TRUE)
-    fwrite(x = as.data.table(fp_split), file = tmp.phase.file,
+    fwrite(x = as.data.table(fp_split), file = tmp.phase.file, nThread = ncores,
            col.names = FALSE, row.names = FALSE, sep = " ", append = TRUE, verbose = FALSE)
     
     # Log message
@@ -198,7 +200,7 @@ ghap.fast2phase <- function(
   
   # Output samples file
   fwrite(x = as.data.table(samples.fam), file = tmp.samples.file, col.names = FALSE,
-         row.names = FALSE, sep = " ")
+         row.names = FALSE, sep = " ", nThread = ncores)
   
   # Get files
   if(verbose == TRUE){
