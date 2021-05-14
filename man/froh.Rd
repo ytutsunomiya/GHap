@@ -8,13 +8,13 @@
   Given runs of homozygosity (ROH) obtained with the \code{\link{ghap.roh}} function, this function computes the proportion of the genome covered by ROHs (FROH) of certain lengths.
 }
 \usage{
- ghap.froh(phase, roh, rohsizes = c(1, 2, 4, 8, 16),
+ ghap.froh(object, roh, rohsizes = c(1, 2, 4, 8, 16),
            only.active.markers = TRUE, ncores = 1)
 }
 
 \arguments{
-  \item{phase}{
-   A GHap.phase object.
+  \item{object}{
+   A valid GHap object (phase or plink).
   }
   \item{roh}{
    A data frame containing runs of homozygosity, such as supplied by the \code{\link{ghap.roh}} function.
