@@ -8,7 +8,7 @@
   This function builds prototype alleles to be used in ancestry predictions.
 }
 \usage{
- ghap.anctrain(phase, train = NULL, method = "unsupervised",
+ ghap.anctrain(object, train = NULL, method = "unsupervised",
                K = 2, iter.max = 10, nstart = 10, nmarkers = 5000,
                tune = FALSE, only.active.samples = TRUE,
                only.active.markers = TRUE, batchsize = NULL,
@@ -19,7 +19,7 @@
 
   The following arguments are used by both the 'supervised' and 'unsupervised' methods:
 
-  \item{phase}{
+  \item{object}{
    A GHap.phase object.
   }
   \item{train}{
