@@ -8,7 +8,7 @@
   Generation of simulated haplotypes based on in silico matings.
 }
 \usage{
-  ghap.simmating(phase, n.individuals = 1,
+  ghap.simmating(object, n.individuals = 1,
                  parent1 = NULL, parent2 = NULL,
                  model = "uniform", out.file,
                  only.active.markers = TRUE,
@@ -17,9 +17,7 @@
 
 \arguments{
 
-  If all input files share the same prefix, the user can use the following shortcut options:
-
-  \item{phase}{
+  \item{object}{
    A GHap.phase object.
   }
   \item{n.individuals}{
@@ -40,7 +38,6 @@
   \item{only.active.markers}{
     A logical value specifying whether only active markers should be used in simulations (default = TRUE).
   }
-
   \item{ncores}{
    A numeric value specifying the number of cores to be used in parallel computing (default = 1).
   }
