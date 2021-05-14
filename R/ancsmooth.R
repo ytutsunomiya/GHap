@@ -1,16 +1,21 @@
 #Function: ghap.ancsmooth
 #License: GPLv3 or later
-#Modification date: 04 May 2021
+#Modification date: 14 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Smoothing for predictions of haplotype ancestry
 
 ghap.ancsmooth<-function(
-  phase,
+  object,
   admix,
   ncores=1,
   verbose=TRUE
 ){
+  
+  # Check if phase is a GHap.phase object-------------------------------------------------------------
+  if(class(object) != "GHap.phase"){
+    stop("Argument phase must be a GHap.phase object.")
+  }
   
   # Log-----------------------------------------------------------------------------------------------
   if(verbose == TRUE){
@@ -23,7 +28,7 @@ ghap.ancsmooth<-function(
   smooth.fun <- function(j){
     out <- NULL
     for(k in 1:length(chr)){
-      pop <- unique(phase$pop[which(phase$id == test[j])])
+      pop <- unique(object$pop[which(object$id == test[j])])
       a <- admix[which(admix$ID == test[j] & admix$CHR == chr[k]),]
       start <- a$BP1[-nrow(a)]
       end <- a$BP1[-1]-1
@@ -59,7 +64,7 @@ ghap.ancsmooth<-function(
         hapout1$BP1[2:nrow(hapout1)] <- hapout1$BP2[1:(nrow(hapout1)-1)] + 1 
       }
       hapout1$BP1[1] <- 1
-      hapout1$BP2[nrow(hapout1)] <- max(phase$bp[which(phase$chr == chr[k])])
+      hapout1$BP2[nrow(hapout1)] <- max(object$bp[which(object$chr == chr[k])])
       hapout1$SIZE <- 1 + hapout1$BP2 - hapout1$BP1
       runs2 <- rle(hap2)
       hapout2 <- matrix(data = NA, nrow = length(runs2$lengths), ncol = 8)
@@ -76,7 +81,7 @@ ghap.ancsmooth<-function(
         hapout2$BP1[2:nrow(hapout2)] <- hapout2$BP2[1:(nrow(hapout2)-1)] + 1 
       }
       hapout2$BP1[1] <- 1
-      hapout2$BP2[nrow(hapout2)] <- max(phase$bp[which(phase$chr == chr[k])])
+      hapout2$BP2[nrow(hapout2)] <- max(object$bp[which(object$chr == chr[k])])
       hapout2$SIZE <- 1 + hapout2$BP2 - hapout2$BP1
       hapout <- rbind(hapout1,hapout2)
       out <- c(out, as.vector(t(hapout)))
@@ -86,13 +91,18 @@ ghap.ancsmooth<-function(
   
   # Compute runs of ancestry--------------------------------------------------------------------------
   ncores <- min(c(detectCores(), ncores))
-  if(Sys.info()["sysname"] == "Windows"){
-    cl <- makeCluster(ncores)
-    clusterExport(cl=cl, varlist = "phase")
-    results <- unlist(parLapply(cl = cl, fun = smooth.fun, X = 1:length(test)))
-    stopCluster(cl)
+  if(ncores == 1){
+    results <- lapply(FUN = smooth.fun, X = 1:length(test))
   }else{
-    results <- mclapply(FUN = smooth.fun, X = 1:length(test), mc.cores = ncores)
+    if(Sys.info()["sysname"] == "Windows"){
+      cl <- makeCluster(ncores)
+      varlist <- list("object","admix")
+      clusterExport(cl = cl, varlist = varlist, envir=environment())
+      results <- unlist(parLapply(cl = cl, fun = smooth.fun, X = 1:length(test)))
+      stopCluster(cl)
+    }else{
+      results <- mclapply(FUN = smooth.fun, X = 1:length(test), mc.cores = ncores)
+    }
   }
   hapout <- NULL
   results <- matrix(data = unlist(results), ncol = 8, byrow = TRUE)
@@ -114,7 +124,7 @@ ghap.ancsmooth<-function(
   colnames(propout) <- c("POP","ID",pops,"UNK")
   # genout <- propout[,-ncol(propout)]
   for(j in 1:length(test)){
-    propout$POP[j] <- unique(phase$pop[which(phase$id == test[j])])
+    propout$POP[j] <- unique(object$pop[which(object$id == test[j])])
     propout$ID[j] <- test[j]
     # genout$POP[j] <- propout$POP[j]
     # genout$ID[j] <- propout$ID[j]
