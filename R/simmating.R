@@ -1,12 +1,12 @@
 #Function: ghap.simmating
 #License: GPLv3 or later
-#Modification date: 12 May 2021
+#Modification date: 14 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Simulate individuals from specified matings
 
 ghap.simmating <- function(
-  phase,
+  object,
   n.individuals = 1,
   parent1 = NULL,
   parent2 = NULL,
@@ -18,14 +18,14 @@ ghap.simmating <- function(
 ){
   
   # Check if phase is a GHap.phase object-------------------------------------------------------------
-  if(class(phase) != "GHap.phase"){
+  if(class(object) != "GHap.phase"){
     stop("Argument phase must be a GHap.phase object.")
   }
   
   # Check if inactive markers should be reactivated---------------------------------------------------
   if(only.active.markers == FALSE){
-    phase$marker.in <- rep(TRUE,times=phase$nmarkers)
-    phase$nmarkers.in <- length(which(phase$marker.in))
+    object$marker.in <- rep(TRUE,times=object$nmarkers)
+    object$nmarkers.in <- length(which(object$marker.in))
   }
   
   # Check if out file exist---------------------------------------------------------------------------
@@ -61,8 +61,8 @@ ghap.simmating <- function(
     parent2 <- tmpprobs
     names(parent2) <- tmpnames
   }
-  parent1ok <- which(names(parent1) %in% phase$id)
-  parent2ok <- which(names(parent2) %in% phase$id)
+  parent1ok <- which(names(parent1) %in% object$id)
+  parent2ok <- which(names(parent2) %in% object$id)
   if(length(parent1ok) != length(parent1) | length(parent1ok) != length(parent1)){
     stop("Some of the provided parent names were not found in the phase object\n")
   }
@@ -135,13 +135,13 @@ ghap.simmating <- function(
   
   # Simulate individuals------------------------------------------------------------------------------
   ncores <- min(c(detectCores(), ncores))
-  uniqchr <- unique(phase$chr)
+  uniqchr <- unique(object$chr)
   chrsize <- rep(x = NA, times = length(uniqchr))
   names(chrsize) <- uniqchr
   nmkrchr <- chrsize
   for(i in 1:length(chrsize)){
-    idx <- which(phase$chr == uniqchr[i])
-    bp <- phase$bp[idx]
+    idx <- which(object$chr == uniqchr[i])
+    bp <- object$bp[idx]
     chrsize[i] <- as.numeric(sum(diff(bp)))
     nmkrchr[i] <- length(idx)
   }
@@ -169,9 +169,9 @@ ghap.simmating <- function(
       cat("Simulating crossing over events on chromosome", names(nmkrchr[chr]), "\r")
     }
     m <- nmkrchr[chr]
-    mkrsidx <- which(phase$marker.in & phase$chr == chr)
-    mkrs <- phase$marker[mkrsidx]
-    parenthap <- ghap.slice(phase = phase, ids = unique(c(indtbl$parent1,indtbl$parent2)),
+    mkrsidx <- which(object$marker.in & object$chr == chr)
+    mkrs <- object$marker[mkrsidx]
+    parenthap <- ghap.slice(object = object, ids = unique(c(indtbl$parent1,indtbl$parent2)),
                             variants = mkrs, lookup = lookup, ncores = ncores)
     if(Sys.info()["sysname"] == "Windows"){
       cl <- makeCluster(ncores)
@@ -181,8 +181,8 @@ ghap.simmating <- function(
       inds <- mclapply(FUN = indbuild, X = 1:n.individuals, mc.cores = ncores)
     }
     inds <- matrix(data = unlist(inds), nrow = m, ncol = 2*n.individuals, byrow = F)
-    mkrmap <- data.frame(CHR = phase$chr[mkrsidx], MARKER = phase$marker[mkrsidx], POS = phase$bp[mkrsidx],
-                         A0 = phase$A0[mkrsidx], A1 = phase$A1[mkrsidx], stringsAsFactors = FALSE)
+    mkrmap <- data.frame(CHR = object$chr[mkrsidx], MARKER = object$marker[mkrsidx], POS = object$bp[mkrsidx],
+                         A0 = object$A0[mkrsidx], A1 = object$A1[mkrsidx], stringsAsFactors = FALSE)
     fwrite(x = as.data.table(mkrmap),
            file = tmp.markers.file, col.names = FALSE, row.names = FALSE,
            sep = " ", append = TRUE, nThread = ncores)
