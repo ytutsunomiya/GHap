@@ -114,9 +114,10 @@ ghap.compress <- function(
   }
   
   # Map passed checks ----------------------------------------------------------
+  nmarkers <- nrow(marker)
   if(verbose == TRUE){
     cat("Done.\n")
-    cat(paste("A total of ", nrow(marker),
+    cat(paste("A total of ", nmarkers,
               " markers were found in ", nchr," chromosomes.\n",sep=""))
   }
   
@@ -153,11 +154,12 @@ ghap.compress <- function(
   }
   
   # Samples passed check -------------------------------------------------------
+  nsamples <- nrow(sample)
   pop <- rep(sample$V1,each=2)
   ids <- rep(sample$V2,each=2)
   if(verbose == TRUE){
     cat("Done.\n")
-    cat(paste("A total of ", nrow(sample), " individuals were found in ",
+    cat(paste("A total of ", nsamples, " individuals were found in ",
               length(unique(pop)), " populations.\n",sep=""))
   }
   
