@@ -191,14 +191,19 @@ ghap.slice <- function(
   
   # Get data -------------------------------------------------------------------
   ncores <- min(c(detectCores(), ncores))
-  if(Sys.info()["sysname"] == "Windows"){
-    cl <- makeCluster(ncores)
-    clusterExport(cl = cl, varlist = list("object"), envir=environment())
-    X <- unlist(parLapply(cl = cl, fun = getBitFun, X = 1:length(vidx)))
-    stopCluster(cl)
+  if(ncores == 1){
+    X <- unlist(lapply(X = 1:length(vidx), FUN = getBitFun))
   }else{
-    X <- unlist(mclapply(X = 1:length(vidx), FUN = getBitFun, mc.cores = ncores))
+    if(Sys.info()["sysname"] == "Windows"){
+      cl <- makeCluster(ncores)
+      clusterExport(cl = cl, varlist = list("object"), envir=environment())
+      X <- unlist(parLapply(cl = cl, fun = getBitFun, X = 1:length(vidx)))
+      stopCluster(cl)
+    }else{
+      X <- unlist(mclapply(X = 1:length(vidx), FUN = getBitFun, mc.cores = ncores))
+    }
   }
+
   if(transposed == FALSE){
     X <- Matrix(data = X, nrow = length(vidx), ncol = length(iidx),
                 byrow = TRUE, sparse = TRUE)
