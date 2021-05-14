@@ -1,12 +1,12 @@
 #Function: ghap.anctest
 #License: GPLv3 or later
-#Modification date: 12 May 2021
+#Modification date: 14 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Predict ancestry of haplotypes
 
 ghap.anctest <- function(
-  phase,
+  object,
   blocks,
   prototypes,
   test = NULL,
@@ -17,35 +17,35 @@ ghap.anctest <- function(
 ){
   
   # Check if phase is a GHap.phase object-------------------------------------------------------------
-  if(class(phase) != "GHap.phase"){
+  if(class(object) != "GHap.phase"){
     stop("Argument phase must be a GHap.phase object.")
   }
   
   # Check if inactive markers and samples should be reactived-----------------------------------------
   if(only.active.markers == FALSE){
-    phase$marker.in <- rep(TRUE,times=phase$nmarkers)
-    phase$nmarkers.in <- length(which(phase$marker.in))
+    object$marker.in <- rep(TRUE,times=object$nmarkers)
+    object$nmarkers.in <- length(which(object$marker.in))
   }
   if(only.active.samples == FALSE){
-    phase$id.in <- rep(TRUE,times=2*phase$nsamples)
-    phase$nsamples.in <- length(which(phase$id.in))/2
+    object$id.in <- rep(TRUE,times=2*object$nsamples)
+    object$nsamples.in <- length(which(object$id.in))/2
   }
   
   # Organize prototype dataframe ---------------------------------------------------------------------
-  nprotmrk <- length(which(prototypes$MARKER %in% phase$marker))
+  nprotmrk <- length(which(prototypes$MARKER %in% object$marker))
   if(nprotmrk != nrow(prototypes)){
     stop("Markers listed in the prototypes dataframe should be present in the GHap.phase object.")
   }
-  if(identical(prototypes$MARKER, phase$marker) == FALSE){
+  if(identical(prototypes$MARKER, object$marker) == FALSE){
     protmrk <- prototypes$MARKER
-    tmp <- data.frame(IDX = 1:phase$nmarkers, MARKER = phase$marker, stringsAsFactors = FALSE)
+    tmp <- data.frame(IDX = 1:object$nmarkers, MARKER = object$marker, stringsAsFactors = FALSE)
     prototypes <- merge(x = tmp, y = prototypes, by = "MARKER", all.x=TRUE)
     prototypes <- prototypes[order(prototypes$IDX),-2]
-    phase$marker.in <- phase$marker %in% protmrk & phase$marker.in == TRUE
+    object$marker.in <- object$marker %in% protmrk & object$marker.in == TRUE
   }
   
   # Map test samples----------------------------------------------------------------------------------
-  test.idx <- which(phase$id %in% test & phase$id.in == TRUE)
+  test.idx <- which(object$id %in% test & object$id.in == TRUE)
   
   # Initialize lookup table----------------------------------------------------------------------------
   lookup <- rep(NA,times=256)
@@ -59,6 +59,7 @@ ghap.anctest <- function(
     d <- d*10
   }
   lookup <- sprintf(fmt="%08d", lookup)
+  ncores <- min(c(detectCores(), ncores))
   
   # Initialize block iteration function---------------------------------------------------------------
   blockfun <- function(b){
@@ -67,14 +68,14 @@ ghap.anctest <- function(
     block.info <- blocks[b, c("BLOCK","CHR","BP1","BP2")]
     
     #SNPs in the block
-    snps <- which(phase$chr == block.info$CHR &
-                    phase$bp >= block.info$BP1 &
-                    phase$bp <= block.info$BP2 &
-                    phase$marker.in == TRUE)
+    snps <- which(object$chr == block.info$CHR &
+                    object$bp >= block.info$BP1 &
+                    object$bp <= block.info$BP2 &
+                    object$marker.in == TRUE)
     blocksize <- length(snps)
     
     #Get test haplotypes
-    Mtst <- ghap.slice(object = phase, ids = test.idx, variants = snps,
+    Mtst <- ghap.slice(object = object, ids = test.idx, variants = snps,
                        index = TRUE, lookup = lookup, verbose = FALSE)
     Mref <- prototypes[snps,-1]
     
@@ -88,8 +89,8 @@ ghap.anctest <- function(
       pred[h] <- which(sq == min(sq))
     }
     pred <- colnames(Mref)[pred]
-    ids <- phase$id[test.idx]
-    pops <- phase$pop[test.idx]
+    ids <- object$id[test.idx]
+    pops <- object$pop[test.idx]
     names(pred) <- ids
     
     #Make output
@@ -111,13 +112,19 @@ ghap.anctest <- function(
   if(verbose == TRUE){
     cat("\nPredicting ancestry of haplotypes... ")
   }
-  ncores <- min(c(detectCores(), ncores))
-  if(Sys.info()["sysname"] == "Windows"){
-    cl <- makeCluster(ncores)
-    results <- unlist(parLapply(cl = cl, fun = blockfun, X = 1:nrow(blocks)))
-    stopCluster(cl)
+  if(ncores == 1){
+    results <- lapply(FUN = blockfun, X = 1:nrow(blocks))
   }else{
-    results <- mclapply(FUN = blockfun, X = 1:nrow(blocks), mc.cores = ncores)
+    if(Sys.info()["sysname"] == "Windows"){
+      cl <- makeCluster(ncores)
+      clusterEvalQ(cl, library(Matrix))
+      varlist <- list("blocks","object","test.idx","lookup")
+      clusterExport(cl = cl, varlist = varlist, envir=environment())
+      results <- unlist(parLapply(cl = cl, fun = blockfun, X = 1:nrow(blocks)))
+      stopCluster(cl)
+    }else{
+      results <- mclapply(FUN = blockfun, X = 1:nrow(blocks), mc.cores = ncores)
+    }
   }
   if(verbose == TRUE){
     cat("Done.\n")
