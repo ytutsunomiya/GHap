@@ -20,7 +20,7 @@ ghap.profile <- function(
     stop("\nInput data must be a valid GHap object (phase, haplo or plink).")
   }
   fac <- c(2,1,1)
-  names(fac) <- obtype
+  names(fac) <- obtypes
   
   # Initialize lookup table ----------------------------------------------------
   lookup <- rep(NA,times=256)
@@ -107,7 +107,7 @@ ghap.profile <- function(
     for(i in 1:nbatches){
       idx <- which(batch == mybatch[i])
       slice <- activealleles[idx]
-      hap.geno <- ghap.slice(object = haplo, ids = which(object$id.in),
+      hap.geno <- ghap.slice(object = object, ids = which(object$id.in),
                              variants = slice, index = TRUE,
                              lookup = lookup, ncores = ncores)
       if(Sys.info()["sysname"] == "Windows"){
@@ -136,7 +136,7 @@ ghap.profile <- function(
   }
   
   # Scoring for phase ----------------------------------------------------------
-  if(class(phase) %in% c("GHap.phase","GHap.plink")){
+  if(class(object) %in% c("GHap.phase","GHap.plink")){
     
     #Check if inactive samples should be reactived
       if(only.active.samples == FALSE){
@@ -222,7 +222,7 @@ ghap.profile <- function(
     summarkers <- 0
     for(i in 1:nbatches){
       idx <- id1[i]:id2[i]
-      marker.geno <- ghap.slice(object = phase, ids = out$ID, variants = score$MARKER[idx],
+      marker.geno <- ghap.slice(object = object, ids = out$ID, variants = score$MARKER[idx],
                                 impute = TRUE, lookup = lookup, ncores = ncores, unphase = TRUE)
       if(Sys.info()["sysname"] == "Windows"){
         cl <- makeCluster(ncores)
