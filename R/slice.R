@@ -1,6 +1,6 @@
 #Function: ghap.slice
 #License: GPLv3 or later
-#Modification date: 12 May 2021
+#Modification date: 14 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Get a slice of a GHap object
@@ -92,8 +92,8 @@ ghap.slice <- function(
       }else{
         iidx1 <- iidx[1:length(iidx) %% 2 == 1]
         iidx2 <- iidx[1:length(iidx) %% 2 == 0]
-        names(iidx1) <- phase$id[iidx1]
-        names(iidx2) <- phase$id[iidx2]
+        names(iidx1) <- object$id[iidx1]
+        names(iidx2) <- object$id[iidx2]
         iidx1 <- iidx1[ids]
         iidx2 <- iidx2[ids]
         iidx <- rep(NA, times = length(iidx))
