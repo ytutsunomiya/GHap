@@ -1,12 +1,12 @@
 #Function: ghap.anctrain
 #License: GPLv3 or later
-#Modification date: 12 May 2021
+#Modification date: 14 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Create prototype alleles for ancestry predictions
 
 ghap.anctrain <- function(
-  phase,
+  object,
   train = NULL,
   method = "unsupervised",
   K = 2,
@@ -22,7 +22,7 @@ ghap.anctrain <- function(
 ){
   
   # Check if phase is a GHap.phase object-------------------------------------------------------------
-  if(class(phase) != "GHap.phase"){
+  if(class(object) != "GHap.phase"){
     stop("Argument phase must be a GHap.phase object.")
   }
   
@@ -33,25 +33,25 @@ ghap.anctrain <- function(
   
   # Check if inactive markers and samples should be reactived-----------------------------------------
   if(only.active.markers == FALSE){
-    phase$marker.in <- rep(TRUE,times=phase$nmarkers)
-    phase$nmarkers.in <- length(which(phase$marker.in))
+    object$marker.in <- rep(TRUE,times=object$nmarkers)
+    object$nmarkers.in <- length(which(object$marker.in))
   }
   if(only.active.samples == FALSE){
-    phase$id.in <- rep(TRUE,times=2*phase$nsamples)
-    phase$nsamples.in <- length(which(phase$id.in))/2
+    object$id.in <- rep(TRUE,times=2*object$nsamples)
+    object$nsamples.in <- length(which(object$id.in))/2
   }
   
   # Map training samples -----------------------------------------------------------------------------
   if(is.null(train) == TRUE){
-    train.idx <- which(phase$id.in == TRUE)
+    train.idx <- which(object$id.in == TRUE)
   }else{
-    train.idx <- which(phase$id %in% train & phase$id.in == TRUE)
+    train.idx <- which(object$id %in% train & object$id.in == TRUE)
   }
   
   # Map population for supervised analysis -----------------------------------------------------------
   if(method == "supervised"){
-    train.pop <- phase$pop[train.idx]
-    y <- phase$pop[train.idx]
+    train.pop <- object$pop[train.idx]
+    y <- object$pop[train.idx]
     y <- as.factor(y)
   }
   
@@ -85,37 +85,43 @@ ghap.anctrain <- function(
     d <- d*10
   }
   lookup <- sprintf(fmt="%08d", lookup)
+  ncores <- min(c(detectCores(), ncores))
   
   # Seed and tuning for kmeans------------------------------------------------------------------------
   if(method == "unsupervised"){
-    mkr <- sample(x = which(phase$marker.in), size = param$nmarkers, replace = FALSE)
-    Mkm <- ghap.slice(object = phase, ids = train.idx, variants = mkr,
+    mkr <- sample(x = which(object$marker.in), size = param$nmarkers, replace = FALSE)
+    Mkm <- ghap.slice(object = object, ids = train.idx, variants = mkr, transpose = TRUE,
                       index = TRUE, lookup = lookup, ncores = ncores, verbose = FALSE)
     if(tune == TRUE){
       tune.FUN <- function(i){
-        cl <- kmeans(x = t(Mkm), centers = i,
+        clk <- kmeans(x = Mkm, centers = i,
                      iter.max = param$iter.max, nstart = param$nstart)
-        clout <- (cl$betweenss/cl$tot.withinss)*(sum(cl$size) - i)/(i-1)
-        clout <- c(clout,cl$tot.withinss)
+        clout <- (clk$betweenss/clk$tot.withinss)*(sum(clk$size) - i)/(i-1)
+        clout <- c(clout,clk$tot.withinss)
         return(clout)
       }
       if(verbose == TRUE){
         cat("\nQuantifying within-cluster dispersion from K = 1 to K = ", param$K, "... ", sep="")
       }
-      ncores <- min(c(detectCores(), ncores))
-      if(Sys.info()["sysname"] == "Windows"){
-        cl <- makeCluster(ncores)
-        clout <- unlist(parLapply(cl = cl, fun = tune.FUN, X = 1:param$K))
-        stopCluster(cl)
+      if(ncores == 1){
+        clout <- unlist(lapply(X = 1:param$K, FUN = tune.FUN, mc.cores = ncores))
         clout <- as.data.frame(matrix(data = clout, ncol = 2, byrow = T))
-        colnames(clout) <- c("chi","sst")
-        clout$chi[1] <- 0
       }else{
-        clout <- unlist(mclapply(X = 1:param$K, FUN = tune.FUN, mc.cores = ncores))
-        clout <- as.data.frame(matrix(data = clout, ncol = 2, byrow = T))
-        colnames(clout) <- c("chi","sst")
-        clout$chi[1] <- 0
+        if(Sys.info()["sysname"] == "Windows"){
+          cl <- makeCluster(ncores)
+          clusterEvalQ(cl, library(Matrix))
+          varlist <- list("Mkm","param")
+          clusterExport(cl = cl, varlist = varlist, envir=environment())
+          clout <- unlist(parLapply(cl = cl, fun = tune.FUN, X = 1:param$K))
+          stopCluster(cl)
+          clout <- as.data.frame(matrix(data = clout, ncol = 2, byrow = T))
+        }else{
+          clout <- unlist(mclapply(X = 1:param$K, FUN = tune.FUN, mc.cores = ncores))
+          clout <- as.data.frame(matrix(data = clout, ncol = 2, byrow = T))
+        }
       }
+      colnames(clout) <- c("chi","sst")
+      clout$chi[1] <- 0
       if(verbose == TRUE){
         cat("Done.\n")
       }
@@ -141,9 +147,9 @@ ghap.anctrain <- function(
       if(verbose == TRUE){
         cat("\nGrouping haplotypes into K = ", K," pseudo-lineages using K-means clustering... ", sep="")
       }
-      cl <- kmeans(x = t(Mkm), centers = param$K,
+      clk <- kmeans(x = Mkm, centers = param$K,
                    iter.max = param$iter.max, nstart = param$nstart)
-      y <- paste0("K",cl$cluster)
+      y <- paste0("K",clk$cluster)
       if(verbose == TRUE){
         cat("Done.\n")
       }
@@ -152,18 +158,18 @@ ghap.anctrain <- function(
   
   # Generate batch index -----------------------------------------------------------------------------
   if(is.null(batchsize) == TRUE){
-    batchsize <- ceiling(phase$nmarkers.in/10)
+    batchsize <- ceiling(object$nmarkers.in/10)
   }
-  if(batchsize > phase$nmarkers.in){
-    batchsize <- phase$nmarkers.in
+  if(batchsize > object$nmarkers.in){
+    batchsize <- object$nmarkers.in
   }
-  id1 <- seq(1,phase$nmarkers.in,by=batchsize)
+  id1 <- seq(1,object$nmarkers.in,by=batchsize)
   id2 <- (id1+batchsize)-1
-  id1 <- id1[id2<=phase$nmarkers.in]
-  id2 <- id2[id2<=phase$nmarkers.in]
+  id1 <- id1[id2<=object$nmarkers.in]
+  id2 <- id2[id2<=object$nmarkers.in]
   id1 <- c(id1,id2[length(id2)]+1)
-  id2 <- c(id2,phase$nmarkers.in)
-  if(id1[length(id1)] > phase$nmarkers.in){
+  id2 <- c(id2,object$nmarkers.in)
+  if(id1[length(id1)] > object$nmarkers.in){
     id1 <- id1[-length(id1)]; id2 <- id2[-length(id2)]
   }
   
@@ -182,30 +188,36 @@ ghap.anctrain <- function(
     results$chindex <- clout$chi
     results$pchange <- change
   }else{
-    snps.in <- which(phase$marker.in)
+    snps.in <- which(object$marker.in)
     poplabs <- sort(unique(as.character(y)))
     results <- matrix(data = NA, nrow = length(snps.in), ncol = length(poplabs)+1)
     results <- as.data.frame(results)
     colnames(results) <- c("MARKER",poplabs)
-    results$MARKER <- phase$marker[snps.in]
+    results$MARKER <- object$marker[snps.in]
     if(verbose == TRUE){
       cat("\nBuilding prototype alleles... ")
     }
     for(i in 1:length(id1)){
-      X <- ghap.slice(object = phase,
+      X <- ghap.slice(object = object,
                       ids = train.idx,
                       variants = snps.in[id1[i]:id2[i]],
                       index = TRUE,
                       lookup = lookup,
                       ncores = ncores)
       #Compute blocks
-      ncores <- min(c(detectCores(), ncores))
-      if(Sys.info()["sysname"] == "Windows"){
-        cl <- makeCluster(ncores)
-        p <- unlist(parLapply(cl = cl, fun = proto.fun, X = 1:nrow(X)))
-        stopCluster(cl)
+      if(ncores == 1){
+        p <- unlist(lapply(FUN = proto.fun, X = 1:nrow(X)))
       }else{
-        p <- unlist(mclapply(FUN = proto.fun, X = 1:nrow(X), mc.cores = ncores))
+        if(Sys.info()["sysname"] == "Windows"){
+          cl <- makeCluster(ncores)
+          clusterEvalQ(cl, library(Matrix))
+          varlist <- list("X","y")
+          clusterExport(cl = cl, varlist = varlist, envir=environment())
+          p <- unlist(parLapply(cl = cl, fun = proto.fun, X = 1:nrow(X)))
+          stopCluster(cl)
+        }else{
+          p <- unlist(mclapply(FUN = proto.fun, X = 1:nrow(X), mc.cores = ncores))
+        }
       }
       p <- data.frame(matrix(p, ncol=length(poplabs), byrow=TRUE), stringsAsFactors = F)
       results[id1[i]:id2[i],-1] <- p
