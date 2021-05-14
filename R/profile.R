@@ -229,7 +229,7 @@ ghap.profile <- function(
         clusterEvalQ(cl, library(Matrix))
         varlist <- list("marker.geno","score")
         clusterExport(cl = cl, varlist = varlist, envir=environment())
-        a <- unlist(parLapply(cl = cl, fun = marker_score.FUN, X = 1:nrow(marker.geno))
+        a <- unlist(parLapply(cl = cl, fun = marker_score.FUN, X = 1:nrow(marker.geno)))
         stopCluster(cl)
         a <- data.frame(matrix(a, nrow=nrow(marker.geno), byrow=TRUE))
         a <- colSums(a)
