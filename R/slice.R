@@ -114,7 +114,7 @@ ghap.slice <- function(
     # Organize indices for variants
     if(class(object) == "GHap.haplo"){
       vidx <- which(1:object$nalleles %in% variants)
-      if(length(vidx) != length(alleles)){
+      if(length(vidx) != length(variants)){
         stop("Some of the provided marker names were not found")
       }else{
         vidx <- variants
