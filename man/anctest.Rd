@@ -8,14 +8,14 @@
   This function uses prototype alleles to predict ancestry of haplotypes in test samples.
 }
 \usage{
- ghap.anctest(phase, blocks, prototypes, test = NULL,
+ ghap.anctest(object, blocks, prototypes, test = NULL,
               only.active.samples = TRUE, only.active.markers = TRUE,
               ncores = 1, verbose = TRUE)
 }
 
 \arguments{
 
-  \item{phase}{
+  \item{object}{
    A GHap.phase object.
   }
   \item{blocks}{
