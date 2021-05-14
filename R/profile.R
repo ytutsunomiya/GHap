@@ -223,7 +223,7 @@ ghap.profile <- function(
     for(i in 1:nbatches){
       idx <- id1[i]:id2[i]
       marker.geno <- ghap.slice(object = phase, ids = out$ID, variants = score$MARKER[idx],
-                                imputed = TRUE, lookup = lookup, ncores = ncores, unphase = TRUE)
+                                impute = TRUE, lookup = lookup, ncores = ncores, unphase = TRUE)
       if(Sys.info()["sysname"] == "Windows"){
         cl <- makeCluster(ncores)
         clusterEvalQ(cl, library(Matrix))
