@@ -8,7 +8,7 @@
   Map haplotype segments that are likely identical-by-descent.
 }
 \usage{
- ghap.roh(phase, minroh = 1e+6, method = "hmm", freq = NULL,
+ ghap.roh(object, minroh = 1e+6, method = "hmm", freq = NULL,
           inbcoef = NULL, error = 0.25/100, only.active.samples = TRUE,
           only.active.markers = TRUE, ncores = 1, verbose = TRUE)
 }
@@ -17,8 +17,8 @@
 
   The following arguments are used by both the 'hmm' and 'naive' methods:
 
-  \item{phase}{
-   A GHap.phase object.
+  \item{object}{
+   A valid GHap object (phase or plink).
   }
   \item{minroh}{
    Minimum ROH length to output.
