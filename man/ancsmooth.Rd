@@ -8,11 +8,11 @@
   Given ancestry predictions obtained with the \code{\link{ghap.anctest}} or \code{\link{ghap.ancsvm}} functions, overlapping classifications are smoothed to refine the boundaries of recombination breakpoints.
 }
 \usage{
- ghap.ancsmooth(phase, admix, ncores = 1, verbose = TRUE)
+ ghap.ancsmooth(object, admix, ncores = 1, verbose = TRUE)
 }
 
 \arguments{
-  \item{phase}{
+  \item{object}{
    A GHap.phase object.
   }
   \item{admix}{
