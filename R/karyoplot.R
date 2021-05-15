@@ -20,7 +20,8 @@ ghap.karyoplot <- function(
   
   #Check if chromosomes are factors
   if(is.factor(admix$CHR) == FALSE){
-    nchr <- length(unique(admix$CHR))
+    chr <- unique(admix$CHR)
+    nchr <- length(chr)
     chrorder <- chr[order(nchar(chr),chr)]
     admix$CHR <- factor(x = admix$CHR, levels = chrorder, labels = chrorder)
   }
