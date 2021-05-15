@@ -1,6 +1,6 @@
 #Function: ghap.ancplot
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 15 May 2020
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Plot ancestry proportions
@@ -13,7 +13,7 @@ ghap.ancplot <- function(
   colors=NULL,
   pop.order=NULL,
   sortby=NULL,
-  use.unk=TRUE,
+  use.unk=FALSE,
   legend=TRUE
 ){
   
