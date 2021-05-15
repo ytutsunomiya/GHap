@@ -1,6 +1,6 @@
 #Function: ghap.karyoplot
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 15 May 2021
 #Written by: Marco Milanesi, Yuri Tani Utsunomiya
 #Contact: marco.milanesi.mm@gmail.com, ytutsunomiya@gmail.com
 #Description: Individual chromosome painting
@@ -17,6 +17,13 @@ ghap.karyoplot <- function(
   
   #Load admixture results
   admix <- ancsmooth$haplotypes
+  
+  #Check if chromosomes are factors
+  if(is.factor(admix$CHR) == FALSE){
+    nchr <- length(unique(admix$CHR))
+    chrorder <- chr[order(nchar(chr),chr)]
+    admix$CHR <- factor(x = admix$CHR, levels = chrorder, labels = chrorder)
+  }
   
   #Find number of Ks
   pop <- sort(unique(admix$ANCESTRY))
@@ -104,7 +111,7 @@ ghap.karyoplot <- function(
       if (line == nline & line == 1){
         par(mar=c(4, 4, 4, 2) + 0.1)
       }
-
+      
       #Plot
       if (line == 1){
         plot(0,0, ylim = c(0,maxMb), xlim = c(0,xlim), type = "n", 
