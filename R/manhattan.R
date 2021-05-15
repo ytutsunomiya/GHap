@@ -1,6 +1,6 @@
 #Function: ghap.manhattan
 #License: GPLv3 or later
-#Modification date: 15 May 2020
+#Modification date: 15 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Generate a Manhattan plot
@@ -33,8 +33,9 @@ ghap.manhattan <- function(
     stop(emsg)
   }
   if(is.factor(data[,chr]) == FALSE){
-    nchr <- length(unique(data[,chr]))
-    chrorder <- chr[order(nchar(chr),chr)]
+    chrs <- unique(unique(data[,chr]))
+    nchr <- length(chrs)
+    chrorder <- chrs[order(nchar(chrs),chrs)]
     data[,chr] <- factor(x = data[,chr], levels = chrorder, labels = chrorder)
   }
   
