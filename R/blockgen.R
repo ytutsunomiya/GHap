@@ -1,20 +1,20 @@
 #Function: ghap.blockgen
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 15 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Generate blocks based on sliding windows
 
 ghap.blockgen<-function(
-  phase,
+  object,
   windowsize=10,
   slide=5,
   unit="marker",
   nsnp=2
 ){
   
-  #Check if phase is a GHap.phase object
-  if(class(phase) != "GHap.phase"){
+  #Check if object is of class GHap.phase
+  if(class(object) != "GHap.phase"){
     stop("Argument phase must be a GHap.phase object.")
   }
   if(unit %in% c("marker","kbp","ibd") == FALSE){
@@ -22,22 +22,22 @@ ghap.blockgen<-function(
   }
   
   #Initialize vectors
-  BLOCK <- rep(NA,times=phase$nmarkers.in)
-  CHR <- rep(NA,times=phase$nmarkers.in)
-  BP1 <- rep(NA,times=phase$nmarkers.in)
-  BP2 <- rep(NA,times=phase$nmarkers.in)
-  SIZE <- rep(NA,times=phase$nmarkers.in)
-  NSNP <- rep(NA,times=phase$nmarkers.in)
+  BLOCK <- rep(NA,times=object$nmarkers.in)
+  CHR <- rep(NA,times=object$nmarkers.in)
+  BP1 <- rep(NA,times=object$nmarkers.in)
+  BP2 <- rep(NA,times=object$nmarkers.in)
+  SIZE <- rep(NA,times=object$nmarkers.in)
+  NSNP <- rep(NA,times=object$nmarkers.in)
   
   if(unit == "kbp"){
     
     windowsize <- windowsize*1e+3
     slide <- slide*1e+3
     offset <- 0
-    for(k in unique(phase$chr)){
-      cmkr <- which(phase$marker.in & phase$chr == k)
+    for(k in unique(object$chr)){
+      cmkr <- which(object$marker.in & object$chr == k)
       nmkr <- length(cmkr)
-      bp <- phase$bp[cmkr]
+      bp <- object$bp[cmkr]
       minbp <- bp[1]
       maxbp <- bp[nmkr]
       id1<-seq(1,maxbp,by=slide)
@@ -46,7 +46,7 @@ ghap.blockgen<-function(
       id2<-id2[id2 <= maxbp]
       for(i in 1:length(id1)){
         slice <- cmkr[which(bp >= id1[i] & bp <= id2[i])]
-        CHR[i+offset] <- phase$chr[slice[1]]
+        CHR[i+offset] <- object$chr[slice[1]]
         BP1[i+offset] <- id1[i]
         BP2[i+offset] <- id2[i]
         NSNP[i+offset] <- length(slice)
@@ -58,8 +58,8 @@ ghap.blockgen<-function(
   }else if(unit == "marker"){
     
     offset <- 0
-    for(k in unique(phase$chr)){
-      cmkr <- which(phase$marker.in & phase$chr == k)
+    for(k in unique(object$chr)){
+      cmkr <- which(object$marker.in & object$chr == k)
       nmkr <- length(cmkr)
       id1<-seq(1,nmkr,by=slide)
       id2<-id1+(windowsize-1)
@@ -67,15 +67,15 @@ ghap.blockgen<-function(
       id2<-id2[id2 <= nmkr]
       for(i in 1:length(id1)){
         slice <- cmkr[id1[i]:id2[i]]
-        CHR[i+offset] <- phase$chr[slice[1]]
-        BP1[i+offset] <- phase$bp[slice[1]]
-        BP2[i+offset] <- phase$bp[slice[length(slice)]]
+        CHR[i+offset] <- object$chr[slice[1]]
+        BP1[i+offset] <- object$bp[slice[1]]
+        BP2[i+offset] <- object$bp[slice[length(slice)]]
         NSNP[i+offset] <- length(slice)
         BLOCK[i+offset] <- paste("CHR",CHR[i+offset],"_B",i,sep="")
       }
       offset <- offset + length(id1)
     }
-
+    
     
   }
   
