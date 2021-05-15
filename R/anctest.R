@@ -1,13 +1,13 @@
 #Function: ghap.anctest
 #License: GPLv3 or later
-#Modification date: 14 May 2021
+#Modification date: 15 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Predict ancestry of haplotypes
 
 ghap.anctest <- function(
   object,
-  blocks,
+  blocks = NULL,
   prototypes,
   test = NULL,
   only.active.samples = TRUE,
@@ -16,12 +16,12 @@ ghap.anctest <- function(
   verbose = TRUE
 ){
   
-  # Check if phase is a GHap.phase object-------------------------------------------------------------
+  # Check if object is of class GHap.phase -------------------------------------
   if(class(object) != "GHap.phase"){
     stop("Argument phase must be a GHap.phase object.")
   }
   
-  # Check if inactive markers and samples should be reactived-----------------------------------------
+  # Check if inactive markers and samples should be reactived ------------------
   if(only.active.markers == FALSE){
     object$marker.in <- rep(TRUE,times=object$nmarkers)
     object$nmarkers.in <- length(which(object$marker.in))
@@ -31,23 +31,25 @@ ghap.anctest <- function(
     object$nsamples.in <- length(which(object$id.in))/2
   }
   
-  # Organize prototype dataframe ---------------------------------------------------------------------
+  # Organize prototype dataframe -----------------------------------------------
   nprotmrk <- length(which(prototypes$MARKER %in% object$marker))
   if(nprotmrk != nrow(prototypes)){
-    stop("Markers listed in the prototypes dataframe should be present in the GHap.phase object.")
+    emsg <- "\nMarkers in the prototypes should also be present in the object."
+    stop(emsg)
   }
   if(identical(prototypes$MARKER, object$marker) == FALSE){
     protmrk <- prototypes$MARKER
-    tmp <- data.frame(IDX = 1:object$nmarkers, MARKER = object$marker, stringsAsFactors = FALSE)
+    tmp <- data.frame(IDX = 1:object$nmarkers, MARKER = object$marker,
+                      stringsAsFactors = FALSE)
     prototypes <- merge(x = tmp, y = prototypes, by = "MARKER", all.x=TRUE)
     prototypes <- prototypes[order(prototypes$IDX),-2]
     object$marker.in <- object$marker %in% protmrk & object$marker.in == TRUE
   }
   
-  # Map test samples----------------------------------------------------------------------------------
+  # Map test samples -----------------------------------------------------------
   test.idx <- which(object$id %in% test & object$id.in == TRUE)
   
-  # Initialize lookup table----------------------------------------------------------------------------
+  # Initialize lookup table ----------------------------------------------------
   lookup <- rep(NA,times=256)
   lookup[1:2] <- c(0,1)
   d <- 10
@@ -61,7 +63,24 @@ ghap.anctest <- function(
   lookup <- sprintf(fmt="%08d", lookup)
   ncores <- min(c(detectCores(), ncores))
   
-  # Initialize block iteration function---------------------------------------------------------------
+  # Check if blocks exist ------------------------------------------------------
+  if(is.null(blocks) == TRUE){
+    
+    # Calculate marker density
+    mrkdist <- diff(object$bp)
+    mrkdist <- mrkdist[which(mrkdist > 0)]
+    density <- mean(mrkdist)
+    
+    # Generate blocks for admixture events
+    g <- 10
+    window <- (100e+6)/(2*g)
+    window <- ceiling(window/density)
+    step <- ceiling(window/4)
+    blocks <- ghap.blockgen(object, windowsize = window,
+                            slide = step, unit = "marker")
+  }
+  
+  # Initialize block iteration function ----------------------------------------
   blockfun <- function(b){
     
     #Get block info
@@ -108,7 +127,9 @@ ghap.anctest <- function(
     return(out)
   }
   
-  # Compute ancestry----------------------------------------------------------------------------------
+  
+  
+  # Compute ancestry -----------------------------------------------------------
   if(verbose == TRUE){
     cat("\nPredicting ancestry of haplotypes... ")
   }
@@ -130,7 +151,8 @@ ghap.anctest <- function(
     cat("Done.\n")
     cat("Assembling results... ")
   }
-  results <- data.frame(matrix(unlist(results), ncol=8, byrow=TRUE), stringsAsFactors = F)
+  results <- data.frame(matrix(unlist(results), ncol=8, byrow=TRUE),
+                        stringsAsFactors = F)
   colnames(results) <- c("BLOCK","CHR","BP1","BP2","POP","ID","HAP1","HAP2")
   results$BP1 <- as.numeric(results$BP1)
   results$BP2 <- as.numeric(results$BP2)
@@ -138,7 +160,7 @@ ghap.anctest <- function(
     cat("Done.\n")
   }
   
-  # Return results------------------------------------------------------------------------------------
+  # Return results -------------------------------------------------------------
   return(results)
   
   
