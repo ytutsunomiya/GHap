@@ -10,7 +10,7 @@
 \usage{
  ghap.ancplot(ancsmooth, labels = TRUE, pop.ang = 45, group.ang = 0,
               colors = NULL, pop.order = NULL, sortby = NULL,
-              use.unk = TRUE, legend = TRUE)
+              use.unk = FALSE, legend = TRUE)
 }
 
 \arguments{
