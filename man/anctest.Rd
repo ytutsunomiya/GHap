@@ -8,7 +8,7 @@
   This function uses prototype alleles to predict ancestry of haplotypes in test samples.
 }
 \usage{
- ghap.anctest(object, blocks, prototypes, test = NULL,
+ ghap.anctest(object, blocks = NULL, prototypes, test = NULL,
               only.active.samples = TRUE, only.active.markers = TRUE,
               ncores = 1, verbose = TRUE)
 }
@@ -72,7 +72,7 @@ The function returns a dataframe with the following columns:
 }
 
 \details{
-For each interrogated block, tested haplotypes are assigned to their nearest centroids (i.e., the pseudo-lineages with the smallest Euclidean distances).
+For each interrogated block, tested haplotypes are assigned to their nearest centroids (i.e., the pseudo-lineages with the smallest Euclidean distances). If no blocks are supplied, the function automatically builds blocks compatible with admixture up to 10 generations in the past based on intermarker distances. This has been chosen according to simulation results, where the use of haplotype blocks compatible with recent admixture (~10 generations) retained reasonable accuracy across most scenarios, regardless of the age of admixture.
 }
 
 \author{
