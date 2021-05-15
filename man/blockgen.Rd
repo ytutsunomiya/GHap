@@ -8,11 +8,11 @@
  This function generates HapBlocks based on sliding windows. The window and the step size can be specified in markers or kbp. For each window, block coordinates are generated.
 }
 \usage{
- ghap.blockgen(phase, windowsize = 10, slide = 5, unit = "marker", nsnp = 2)
+ ghap.blockgen(object, windowsize = 10, slide = 5, unit = "marker", nsnp = 2)
 }
 
 \arguments{
-  \item{phase}{
+  \item{object}{
    A GHap.phase object.
   }
   \item{windowsize}{
