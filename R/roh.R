@@ -1,17 +1,17 @@
 #Function: ghap.roh
 #License: GPLv3 or later
-#Modification date: 12 May 2021
+#Modification date: 21 July 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Map streches of homozygous genotypes
 
 ghap.roh <- function(
   object,
-  minroh=1e+6,
-  method="hmm",
-  freq=NULL,
-  inbcoef=NULL,
-  error=0.25/100,
+  minroh = 1e+6,
+  method = "hmm",
+  freq = NULL,
+  inbcoef = NULL,
+  error = 0.25/100,
   only.active.samples = TRUE,
   only.active.markers = TRUE,
   ncores = 1,
@@ -223,7 +223,18 @@ ghap.roh <- function(
   results$BP1 <- as.integer(results$BP1)
   results$BP2 <- as.integer(results$BP2)
   results$LENGTH <- as.integer(results$LENGTH)
+  
+  # Include individuals without ROHs
+  ids.t = as.data.frame(unique(cbind(object$pop, object$id)[object$id.in,]))
+  if (nrow(ids.t) != nrow(unique(results[,c("POP", "ID")]))){
+   idx = which(paste0(ids.t$V1, ids.t$V2) %in% paste0(results$POP, results$ID))
+   ids.t = ids.t[-idx,]
+   ids.t = cbind(ids.t, "0", as.integer(0), as.integer(0), as.integer(0))
+   colnames(ids.t) <- c("POP", "ID", "CHR", "BP1", "BP2", "LENGTH")
+   results = rbind(results, ids.t)
+  }
   results <- results[order(results$POP, results$ID, results$CHR, results$BP1),]
+  
   if(verbose == TRUE){
     cat("Done.\n\n")
   }
