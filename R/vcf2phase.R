@@ -91,7 +91,13 @@ ghap.vcf2phase <- function(
     cat("Note: only bi-allelic variants will be processed.\n")
   }
   for(i in 1:length(vcf.files)){
-    myfile <- fread(file = vcf.files[i], header = TRUE, nThread = ncores)
+    head <- scan(file = vcf.files[i], what = "character", sep = "\n", n = 5000, quiet = TRUE)
+    head <- grep(pattern = "^#CHROM", x = head)
+    if(length(head) != 1){
+      emsg <- paste("Could not find unique header in file ",vcf.files[i],"!", sep="")
+      stop(emsg)
+    }
+    myfile <- fread(file = vcf.files[i], header = TRUE, skip = head-1, nThread = ncores)
     if(ncol(myfile) != expcols){
       emsg <- paste("Expected 9 + ",nids," = ",expcols,
                     " columns in file ",vcf.files[i]," but found ", ncol(myfile), "!", sep="")
