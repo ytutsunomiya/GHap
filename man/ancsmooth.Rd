@@ -89,7 +89,7 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # ghap.compress(input.file = "human", out.file = "human")
 # 
 # # Load phase data
-# phase <- ghap.loadphase(input.file = "human")
+# phase <- ghap.loadphase(input.file = "human_hapmap3_chr2")
 # 
 # ### RUN ###
 # 
@@ -109,9 +109,9 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # 
 # # Unsupervised analysis with best K
 # prototypes <- ghap.anctrain(phase = phase, K = 3, ncores = 1)
-# hapadmix <- ghap.anctest(phase = phase, blocks = blocks, prototypes = prototypes,
+# hapadmix <- ghap.anctest(phase, blocks = blocks, prototypes = prototypes,
 #                          test = unique(phase$id), ncores = 1)
-# anctracks <- ghap.ancsmooth(phase = phase, admix = hapadmix, ncores = 1)
+# anctracks <- ghap.ancsmooth(phase, admix = hapadmix, ncores = 1)
 # 
 # # Supervised analysis with user-defined labels
 # pops <- phase$pop
@@ -122,12 +122,12 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # labels[which(labels \%in\% c("MKK","GIH","ASW","MEX"))] <- "Test"
 # phase$pop <- labels
 # train <- unique(phase$id[which(phase$pop != "Test")])
-# prototypes <- ghap.anctrain(phase = phase, train = train,
+# prototypes <- ghap.anctrain(phase, train = train,
 #                             method = "supervised", ncores = 1)
-# hapadmix <- ghap.anctest(phase = phase, blocks = blocks, prototypes = prototypes,
+# hapadmix <- ghap.anctest(phase, blocks = blocks, prototypes = prototypes,
 #                          test = unique(phase$id), ncores = 1)
 # phase$pop <- pops
-# anctracks <- ghap.ancsmooth(phase = phase, admix = hapadmix, ncores = 1)
+# anctracks <- ghap.ancsmooth(phase, admix = hapadmix, ncores = 1)
 }
 
 \seealso{
