@@ -62,10 +62,10 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # file.copy(from = exfiles, to = "./")
 # 
 # # Compress phase data
-# ghap.compress(input.file = "human", out.file = "human")
+# #ghap.compress(input.file = "human", out.file = "human")
 # 
 # # Load phase data
-# phase <- ghap.loadphase(input.file = "human")
+# phase <- ghap.loadphase(input.file = "human_hapmap3_chr2")
 # 
 # # Calculate marker density
 # mrkdist <- diff(phase$bp)
@@ -82,10 +82,10 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # blocks <- ghap.blockgen(phase, windowsize = window, slide = step, unit = "marker")
 # 
 # # Unsupervised analysis with best K
-# prototypes <- ghap.anctrain(phase = phase, K = 3, ncores = 1)
-# hapadmix <- ghap.anctest(phase = phase, blocks = blocks, prototypes = prototypes,
+# prototypes <- ghap.anctrain(object = phase, K = 3, ncores = 1)
+# hapadmix <- ghap.anctest(object = phase, blocks = blocks, prototypes = prototypes,
 #                          test = unique(phase$id), ncores = 1)
-# anctracks <- ghap.ancsmooth(phase = phase, admix = hapadmix, ncores = 1)
+# anctracks <- ghap.ancsmooth(object = phase, admix = hapadmix, ncores = 1)
 # 
 # ### RUN ###
 #
