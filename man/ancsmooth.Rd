@@ -108,10 +108,10 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # blocks <- ghap.blockgen(phase, windowsize = window, slide = step, unit = "marker")
 # 
 # # Unsupervised analysis with best K
-# prototypes <- ghap.anctrain(phase = phase, K = 3, ncores = 1)
-# hapadmix <- ghap.anctest(phase, blocks = blocks, prototypes = prototypes,
+# prototypes <- ghap.anctrain(object = phase, K = 3, ncores = 1)
+# hapadmix <- ghap.anctest(object = phase, blocks = blocks, prototypes = prototypes,
 #                          test = unique(phase$id), ncores = 1)
-# anctracks <- ghap.ancsmooth(phase, admix = hapadmix, ncores = 1)
+# anctracks <- ghap.ancsmooth(object = phase, admix = hapadmix, ncores = 1)
 # 
 # # Supervised analysis with user-defined labels
 # pops <- phase$pop
@@ -122,12 +122,12 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # labels[which(labels \%in\% c("MKK","GIH","ASW","MEX"))] <- "Test"
 # phase$pop <- labels
 # train <- unique(phase$id[which(phase$pop != "Test")])
-# prototypes <- ghap.anctrain(phase, train = train,
+# prototypes <- ghap.anctrain(object = phase, train = train,
 #                             method = "supervised", ncores = 1)
-# hapadmix <- ghap.anctest(phase, blocks = blocks, prototypes = prototypes,
+# hapadmix <- ghap.anctest(object = phase, blocks = blocks, prototypes = prototypes,
 #                          test = unique(phase$id), ncores = 1)
 # phase$pop <- pops
-# anctracks <- ghap.ancsmooth(phase, admix = hapadmix, ncores = 1)
+# anctracks <- ghap.ancsmooth(object = phase, admix = hapadmix, ncores = 1)
 }
 
 \seealso{
