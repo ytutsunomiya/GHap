@@ -112,10 +112,10 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # file.copy(from = exfiles, to = "./")
 # 
 # # Compress phase data
-# ghap.compress(input.file = "human", out.file = "human")
+# #ghap.compress(input.file = "human", out.file = "human")
 # 
 # # Load phase data
-# phase <- ghap.loadphase(input.file = "human")
+# phase <- ghap.loadphase(input.file = "human_hapmap3_chr2")
 # 
 # ### RUN ###
 # 
