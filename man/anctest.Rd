@@ -88,10 +88,10 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # file.copy(from = exfiles, to = "./")
 # 
 # # Compress phase data
-# ghap.compress(input.file = "human", out.file = "human")
+# #ghap.compress(input.file = "human", out.file = "human")
 # 
 # # Load phase data
-# phase <- ghap.loadphase(input.file = "human")
+# phase <- ghap.loadphase(input.file = "human_hapmap3_chr2")
 # 
 # ### RUN ###
 # 
@@ -110,8 +110,8 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # blocks <- ghap.blockgen(phase, windowsize = window, slide = step, unit = "marker")
 # 
 # # Unsupervised analysis
-# prototypes <- ghap.anctrain(phase = phase, K = 3, ncores = 1)
-# hapadmix <- ghap.anctest(phase = phase, blocks = blocks, prototypes = prototypes,
+# prototypes <- ghap.anctrain(object = phase, K = 3, ncores = 1)
+# hapadmix <- ghap.anctest(object = phase, blocks = blocks, prototypes = prototypes,
 #                          test = unique(phase$id), ncores = 1)
 # 
 # # Supervised analysis with user-defined labels
@@ -123,9 +123,9 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # labels[which(labels \%in\% c("MKK","GIH","ASW","MEX"))] <- "Test"
 # phase$pop <- labels
 # train <- unique(phase$id[which(phase$pop != "Test")])
-# prototypes <- ghap.anctrain(phase = phase, train = train,
+# prototypes <- ghap.anctrain(object = phase, train = train,
 #                             method = "supervised", ncores = 1)
-# hapadmix <- ghap.anctest(phase = phase, blocks = blocks, prototypes = prototypes,
+# hapadmix <- ghap.anctest(object = phase, blocks = blocks, prototypes = prototypes,
 #                          test = unique(phase$id), ncores = 1)
 # phase$pop <- pops
 }
