@@ -1,6 +1,6 @@
 #Function: ghap.simmating
 #License: GPLv3 or later
-#Modification date: 14 May 2021
+#Modification date: 10 Sep 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Simulate individuals from specified matings
@@ -161,8 +161,14 @@ ghap.simmating <- function(
   }else if(model == "uniform"){
     chrmean <- nmkrchr
     chrmean[1:length(chrmean)] <- 1
+  }else if(identical(names(model) == uniqchr)){
+    chrmean <- model
   }else{
-    stop("Argument model has to take value 'uniform' or 'proportional'")
+    emsg <- paste0("\nArgument model has to be one of the following:\n",
+                   "a) 'uniform'\n",
+                   "b) 'proportional'\n",
+                   "c) named vector with chromosome-specific recombination rates\n")
+    stop(emsg)
   }
   for(chr in uniqchr){
     if(verbose == TRUE){
