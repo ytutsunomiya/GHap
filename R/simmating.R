@@ -161,8 +161,8 @@ ghap.simmating <- function(
   }else if(model == "uniform"){
     chrmean <- nmkrchr
     chrmean[1:length(chrmean)] <- 1
-  }else if(identical(names(model) == uniqchr)){
-    chrmean <- model
+  }else if(identical(names(model), names(chrsize)) & is.numeric(model) == TRUE){
+    chrmean <- model*(chrsize/1e+6)/100
   }else{
     emsg <- paste0("\nArgument model has to be one of the following:\n",
                    "a) 'uniform'\n",
