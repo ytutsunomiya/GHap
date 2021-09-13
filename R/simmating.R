@@ -155,10 +155,10 @@ ghap.simmating <- function(
                        stringsAsFactors = FALSE)
   write.table(x = indtbl, file = tmp.pedigree.file, col.names = FALSE, row.names = FALSE, sep = " ", quote = FALSE)
   write.table(x = cbind("SIM",idgen), file = tmp.samples.file, col.names = FALSE, row.names = FALSE, sep = " ", quote = FALSE)
-  if(model == "proportional"){
+  if("proportional" %in% model & length(model) == 1){
     chrprop <- chrsize/sum(chrsize)
     chrmean <- chrprop*length(chrsize)
-  }else if(model == "uniform"){
+  }else if("uniform" %in% model & length(model) == 1){
     chrmean <- nmkrchr
     chrmean[1:length(chrmean)] <- 1
   }else if(identical(names(model), names(chrsize)) & is.numeric(model) == TRUE){
