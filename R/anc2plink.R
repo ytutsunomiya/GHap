@@ -1,6 +1,6 @@
 #Function: ghap.anc2plink
 #License: GPLv3 or later
-#Modification date: 26 Apr 2020
+#Modification date: 13 Sep 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Output ancestry genotype matrix
@@ -71,7 +71,7 @@ ghap.anc2plink <- function(
   ancs <- unique(anchaplotypes$ANCESTRY)
   ancs <- ancs[which(is.na(ancs) == FALSE)]
   if(ancestry %in% ancs == FALSE | length(ancestry) != 1){
-    emsg <- "\n\nSelected ancestry should be one among:"
+    emsg <- "\n\nSelected ancestry should be one in:"
     emsg <- paste(emsg, paste(sort(ancs), collapse = ", "), sep="\n")
     stop(emsg)
   }
@@ -145,6 +145,9 @@ ghap.anc2plink <- function(
     miss <- which(X[,ncol(X)] != 0)
     x <- X[,ancestry]
     x[miss] <- NA
+    
+    # Order x vector
+    x <- x[id]
     
     # Calculate frequency
     x2 <- x[which(is.na(x) == FALSE)]
