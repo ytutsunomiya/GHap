@@ -8,8 +8,9 @@
   This function takes a GHap.phase object and computes the allele frequency for each marker.
 }
 \usage{
-  ghap.freq(object, type = "maf", only.active.samples = TRUE, only.active.markers = TRUE,
-           batchsize = NULL, ncores = 1, verbose = TRUE)
+  ghap.freq(object, type = "maf", only.active.samples = TRUE,
+            only.active.markers = TRUE, batchsize = NULL,
+            ncores = 1, verbose = TRUE)
 }
 
 \arguments{
@@ -49,20 +50,24 @@
   
 # #### DO NOT RUN IF NOT NECESSARY ###
 # 
-# # Copy the example data in the current working directory
+# # Copy phase data to the current working directory
 # exfiles <- ghap.makefile()
 # file.copy(from = exfiles, to = "./")
-# 
-# # Compress phase data
-# ghap.compress(input.file = "human", out.file = "human")
-# 
-# # Load phase data
-# phase <- ghap.loadphase(input.file = "human")
 #
+# # Copy plink data to the current working directory
+# exfiles <- ghap.makefile(format = "plink")
+# file.copy(from = exfiles, to = "./")
+# 
 #
 # ### RUN ###
 # 
-# # Calculate minor allele frequency
+# # Calculate minor allele frequency for phase data
+# phase <- ghap.loadphase(input.file = "human_hapmap3_chr2")
 # maf <- ghap.freq(phase, type = 'maf', ncores = 1)
+#
+# # Calculate minor allele frequency for plink data
+# phase <- ghap.loadplink(input.file = "human_hapmap3_chr2")
+# maf <- ghap.freq(plink, type = 'maf', ncores = 1)
+
 
 }
