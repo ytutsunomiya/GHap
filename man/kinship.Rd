@@ -2,31 +2,36 @@
 \alias{ghap.kinship}
 
 \title{
-Kinship matrix from haplotypes
+Relationship matrix based on genomic data
 }
 \description{
-This function computes a HapAllele-based kinship matrix from a GHap.haplo object.
+This function computes marker-based and HapAllele-based relationship matrices.
 }
 \usage{
-ghap.kinship(haplo, weights = NULL, batchsize = NULL, only.active.samples = TRUE,
-             only.active.alleles = TRUE, ncores = 1, verbose = TRUE)
+ghap.kinship(object, weights = NULL, sparsity = NULL,
+             batchsize = NULL, only.active.samples = TRUE,
+             only.active.variants = TRUE, ncores = 1,
+             verbose = TRUE)
 }
 
 \arguments{
-  \item{haplo}{
-    A GHap.haplo object.
+  \item{object}{
+    A valid GHap object (phase, haplo or plink).
   }
   \item{weights}{
-    A numeric vector providing HapAllele-specific weights.
+    A numeric vector providing variant-specific weights.
+  }
+  \item{sparsity}{
+    A numeric value specifying a relationship cut-off (default = NULL). All relationships below the specified cut-off will be set to zero, inducing sparsity into the relationship matrix.
   }
   \item{batchsize}{
-   A numeric value controlling the number of HapAlleles to be processed at a time (default = nalleles/10).
+   A numeric value controlling the number of variants to be processed at a time (default = nalleles/10).
   }
   \item{only.active.samples}{
     A logical value specifying whether only active samples should be included in the output (default = TRUE).
   }
   \item{only.active.alleles}{
-    A logical value specifying whether only active haplotype alleles should be included in the output (default = TRUE).
+    A logical value specifying whether only active variants should be included in the output (default = TRUE).
   }
   \item{ncores}{
    A numeric value specifying the number of cores to be used in parallel computations (default = 1).
@@ -37,16 +42,15 @@ ghap.kinship(haplo, weights = NULL, batchsize = NULL, only.active.samples = TRUE
 }
 
 \value{
-The function returns a \emph{n} x \emph{n} matrix of HapAllele-based kinships, where \emph{n} is the number of individuals.
+The function returns a \emph{n} x \emph{n} relationship matrix, where \emph{n} is the number of individuals.
 }
 
 \details{
 
-Let \eqn{\mathbf{M}} be the centered \emph{N} x \emph{H} matrix of HapGenotypes, where \emph{N} is the number of individuals and \emph{H} is the number of HapAlleles. The HapAllele covariance among individuals is computed as:
+Let \eqn{\mathbf{M}} be the centered \emph{n} x \emph{m} matrix of genotypes, where \emph{n} is the number of individuals and \emph{m} is the number of variants (i.e, markers or HapAlleles). The relationship matrix is computed as:
 
 \deqn{\mathbf{K} = q\mathbf{MDM}'}
-
-where \eqn{\mathbf{D} = diag(d_i)}, \eqn{d_i} is the weight of HapAllele \emph{i} (default \eqn{d_i = 1}), and \eqn{q} is a scaling factor defined as \eqn{tr(\mathbf{MDM}')^{-1}M}. This is a generalization of the SNP-based genomic relationship matrix (VanRaden, 2008).
+where \eqn{\mathbf{D} = diag(d_i)}, \eqn{d_i} is the weight of variant \emph{i} (default \eqn{d_i = 1}), and \eqn{q} is a scaling factor defined as \eqn{tr(\mathbf{MDM}')^{-1}m}. This is a generalization of the SNP-based genomic relationship matrix (VanRaden, 2008).
 
 }
 
@@ -64,15 +68,19 @@ P. M. VanRaden. Efficient methods to compute genomic predictions. J. Dairy. Sci.
 
 # #### DO NOT RUN IF NOT NECESSARY ###
 # 
-# # Copy the example data in the current working directory
+# # Copy phase data to the current working directory
 # exfiles <- ghap.makefile()
 # file.copy(from = exfiles, to = "./")
 # 
-# # Compress phase data
-# ghap.compress(input.file = "human", out.file = "human")
+# # Copy plink data to the current working directory
+# exfiles <- ghap.makefile(format = "plink")
+# file.copy(from = exfiles, to = "./")
 # 
 # # Load phase data
-# phase <- ghap.loadphase(input.file = "human")
+# phase <- ghap.loadphase(input.file = "human_hapmap3_chr2")
+# 
+# # Load plink data
+# plink <- ghap.loadplink(input.file = "human_hapmap3_chr2")
 # 
 # # Generate blocks of 5 markers sliding 5 markers at a time
 # blocks <- ghap.blockgen(phase, windowsize = 5, slide = 5, unit = "marker")
@@ -80,18 +88,25 @@ P. M. VanRaden. Efficient methods to compute genomic predictions. J. Dairy. Sci.
 # # Haplotyping
 # ghap.haplotyping(phase = phase, blocks = blocks, outfile = "human",
 #                  binary = T, ncores = 1)
-#
+# 
 # # Load haplotype genotypes
 # haplo <- ghap.loadhaplo(input.file = "human")
-#
-#
-# ### RUN ###
 # 
 # # Exclude minor alleles and singletons
 # hapstats <- ghap.hapstats(haplo, ncores = 1)
-# haplo <- ghap.subsethaplo(haplo,ids=haplo$id, alleles = hapstats$TYPE \%in\% c("REGULAR","MAJOR"))
-#
-# # Compute Kinship matrix
-# K <- ghap.kinship(haplo, ncores = 1)
+# haplo <- ghap.subsethaplo(haplo,ids=haplo$id,
+#                           alleles = hapstats$TYPE \%in\% c("REGULAR","MAJOR"))
+# 
+# 
+# ### RUN ###
+# 
+# # Relationship matrix with phase object
+# K1 <- ghap.kinship(phase, ncores = 1)
+# 
+# # Relationship matrix with plink object
+# K2 <- ghap.kinship(plink, ncores = 1)
+# 
+# # Relationship matrix with haplo object
+# K3 <- ghap.kinship(haplo, ncores = 1)
 
 }
