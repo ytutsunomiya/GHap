@@ -8,8 +8,9 @@
   This function loads binary PLINK files (bed/bim/fam) and converts them into a native GHap.plink object.
 }
 \usage{
-  ghap.loadplink(input.file = NULL, bed.file = NULL, bim.file = NULL,
-                 fam.file = NULL, ncores = 1, verbose = TRUE)
+  ghap.loadplink(input.file = NULL, bed.file = NULL,
+                 bim.file = NULL, fam.file = NULL,
+                 ncores = 1, verbose = TRUE)
 }
 
 \arguments{
@@ -103,4 +104,24 @@
 
 \author{
   Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
+}
+
+\examples{
+
+# #### DO NOT RUN IF NOT NECESSARY ###
+# 
+# # Copy an example dataset to the current working directory
+# exfiles <- ghap.makefile(format = "plink")
+# file.copy(from = exfiles, to = "./")
+# 
+# ### RUN ###
+# 
+# # Load data using prefix
+# plink <- ghap.loadplink(input.file = "human_hapmap3_chr2")
+# 
+# # Load data using file names
+# plink <- ghap.loadplink(bed.file = "human_hapmap3_chr2.bed",
+#                         bim.file = "human_hapmap3_chr2.bim",
+#                         fam.file = "human_hapmap3_chr2.fam")
+
 }
