@@ -1,6 +1,6 @@
 #Function: ghap.freq
 #License: GPLv3 or later
-#Modification date: 12 May 2021
+#Modification date: 23 Sep 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute marker allele frequencies
@@ -71,13 +71,6 @@ ghap.freq <- function(
     id1 <- id1[-length(id1)]; id2 <- id2[-length(id2)]
   }
   
-  # Frequency function ---------------------------------------------------------
-  freq.fun <- function(i){
-    x <- X[i,]
-    p <- sum(x)/(2*length(x))
-    return(p)
-  }
-  
   # Frequency calculation ------------------------------------------------------
   ids.in <- which(object$id.in)
   snps.in <- which(object$marker.in)
@@ -89,10 +82,16 @@ ghap.freq <- function(
                     variants = snps.in[id1[i]:id2[i]],
                     index = TRUE,
                     unphase = TRUE,
-                    impute = TRUE,
+                    impute = FALSE,
                     lookup = lookup,
                     ncores = ncores)
-    freq[id1[i]:id2[i]] <- rowSums(X)/(2*ncol(X))
+    if(class(object) == "GHap.plink"){
+      n <- apply(X = X, MARGIN = 1,
+                 FUN = function(x){length(which(is.na(x) == FALSE))})
+      freq[id1[i]:id2[i]] <- rowSums(X, na.rm = TRUE)/(2*n)
+    }else{
+      freq[id1[i]:id2[i]] <- rowSums(X)/(2*nrow(X))
+    }
   }
   
   # Results --------------------------------------------------------------------
