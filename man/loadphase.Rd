@@ -8,8 +8,9 @@
   This function loads binary phased genotype data and converts them into a native GHap.phase object.
 }
 \usage{
-  ghap.loadphase(input.file = NULL, samples.file = NULL, markers.file = NULL,
-                 phaseb.file = NULL, ncores = 1, verbose = TRUE)
+  ghap.loadphase(input.file = NULL, samples.file = NULL,
+                 markers.file = NULL, phaseb.file = NULL,
+                 ncores = 1, verbose = TRUE)
 }
 
 \arguments{
@@ -108,21 +109,18 @@
 
 # #### DO NOT RUN IF NOT NECESSARY ###
 # 
-# # Copy the example data in the current working directory
+# # Copy an example dataset to the current working directory
 # exfiles <- ghap.makefile()
 # file.copy(from = exfiles, to = "./")
-# 
-# # Compress phase data
-# ghap.compress(input.file = "human", out.file = "human")
 # 
 # ### RUN ###
 # 
 # # Load data using prefix
-# phase <- ghap.loadphase(input.file = "human")
+# phase <- ghap.loadphase(input.file = "human_hapmap3_chr2")
 #
 # # Load data using file names
-# phase <- ghap.loadphase(samples.file = "human.samples",
-#                         markers.file = "human.markers",
-#                         phaseb.file = "human.phaseb")
+# phase <- ghap.loadphase(samples.file = "human_hapmap3_chr2.samples",
+#                         markers.file = "human_hapmap3_chr2.markers",
+#                         phaseb.file = "human_hapmap3_chr2.phaseb")
 
 }
