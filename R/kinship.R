@@ -1,6 +1,6 @@
 #Function: ghap.kinship
 #License: GPLv3 or later
-#Modification date: 23 Sep 2021
+#Modification date: 24 Sep 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute relationship matrix
@@ -9,6 +9,7 @@ ghap.kinship <- function(
   object,
   weights=NULL,
   sparsity=NULL,
+  type=1,
   batchsize=NULL,
   only.active.samples=TRUE,
   only.active.variants=TRUE,
@@ -51,10 +52,7 @@ ghap.kinship <- function(
   }
   
   #Check weights
-  if (is.null(weights) == TRUE) {
-    weights <- rep(1,times=var.n)
-  }
-  if (length(weights) != var.n) {
+  if (is.null(weights) == FALSE & length(weights) != var.n) {
     stop("Vector of weights must have the same length as the number of variants.")
   }
   
@@ -97,6 +95,83 @@ ghap.kinship <- function(
     cat("Inactive variants will be ignored.\n")
   }
   
+  #Initialize allele frequency function ----------------------------------------
+  freqfun <- function(x){
+    n <- length(which(is.na(x) == FALSE))
+    p <- sum(x, na.rm = TRUE)/(2*n)
+    return(p)
+  }
+  
+  #Initialize scaling function -------------------------------------------------
+  scalefun <- vector(mode = "list", length = 6)
+  scalefun[[1]] <- function(x){
+    m <- mean(x, na.rm = TRUE)
+    aa <- which(x == 0)
+    ab <- which(x == 1)
+    bb <- which(x == 2)
+    x[aa] <- -m
+    x[ab] <- 1 - m
+    x[bb] <- 2 - m
+    return(x)
+  }
+  scalefun[[2]] <- function(x){
+    m <- mean(x, na.rm = TRUE)
+    s <- sd(x, na.rm = TRUE)
+    aa <- which(x == 0)
+    ab <- which(x == 1)
+    bb <- which(x == 2)
+    x[aa] <- -m/s
+    x[ab] <- (1-m)/s
+    x[bb] <- (2-m)/s
+    return(x)
+  }
+  scalefun[[3]] <- function(x){
+    n <- length(which(is.na(x) == FALSE))
+    p <- sum(x, na.rm = TRUE)/(2*n)
+    m <- 2*p
+    aa <- which(x == 0)
+    ab <- which(x == 1)
+    bb <- which(x == 2)
+    x[aa] <- -m
+    x[ab] <- 1 - m
+    x[bb] <- 2 - m
+    return(x)
+  }
+  scalefun[[4]] <- function(x){
+    n <- length(which(is.na(x) == FALSE))
+    p <- sum(x, na.rm = TRUE)/(2*n)
+    s <- sqrt(2*p*(1-p))
+    m <- 2*p
+    aa <- which(x == 0)
+    ab <- which(x == 1)
+    bb <- which(x == 2)
+    x[aa] <- -m/s
+    x[ab] <- (1-m)/s
+    x[bb] <- (2-m)/s
+    return(x)
+  }
+  scalefun[[5]] <- function(x){
+    n <- length(which(is.na(x) == FALSE))
+    p <- sum(x, na.rm = TRUE)/(2*n)
+    aa <- which(x == 0)
+    ab <- which(x == 1)
+    bb <- which(x == 2)
+    x[aa] <- -2*p^2
+    x[ab] <- 2*p*(1-p)
+    x[bb] <- -2*(1-p)^2
+    return(x)
+  }
+  scalefun[[6]] <- scalefun[[5]]
+  
+  #Initialize denominators -----------------------------------------------------
+  scaleval <- vector(mode = "list", length = 6)
+  scaleval[[1]] <- function(){return(mean(diag(K)))}
+  scaleval[[2]] <- function(){return(nrow(K))}
+  scaleval[[3]] <- function(){return(2*sum(p*(1-p)))}
+  scaleval[[4]] <- scaleval[[2]]
+  scaleval[[5]] <- function(){return(4*sum(p^2*(1-p)^2))}
+  scaleval[[6]] <- scaleval[[1]]
+    
   #Initialize kinship matrix ---------------------------------------------------
   if(verbose == TRUE){
     cat("Preparing", id.n, "x", id.n, "kinship matrix.\n")
@@ -107,6 +182,7 @@ ghap.kinship <- function(
   #Kinship iterate function ----------------------------------------------------
   ncores <- min(c(detectCores(), ncores))
   sumvariants <- 0
+  q <- 0
   for(i in 1:length(id1)){
     idx <- id1[i]:id2[i]
     Ztmp <- ghap.slice(object = object,
@@ -117,9 +193,14 @@ ghap.kinship <- function(
                        impute = TRUE,
                        lookup = lookup,
                        ncores = ncores)
-    Ztmp.mean <- apply(X = Ztmp, MARGIN = 1, FUN = mean)
-    Ztmp <- (Ztmp - Ztmp.mean)
-    K <- K + crossprod(Ztmp*sqrt(weights[idx]))
+    p <- apply(X = Ztmp, MARGIN = 1, FUN = freqfun)
+    q <- q + scaleval[[type]]()
+    Ztmp <- apply(X = Ztmp, MARGIN = 1, FUN = scalefun[[type]])
+    if(is.null(weights)){
+      K <- K + tcrossprod(Ztmp)
+    }else{
+      K <- K + tcrossprod(Ztmp*sqrt(weights[idx]))
+    }
     if(verbose == TRUE){
       sumvariants <- sumvariants + length(idx)
       cat(sumvariants, "variants processed.\r")
@@ -127,7 +208,6 @@ ghap.kinship <- function(
   }
   
   #Scale kinship matrix -------------------------------------------------------
-  q <- mean(diag(K))
   K <- K/q
   colnames(K) <- object$id[id.in]
   rownames(K) <- colnames(K)
