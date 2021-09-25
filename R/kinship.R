@@ -1,6 +1,6 @@
 #Function: ghap.kinship
 #License: GPLv3 or later
-#Modification date: 24 Sep 2021
+#Modification date: 23 Sep 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute relationship matrix
@@ -166,7 +166,7 @@ ghap.kinship <- function(
   #Initialize denominators -----------------------------------------------------
   scaleval <- vector(mode = "list", length = 6)
   scaleval[[1]] <- function(){return(mean(diag(K)))}
-  scaleval[[2]] <- function(){return(nrow(K))}
+  scaleval[[2]] <- function(){return(var.n)}
   scaleval[[3]] <- function(){return(2*sum(p*(1-p)))}
   scaleval[[4]] <- scaleval[[2]]
   scaleval[[5]] <- function(){return(4*sum(p^2*(1-p)^2))}
@@ -194,7 +194,15 @@ ghap.kinship <- function(
                        lookup = lookup,
                        ncores = ncores)
     p <- apply(X = Ztmp, MARGIN = 1, FUN = freqfun)
-    q <- q + scaleval[[type]]()
+    exc <- which(pmin(p,1-p) == 0)
+    if(length(exc) > 0){
+      p <- p[-exc]
+      Ztmp <- Ztmp[-exc,]
+      var.n <- var.n - length(exc)
+    }
+    if(type %in% c(3,5)){
+      q <- q + scaleval[[type]]() 
+    }
     Ztmp <- apply(X = Ztmp, MARGIN = 1, FUN = scalefun[[type]])
     if(is.null(weights)){
       K <- K + tcrossprod(Ztmp)
@@ -208,6 +216,9 @@ ghap.kinship <- function(
   }
   
   #Scale kinship matrix -------------------------------------------------------
+  if(type %in% c(3,5) == FALSE){
+    q <- scaleval[[type]]() 
+  }
   K <- K/q
   colnames(K) <- object$id[id.in]
   rownames(K) <- colnames(K)
