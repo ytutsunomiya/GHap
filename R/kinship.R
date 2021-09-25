@@ -225,7 +225,7 @@ ghap.kinship <- function(
   
   #Induce sparsity ------------------------------------------------------------
   if(is.null(sparsity) == FALSE){
-    drop0(K, tol = sparsity)
+    K <- drop0(K, tol = sparsity)
   }
   
   #Return output --------------------------------------------------------------
