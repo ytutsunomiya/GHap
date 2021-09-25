@@ -1,6 +1,6 @@
 #Function: ghap.kinship
 #License: GPLv3 or later
-#Modification date: 23 Sep 2021
+#Modification date: 25 Sep 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute relationship matrix
@@ -225,8 +225,7 @@ ghap.kinship <- function(
   
   #Induce sparsity ------------------------------------------------------------
   if(is.null(sparsity) == FALSE){
-    K[K < sparsity] <- 0
-    K <- as(as(K,"dsyMatrix"),"dsCMatrix")
+    drop0(K, tol = sparsity)
   }
   
   #Return output --------------------------------------------------------------
