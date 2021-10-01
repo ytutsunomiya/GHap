@@ -1,6 +1,6 @@
 #Function: ghap.freq
 #License: GPLv3 or later
-#Modification date: 23 Sep 2021
+#Modification date: 01 Oct 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute marker allele frequencies
@@ -90,7 +90,7 @@ ghap.freq <- function(
                  FUN = function(x){length(which(is.na(x) == FALSE))})
       freq[id1[i]:id2[i]] <- rowSums(X, na.rm = TRUE)/(2*n)
     }else{
-      freq[id1[i]:id2[i]] <- rowSums(X)/(2*nrow(X))
+      freq[id1[i]:id2[i]] <- rowSums(X)/(2*ncol(X))
     }
   }
   
