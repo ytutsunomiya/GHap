@@ -49,20 +49,6 @@ ghap.anctest <- function(
   # Map test samples -----------------------------------------------------------
   test.idx <- which(object$id %in% test & object$id.in == TRUE)
   
-  # Initialize lookup table ----------------------------------------------------
-  lookup <- rep(NA,times=256)
-  lookup[1:2] <- c(0,1)
-  d <- 10
-  i <- 3
-  while(i <= 256){
-    b <- d + lookup[1:(i-1)]
-    lookup[i:(length(b)+i-1)] <- b
-    i <- i + length(b)
-    d <- d*10
-  }
-  lookup <- sprintf(fmt="%08d", lookup)
-  ncores <- min(c(detectCores(), ncores))
-  
   # Check if blocks exist ------------------------------------------------------
   if(is.null(blocks) == TRUE){
     
@@ -95,7 +81,7 @@ ghap.anctest <- function(
     
     #Get test haplotypes
     Mtst <- ghap.slice(object = object, ids = test.idx, variants = snps,
-                       index = TRUE, lookup = lookup, verbose = FALSE)
+                       index = TRUE, verbose = FALSE)
     Mref <- prototypes[snps,-1]
     
     #Prediction
@@ -130,6 +116,7 @@ ghap.anctest <- function(
   
   
   # Compute ancestry -----------------------------------------------------------
+  ncores <- min(c(detectCores(), ncores))
   if(verbose == TRUE){
     cat("\nPredicting ancestry of haplotypes... ")
   }
@@ -139,7 +126,7 @@ ghap.anctest <- function(
     if(Sys.info()["sysname"] == "Windows"){
       cl <- makeCluster(ncores)
       clusterEvalQ(cl, library(Matrix))
-      varlist <- list("blocks","object","test.idx","lookup")
+      varlist <- list("blocks","object","test.idx")
       clusterExport(cl = cl, varlist = varlist, envir=environment())
       results <- unlist(parLapply(cl = cl, fun = blockfun, X = 1:nrow(blocks)))
       stopCluster(cl)
