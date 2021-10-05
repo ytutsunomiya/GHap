@@ -21,22 +21,6 @@ ghap.profile <- function(
   }
   fac <- c(2,1,1)
   names(fac) <- obtypes
-  
-  # Initialize lookup table ----------------------------------------------------
-  lookup <- rep(NA,times=256)
-  lookup[1:2] <- c(0,1)
-  d <- 10
-  i <- 3
-  while(i <= 256){
-    b <- d + lookup[1:(i-1)]
-    lookup[i:(length(b)+i-1)] <- b
-    i <- i + length(b)
-    d <- d*10
-  }
-  lookup <- sprintf(fmt="%08d", lookup)
-  if(class(object) != "GHap.phase"){
-    lookup <- sapply(lookup, function(i){intToUtf8(rev(utf8ToInt(i)))})
-  }
   ncores <- min(c(detectCores(), ncores))
   
   # Scoring for haplo ----------------------------------------------------------
@@ -108,8 +92,7 @@ ghap.profile <- function(
       idx <- which(batch == mybatch[i])
       slice <- activealleles[idx]
       hap.geno <- ghap.slice(object = object, ids = which(object$id.in),
-                             variants = slice, index = TRUE,
-                             lookup = lookup, ncores = ncores)
+                             variants = slice, index = TRUE, ncores = ncores)
       if(Sys.info()["sysname"] == "Windows"){
         cl <- makeCluster(ncores)
         clusterEvalQ(cl, library(Matrix))
@@ -139,7 +122,7 @@ ghap.profile <- function(
   if(class(object) %in% c("GHap.phase","GHap.plink")){
     
     #Check if inactive samples should be reactived
-      if(only.active.samples == FALSE){
+    if(only.active.samples == FALSE){
       object$id.in <- rep(TRUE,times=fac[class(object)]*object$nsamples)
       object$nsamples.in <- length(which(object$id.in))/fac[class(object)]
     }
@@ -223,7 +206,7 @@ ghap.profile <- function(
     for(i in 1:nbatches){
       idx <- id1[i]:id2[i]
       marker.geno <- ghap.slice(object = object, ids = out$ID, variants = score$MARKER[idx],
-                                impute = TRUE, lookup = lookup, ncores = ncores, unphase = TRUE)
+                                impute = TRUE, ncores = ncores, unphase = TRUE)
       if(Sys.info()["sysname"] == "Windows"){
         cl <- makeCluster(ncores)
         clusterEvalQ(cl, library(Matrix))
