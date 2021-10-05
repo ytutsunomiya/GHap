@@ -10,7 +10,7 @@
 \usage{
 ghap.slice(object, ids, variants, index=FALSE,
            transposed=FALSE, sparse=TRUE, unphase=FALSE,
-           impute=FALSE, lookup=NULL, ncores=1, verbose=TRUE)
+           impute=FALSE, ncores=1, verbose=TRUE)
 }
 
 \arguments{
@@ -38,9 +38,6 @@ ghap.slice(object, ids, variants, index=FALSE,
   \item{impute}{
    A logical value specfying if missing genotypes should be replaced by 0 (i.e., A0/A0 genotypes, default = FALSE). Only meaningful for "GHap.plink" objects.
   }
-  \item{lookup}{
-    A character vector containing the look up table to decode the binary file. Only meaningful for developers.
-  }
   \item{ncores}{
    A numeric value specifying the number of cores to be used in parallel computations (default = 1).
   }
@@ -54,7 +51,7 @@ ghap.slice(object, ids, variants, index=FALSE,
 }
 
 \details{
-  This function parses the binary input file and returns an R matrix with the requested list of variants (markers or alleles) and individuals. The argument index allows the user to specify individuals either by name (index = FALSE) or by indices as stored in the GHap object (index = TRUE). In the case of "GHap.haplo" objects, HapAlleles can only by parsed via indices. The lookup argument also allows the user to provide a vector containing the decoding scheme to translate bits into integers in R. However, this argument should only be used by developers.
+  This function parses the binary input file and returns an R matrix with the requested list of variants (markers or alleles) and individuals. The argument index allows the user to specify individuals either by name (index = FALSE) or by indices as stored in the GHap object (index = TRUE). In the case of "GHap.haplo" objects, HapAlleles can only by parsed via indices.
 }
 
 \author{
