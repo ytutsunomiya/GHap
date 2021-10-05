@@ -1,6 +1,6 @@
 #Function: ghap.freq
 #License: GPLv3 or later
-#Modification date: 01 Oct 2021
+#Modification date: 05 Oct 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute marker allele frequencies
@@ -38,64 +38,78 @@ ghap.freq <- function(
     stop("\nArgument type must be 'maf', 'A0' or 'A1'.")
   }
   
-  # Initialize lookup table ----------------------------------------------------
-  lookup <- rep(NA,times=256)
-  lookup[1:2] <- c(0,1)
-  d <- 10
-  i <- 3
-  while(i <= 256){
-    b <- d + lookup[1:(i-1)]
-    lookup[i:(length(b)+i-1)] <- b
-    i <- i + length(b)
-    d <- d*10
+  # Calculate offset and bitloss -----------------------------------------------
+  offset <- ceiling((2*object$nsamples)/8)
+  bitloss <- 8 - ((2*object$nsamples) %% 8)
+  if(bitloss == 8){
+    bitloss <- 0
   }
-  lookup <- sprintf(fmt="%08d", lookup)
-  if(class(object) != "GHap.phase"){
-    lookup <- sapply(lookup, function(i){intToUtf8(rev(utf8ToInt(i)))})
+  lookup <- rep(NA, times=offset*8)
+  for(i in 1:offset){
+    idx1 <- i*8
+    idx2 <- idx1-7
+    lookup[idx1:idx2] <- idx2:idx1
   }
   
-  # Generate batch index -------------------------------------------------------
-  if(is.null(batchsize) == TRUE){
-    batchsize <- ceiling(object$nmarkers.in/10)
-  }
-  if(batchsize > object$nmarkers.in){
-    batchsize <- object$nmarkers.in
-  }
-  id1 <- seq(1,object$nmarkers.in,by=batchsize)
-  id2 <- (id1+batchsize)-1
-  id1 <- id1[id2<=object$nmarkers.in]
-  id2 <- id2[id2<=object$nmarkers.in]
-  id1 <- c(id1,id2[length(id2)]+1)
-  id2 <- c(id2,object$nmarkers.in)
-  if(id1[length(id1)] > object$nmarkers.in){
-    id1 <- id1[-length(id1)]; id2 <- id2[-length(id2)]
-  }
-  
-  # Frequency calculation ------------------------------------------------------
-  ids.in <- which(object$id.in)
-  snps.in <- which(object$marker.in)
-  freq <- rep(NA, times=object$nmarkers.in)
-  ncores <- min(c(detectCores(), ncores))
-  for(i in 1:length(id1)){
-    X <- ghap.slice(object = object,
-                    ids = ids.in,
-                    variants = snps.in[id1[i]:id2[i]],
-                    index = TRUE,
-                    unphase = TRUE,
-                    impute = FALSE,
-                    lookup = lookup,
-                    ncores = ncores)
-    if(class(object) == "GHap.plink"){
-      n <- apply(X = X, MARGIN = 1,
-                 FUN = function(x){length(which(is.na(x) == FALSE))})
-      freq[id1[i]:id2[i]] <- rowSums(X, na.rm = TRUE)/(2*n)
-    }else{
-      freq[id1[i]:id2[i]] <- rowSums(X)/(2*ncol(X))
+  # Frequency function ---------------------------------------------------------
+  if(class(object) == "GHap.plink"){
+    freqFun <- function(i){
+      object.con <- file(object$plink, "rb")
+      a <- seek(con = object.con, where = 3 + offset*(vidx[i]-1),
+                origin = 'start',rw = 'r')
+      geno <- readBin(object.con, what=raw(), size = 1,
+                      n = offset, signed = FALSE)
+      geno <- as.integer(rawToBits(geno))
+      geno1 <- geno[1:length(geno) %% 2 == 1]
+      geno2 <- geno[1:length(geno) %% 2 == 0]
+      geno <- vector(mode = "integer", length = length(geno)/2)
+      geno[which(geno1 == 0 & geno2 == 0)] <- 2
+      geno[which(geno1 == 0 & geno2 == 1)] <- 1
+      geno[which(geno1 == 1 & geno2 == 1)] <- 0
+      geno[which(geno1 == 1 & geno2 == 0)] <- NA
+      geno <- geno[1:object$nsamples]
+      geno <- geno[iidx]
+      geno <- geno[which(is.na(geno) == FALSE)]
+      p <- sum(geno)/(2*length(geno))
+      close.connection(object.con)
+      return(p)
+    }
+  }else{
+    freqFun <- function(i){
+      object.con <- file(object$phase, "rb")
+      a <- seek(con = object.con, where = offset*(vidx[i]-1),
+                origin = 'start',rw = 'r')
+      geno <- readBin(object.con, what=raw(), size = 1,
+                      n = offset, signed = FALSE)
+      geno <- as.integer(rawToBits(geno))
+      geno <- geno[lookup]
+      geno <- geno[1:(2*object$nsamples)]
+      geno <- geno[iidx]
+      geno1 <- geno[1:length(geno) %% 2 == 0]
+      geno2 <- geno[1:length(geno) %% 2 == 1]
+      geno <- geno1 + geno2
+      p <- sum(geno)/(2*length(geno))
+      close.connection(object.con)
+      return(p)
     }
   }
   
+  # Frequency calculation ------------------------------------------------------
+  iidx <- which(object$id.in)
+  vidx <- which(object$marker.in)
+  freq <- rep(NA, times=object$nmarkers.in)
+  ncores <- min(c(detectCores(), ncores))
+  if(Sys.info()["sysname"] == "Windows"){
+    cl <- makeCluster(ncores)
+    clusterExport(cl = cl, varlist = list("object","iidx","vidx"), envir=environment())
+    freq <- unlist(parLapply(cl = cl, fun = freqFun, X = 1:length(vidx)))
+    stopCluster(cl)
+  }else{
+    freq <- unlist(mclapply(X = 1:length(vidx), FUN = freqFun, mc.cores = ncores))
+  }
+  
   # Results --------------------------------------------------------------------
-  names(freq) <- object$marker[snps.in]
+  names(freq) <- object$marker[vidx]
   if(type == "maf"){
     freq <- pmin(freq,1-freq)
   }else if(type == "A0"){
