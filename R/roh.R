@@ -1,6 +1,6 @@
 #Function: ghap.roh
 #License: GPLv3 or later
-#Modification date: 21 July 2021
+#Modification date: 05 Oct 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Map streches of homozygous genotypes
@@ -34,22 +34,6 @@ ghap.roh <- function(
   if(only.active.samples == FALSE){
     object$id.in <- rep(TRUE,times=fac[class(object)]*object$nsamples)
     object$nsamples.in <- length(which(object$id.in))/fac[class(object)]
-  }
-  
-  # Initialize lookup table----------------------------------------------------------------------------
-  lookup <- rep(NA,times=256)
-  lookup[1:2] <- c(0,1)
-  d <- 10
-  i <- 3
-  while(i <= 256){
-    b <- d + lookup[1:(i-1)]
-    lookup[i:(length(b)+i-1)] <- b
-    i <- i + length(b)
-    d <- d*10
-  }
-  lookup <- sprintf(fmt="%08d", lookup)
-  if(class(object) != "GHap.phase"){
-    lookup <- sapply(lookup, function(i){intToUtf8(rev(utf8ToInt(i)))})
   }
   
   # ROH function---------------------------------------------------------------------------------------
@@ -199,7 +183,7 @@ ghap.roh <- function(
     bps <- bps[mkrs]
     freqchr <- freq[mkrs]
     geno <- ghap.slice(object = object, ids = ids, ncores = ncores,
-                       variants = mkrs, unphase = TRUE, impute = TRUE, lookup = lookup)
+                       variants = mkrs, unphase = TRUE, impute = TRUE)
     if(Sys.info()["sysname"] == "Windows"){
       cl <- makeCluster(ncores)
       clusterEvalQ(cl, library(Matrix))
@@ -227,11 +211,11 @@ ghap.roh <- function(
   # Include individuals without ROHs
   ids.t = as.data.frame(unique(cbind(object$pop, object$id)[object$id.in,]))
   if (nrow(ids.t) != nrow(unique(results[,c("POP", "ID")]))){
-   idx = which(paste0(ids.t$V1, ids.t$V2) %in% paste0(results$POP, results$ID))
-   ids.t = ids.t[-idx,]
-   ids.t = cbind(ids.t, "0", as.integer(0), as.integer(0), as.integer(0))
-   colnames(ids.t) <- c("POP", "ID", "CHR", "BP1", "BP2", "LENGTH")
-   results = rbind(results, ids.t)
+    idx = which(paste0(ids.t$V1, ids.t$V2) %in% paste0(results$POP, results$ID))
+    ids.t = ids.t[-idx,]
+    ids.t = cbind(ids.t, "0", as.integer(0), as.integer(0), as.integer(0))
+    colnames(ids.t) <- c("POP", "ID", "CHR", "BP1", "BP2", "LENGTH")
+    results = rbind(results, ids.t)
   }
   results <- results[order(results$POP, results$ID, results$CHR, results$BP1),]
   
