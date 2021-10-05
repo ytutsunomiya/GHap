@@ -1,6 +1,6 @@
 #Function: ghap.anctrain
 #License: GPLv3 or later
-#Modification date: 14 May 2021
+#Modification date: 05 Oct 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Create prototype alleles for ancestry predictions
@@ -61,6 +61,7 @@ ghap.anctrain <- function(
   }else{
     param <- table(y)
   }
+  ncores <- min(c(detectCores(), ncores))
   
   # Log message of parameters-------------------------------------------------------------------------
   if(verbose == TRUE){
@@ -73,29 +74,16 @@ ghap.anctrain <- function(
     }
   }
   
-  # Initialize lookup table----------------------------------------------------------------------------
-  lookup <- rep(NA,times=256)
-  lookup[1:2] <- c(0,1)
-  d <- 10
-  i <- 3
-  while(i <= 256){
-    b <- d + lookup[1:(i-1)]
-    lookup[i:(length(b)+i-1)] <- b
-    i <- i + length(b)
-    d <- d*10
-  }
-  lookup <- sprintf(fmt="%08d", lookup)
-  ncores <- min(c(detectCores(), ncores))
   
   # Seed and tuning for kmeans------------------------------------------------------------------------
   if(method == "unsupervised"){
     mkr <- sample(x = which(object$marker.in), size = param$nmarkers, replace = FALSE)
     Mkm <- ghap.slice(object = object, ids = train.idx, variants = mkr, transpose = TRUE,
-                      index = TRUE, lookup = lookup, ncores = ncores, verbose = FALSE)
+                      index = TRUE, ncores = ncores, verbose = FALSE)
     if(tune == TRUE){
       tune.FUN <- function(i){
         clk <- kmeans(x = Mkm, centers = i,
-                     iter.max = param$iter.max, nstart = param$nstart)
+                      iter.max = param$iter.max, nstart = param$nstart)
         clout <- (clk$betweenss/clk$tot.withinss)*(sum(clk$size) - i)/(i-1)
         clout <- c(clout,clk$tot.withinss)
         return(clout)
@@ -148,7 +136,7 @@ ghap.anctrain <- function(
         cat("\nGrouping haplotypes into K = ", K," pseudo-lineages using K-means clustering... ", sep="")
       }
       clk <- kmeans(x = Mkm, centers = param$K,
-                   iter.max = param$iter.max, nstart = param$nstart)
+                    iter.max = param$iter.max, nstart = param$nstart)
       y <- paste0("K",clk$cluster)
       if(verbose == TRUE){
         cat("Done.\n")
@@ -202,7 +190,6 @@ ghap.anctrain <- function(
                       ids = train.idx,
                       variants = snps.in[id1[i]:id2[i]],
                       index = TRUE,
-                      lookup = lookup,
                       ncores = ncores)
       #Compute blocks
       if(ncores == 1){
