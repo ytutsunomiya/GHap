@@ -1,6 +1,6 @@
 #Function: ghap.profile
 #License: GPLv3 or later
-#Modification date: 14 May 2021
+#Modification date: 05 Oct 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute individual profiles based on HapAllele or marker scores
