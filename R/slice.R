@@ -1,6 +1,6 @@
 #Function: ghap.slice
 #License: GPLv3 or later
-#Modification date: 14 May 2021
+#Modification date: 05 Oct 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Get a slice of a GHap object
@@ -14,7 +14,6 @@ ghap.slice <- function(
   sparse=TRUE,
   unphase=FALSE,
   impute=FALSE,
-  lookup=NULL,
   ncores=1,
   verbose=TRUE
 ){
@@ -24,32 +23,20 @@ ghap.slice <- function(
   if(class(object) %in% obtypes == FALSE){
     stop("\nInput data must be a valid GHap object (phase, haplo or plink).")
   }
-  
-  # Generate lookup table ------------------------------------------------------
-  if(is.null(lookup)){
-    lookup <- rep(NA,times=256)
-    lookup[1:2] <- c(0,1)
-    d <- 10
-    i <- 3
-    while(i <= 256){
-      b <- d + lookup[1:(i-1)]
-      lookup[i:(length(b)+i-1)] <- b
-      i <- i + length(b)
-      d <- d*10
-    }
-    lookup <- sprintf(fmt="%08d", lookup)
-    if(class(object) != "GHap.phase"){
-      lookup <- sapply(lookup, function(i){intToUtf8(rev(utf8ToInt(i)))})
-    }
-  }
-  
+
   # Calculate offset and bitloss -----------------------------------------------
   offset <- ceiling((2*object$nsamples)/8)
   bitloss <- 8 - ((2*object$nsamples) %% 8)
   if(bitloss == 8){
     bitloss <- 0
   }
-  
+  lookup <- rep(NA, times=offset*8)
+  for(i in 1:offset){
+    idx1 <- i*8
+    idx2 <- idx1-7
+    lookup[idx1:idx2] <- idx2:idx1
+  }  
+
   # Get indices ----------------------------------------------------------------
   if(index == TRUE){
     
@@ -138,29 +125,26 @@ ghap.slice <- function(
       object.con <- file(object$phase, "rb")
       a <- seek(con = object.con, where = offset*(vidx[i]-1),
                 origin = 'start',rw = 'r')
-      geno <- readBin(object.con, what=integer(), size = 1,
+      geno <- readBin(object.con, what=raw(), size = 1,
                       n = offset, signed = FALSE)
-      geno <- paste(lookup[geno+1], collapse = "")
-      geno <- unlist(strsplit(x = geno, split = ""))
-      geno <- as.integer(geno[1:(length(geno)-bitloss)])
+      geno <- as.integer(rawToBits(geno))
+      geno <- geno[lookup]
+      geno <- geno[1:(2*object$nsamples)]
       close.connection(object.con)
       return(geno[iidx])
     }
   }else if(class(object) == "GHap.haplo"){
     getBitFun <- function(i){
-      object.con <- file(object$genotypes, "rb")
+      object.con <- file(object$haplo, "rb")
       a <- seek(con = object.con, where = 3 + offset*(vidx[i]-1),
                 origin = 'start',rw = 'r')
-      geno <- readBin(object.con, what=integer(), size = 1,
+      geno <- readBin(object.con, what=raw(), size = 1,
                       n = offset, signed = FALSE)
-      geno <- paste(lookup[geno+1], collapse = "")
-      nc <- nchar(geno)
-      n <- seq(1, nc, by = 2)
-      geno <- substring(geno, n, c(n[-1]-1, nc))
-      geno[which(geno == "00")] <- "0"
-      geno[which(geno == "01")] <- "1"
-      geno[which(geno == "11")] <- "2"
-      geno <- as.integer(geno[1:object$nsamples])
+      geno <- as.integer(rawToBits(geno))
+      geno1 <- geno[1:length(geno) %% 2 == 1]
+      geno2 <- geno[1:length(geno) %% 2 == 0]
+      geno <- vector(mode = "integer", length = length(geno)/2)
+      geno <- geno[1:object$nsamples]
       close.connection(object.con)
       return(geno[iidx])
     }
@@ -169,21 +153,21 @@ ghap.slice <- function(
       object.con <- file(object$plink, "rb")
       a <- seek(con = object.con, where = 3 + offset*(vidx[i]-1),
                 origin = 'start',rw = 'r')
-      geno <- readBin(object.con, what=integer(), size = 1,
+      geno <- readBin(object.con, what=raw(), size = 1,
                       n = offset, signed = FALSE)
-      geno <- paste(lookup[geno+1], collapse = "")
-      nc <- nchar(geno)
-      n <- seq(1, nc, by = 2)
-      geno <- substring(geno, n, c(n[-1]-1, nc))
-      geno[which(geno == "00")] <- "2"
-      geno[which(geno == "01")] <- "1"
-      geno[which(geno == "11")] <- "0"
+      geno <- as.integer(rawToBits(geno))
+      geno1 <- geno[1:length(geno) %% 2 == 1]
+      geno2 <- geno[1:length(geno) %% 2 == 0]
+      geno <- vector(mode = "integer", length = length(geno)/2)
+      geno[which(geno1 == 0 & geno2 == 0)] <- 2
+      geno[which(geno1 == 0 & geno2 == 1)] <- 1
+      geno[which(geno1 == 1 & geno2 == 1)] <- 0
       if(impute == TRUE){
-        geno[which(geno == "10")] <- "0"
+        geno[which(geno1 == 1 & geno2 == 0)] <- 0
       }else{
-        geno[which(geno == "10")] <- NA
+        geno[which(geno1 == 1 & geno2 == 0)] <- NA
       }
-      geno <- as.integer(geno[1:object$nsamples])
+      geno <- geno[1:object$nsamples]
       close.connection(object.con)
       return(geno[iidx])
     }
@@ -203,7 +187,7 @@ ghap.slice <- function(
       X <- unlist(mclapply(X = 1:length(vidx), FUN = getBitFun, mc.cores = ncores))
     }
   }
-
+  
   if(transposed == FALSE){
     X <- Matrix(data = X, nrow = length(vidx), ncol = length(iidx),
                 byrow = TRUE, sparse = TRUE)
