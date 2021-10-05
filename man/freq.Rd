@@ -9,8 +9,8 @@
 }
 \usage{
   ghap.freq(object, type = "maf", only.active.samples = TRUE,
-            only.active.markers = TRUE, batchsize = NULL,
-            ncores = 1, verbose = TRUE)
+            only.active.markers = TRUE, ncores = 1,
+            verbose = TRUE)
 }
 
 \arguments{
@@ -25,9 +25,6 @@
   }
   \item{only.active.markers}{
     A logical value specifying whether only active markers should be included in the output (default = TRUE).
-  }
-  \item{batchsize}{
-   A numeric value controlling the number of markers to be processed at a time (default = nmarkers/10).
   }
   \item{ncores}{
    A numeric value specifying the number of cores to be used in parallel computing (default = 1).
