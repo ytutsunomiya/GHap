@@ -73,19 +73,6 @@ ghap.simmating <- function(
     cat("Number of progeny: ", n.individuals, "\n\n", sep="")
   }
   
-  # Initialize lookup table----------------------------------------------------------------------------
-  lookup <- rep(NA,times=256)
-  lookup[1:2] <- c(0,1)
-  d <- 10
-  i <- 3
-  while(i <= 256){
-    b <- d + lookup[1:(i-1)]
-    lookup[i:(length(b)+i-1)] <- b
-    i <- i + length(b)
-    d <- d*10
-  }
-  lookup <- sprintf(fmt="%08d", lookup)
-  
   # Function for individual simulation----------------------------------------------------------------
   indbuild <- function(i){
     crossovers1 <- rpois(n = 1, lambda = chrmean[chr])
@@ -178,7 +165,7 @@ ghap.simmating <- function(
     mkrsidx <- which(object$marker.in & object$chr == chr)
     mkrs <- object$marker[mkrsidx]
     parenthap <- ghap.slice(object = object, ids = unique(c(indtbl$parent1,indtbl$parent2)),
-                            variants = mkrs, lookup = lookup, ncores = ncores)
+                            variants = mkrs, ncores = ncores)
     if(Sys.info()["sysname"] == "Windows"){
       cl <- makeCluster(ncores)
       inds <- parLapply(cl = cl, fun = indbuild, X = 1:n.individuals)
