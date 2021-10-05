@@ -1,6 +1,6 @@
 #Function: ghap.ancsvm
 #License: GPLv3 or later
-#Modification date: 26 Apr 2021
+#Modification date: 05 Oct 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Predict ancestry of haplotypes using machine learning
@@ -55,26 +55,13 @@ ghap.ancsvm <- function(
   if(is.null(param$gamma) == TRUE){
     param$gamma <- "1/blocksize"
   }
+  ncores <- min(c(detectCores(), ncores))
   
   # Log message of parameters-------------------------------------------------------------------------
   if(verbose == TRUE){
     printparams <- paste(names(param), "=", param, collapse=", ")
     cat("\nUsing svm with parameters:\n[", printparams, "]\n", sep="")
   }
-  
-  # Initialize lookup table----------------------------------------------------------------------------
-  lookup <- rep(NA,times=256)
-  lookup[1:2] <- c(0,1)
-  d <- 10
-  i <- 3
-  while(i <= 256){
-    b <- d + lookup[1:(i-1)]
-    lookup[i:(length(b)+i-1)] <- b
-    i <- i + length(b)
-    d <- d*10
-  }
-  lookup <- sprintf(fmt="%08d", lookup)
-  ncores <- min(c(detectCores(), ncores))
   
   # Initialize block iteration function---------------------------------------------------------------
   blockfun <- function(b){
@@ -91,11 +78,9 @@ ghap.ancsvm <- function(
     
     #Build model matrices
     Mtst <- ghap.slice(object = phase, ids = test.idx, variants = snps,
-                       index = TRUE, transposed = TRUE, lookup = lookup,
-                       verbose = FALSE)
+                       index = TRUE, transposed = TRUE, verbose = FALSE)
     Mref <- ghap.slice(object = phase, ids = train.idx, variants = snps,
-                       index = TRUE, transposed = TRUE, lookup = lookup,
-                       verbose = FALSE)
+                       index = TRUE, transposed = TRUE, verbose = FALSE)
     
     #Model training
     if(param$gamma == "1/blocksize"){
@@ -103,7 +88,8 @@ ghap.ancsvm <- function(
     }else{
       gamma <- param$gamma
     }
-    model <- svm(y = y, x = Mref, kernel = "radial", gamma = gamma, cost = param$cost)
+    model <- svm(y = y, x = Mref, kernel = "radial",
+                 gamma = gamma, cost = param$cost)
     pred <- predict(model, Mtst)
     pred <- as.character(pred)
     ids <- phase$id[test.idx]
