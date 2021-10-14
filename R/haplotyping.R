@@ -1,6 +1,6 @@
 #Function: ghap.haplotyping
 #License: GPLv3 or later
-#Modification date: 12 May 2021
+#Modification date: 14 Oct 2021
 #Written by: Yuri Tani Utsunomiya & Marco Milanesi
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Output haplotype genotype matrix for user-defined haplotype blocks
@@ -91,19 +91,6 @@ ghap.haplotyping <- function(
     }
   }
   
-  # Initialize lookup table for input
-  lookup1 <- rep(NA,times=256)
-  lookup1[1:2] <- c(0,1)
-  d <- 10
-  i <- 3
-  while(i <= 256){
-    b <- d + lookup1[1:(i-1)]
-    lookup1[i:(length(b)+i-1)] <- b
-    i <- i + length(b)
-    d <- d*10
-  }
-  lookup1 <- sprintf(fmt="%08d", lookup1)
-  
   # Initialize lookup table for output
   lookup2 <- rep(NA,times=256)
   lookup2[1:2] <- c(0,1)
@@ -148,14 +135,12 @@ ghap.haplotyping <- function(
       if(length(snps) == 1){
         block.subset <- ghap.slice(object = phase,
                                    ids = unique(phase$id[ids.in]),
-                                   variants = phase$marker[snps],
-                                   lookup = lookup1)
+                                   variants = phase$marker[snps])
         haplotypes <- as.character(block.subset)
       }else{
         block.subset <- ghap.slice(object = phase,
                                    ids = unique(phase$id[ids.in]),
-                                   variants = phase$marker[snps],
-                                   lookup = lookup1)
+                                   variants = phase$marker[snps])
         haplotypes <- apply(block.subset,MARGIN = 2, paste, collapse="")
       }
       
