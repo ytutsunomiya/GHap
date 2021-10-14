@@ -1,6 +1,6 @@
 #Function: ghap.slice
 #License: GPLv3 or later
-#Modification date: 05 Oct 2021
+#Modification date: 14 Oct 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Get a slice of a GHap object
@@ -135,7 +135,7 @@ ghap.slice <- function(
     }
   }else if(class(object) == "GHap.haplo"){
     getBitFun <- function(i){
-      object.con <- file(object$haplo, "rb")
+      object.con <- file(object$genotypes, "rb")
       a <- seek(con = object.con, where = 3 + offset*(vidx[i]-1),
                 origin = 'start',rw = 'r')
       geno <- readBin(object.con, what=raw(), size = 1,
@@ -144,6 +144,10 @@ ghap.slice <- function(
       geno1 <- geno[1:length(geno) %% 2 == 1]
       geno2 <- geno[1:length(geno) %% 2 == 0]
       geno <- vector(mode = "integer", length = length(geno)/2)
+      geno[which(geno1 == 0 & geno2 == 0)] <- 0
+      geno[which(geno1 == 0 & geno2 == 1)] <- 1
+      geno[which(geno1 == 1 & geno2 == 0)] <- 1
+      geno[which(geno1 == 1 & geno2 == 1)] <- 2
       geno <- geno[1:object$nsamples]
       close.connection(object.con)
       return(geno[iidx])
