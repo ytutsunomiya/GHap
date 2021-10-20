@@ -1,56 +1,66 @@
 #Function: ghap.lmm
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 20 Oct 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
-#Description: Mixed linear model fitting
+#Description: mixed model fitting
 
-ghap.lmm<-function(
-  fixed,
-  random,
-  covmat=NULL,       #List with covariance matrices for random effects
-  data,              #Data frame containing model data
-  weights = NULL,    #Weights of observations
-  family = "gaussian",
-  REML = TRUE,
-  verbose=TRUE
+ghap.lmm <- function(
+  formula,
+  data,
+  covmat = NULL,
+  weights = NULL,
+  vcp.initial = NULL,
+  vcp.estimate = TRUE,
+  vcp.conv = 1e-12,
+  errors = TRUE,
+  em.reml = 10,
+  tol = 1e-10,
+  verbose = TRUE
 ){
   
-  #Check family
-  if(is.character(family)){
-    family <- get(family, mode = "function", envir = parent.frame(2))
-  }
-  if(is.function(family)){
-    family <- family()
-  }
-  
-  #Log message
-  if(verbose==TRUE){
-    cat("\nAssuming", family$family,"family with", family$link,"link function.\n")
-  }
-  
-  #Make formula
-  rand.labels <- attr(terms(random),"term.labels")
-  form <- paste(format(fixed),paste("(1 | ",rand.labels,")",sep="",collapse=" + "),sep=" + ")
-  form <- as.formula(form)
-  
-  #Log message
-  if(verbose==TRUE){
+  # Get formula information -------------------------------------------------
+  allterms <- unlist(strsplit(x = as.character(formula)[-1], split = "\\+"))
+  response <- gsub(pattern = "\\s+", replacement = "", x = allterms[1])
+  ranterms <- grep(pattern = "\\(", x = allterms)
+  fixterms <- gsub(pattern = "\\s+", replacement = "", allterms[-c(1,ranterms)])
+  ranterms <- gsub(pattern = "\\s+|\\(|\\)", replacement = "", x = allterms[ranterms])
+  if (verbose == TRUE) {
     cat("\nAssembling design matrices... ")
   }
   
-  #Sanity check for covariances
-  cov.labels <- NULL
+  # Sanity check for random effects -----------------------------------------
+  for(i in 1:length(ranterms)){
+    ranname <- unlist(strsplit(x = ranterms[i], split = "\\|"))
+    if(ranname[1] != "1"){
+      stop("This function does not support random regression yet.\n")
+    }else{
+      ranterms[i] <- gsub(pattern = "^.+\\|", replacement = "", x = ranterms[i])
+    }
+  }
+  
+  # Assemble fixed effects -------------------------------------------------
+  form <- paste0(response, "~", paste(fixterms, collapse = "+"))
+  X <- sparse.model.matrix(as.formula(form), data=data)
+  y <- data[,response]
+  n <- length(y)
+  s <- ncol(X)
+  rankX <- as.numeric(rankMatrix(X, method = "qr"))
+  
+  # Sanity check for covariances --------------------------------------------
   if(is.null(covmat) == FALSE){
-    cov.labels <- names(covmat)
-    for(i in cov.labels){
-      if(i %in% rand.labels == FALSE){
+    for(i in names(covmat)){
+      if(i %in% ranterms == FALSE){
         stop("Random effect ", i, " was not specified in the formula.")
+      }else if(is.null(covmat[[i]]) == TRUE){
+        lvl <- unique(data[,i])
+        data[,i] <- factor(data[,i], levels = sort(lvl))
+        covmat[[i]] <- Diagonal(nlevels(data[,i]))
       }else{
         if(identical(colnames(covmat[[i]]),rownames(covmat[[i]])) != TRUE){
           stop("Factors do not match between columns and rows in the ", i," covariance matrix!")
         }
-        if(any(data[,i] %in% colnames(covmat[[i]]))==F){
+        if(any(data[,i] %in% colnames(covmat[[i]]) == F)){
           stop("There are factors in ", i, " without covariance")
         }
         if(length(which(is.na(colnames(covmat[[i]])) == T)) != 0){
@@ -62,106 +72,365 @@ ghap.lmm<-function(
           stop("Duplicated factors declared in the ", i," covariance matrix!")
         }
         rm(cvr.dup)
-        data[,i] <- factor(data[,i], levels = colnames(covmat[[i]]), ordered = TRUE)
-        covmat[[i]] <- chol(nearPD(covmat[[i]])$mat)
+        data[,i] <- factor(data[,i], levels = colnames(covmat[[i]]))
+      }
+    }
+  }else{
+    covmat <- vector(mode = "list", length = length(ranterms))
+    names(covmat) <- ranterms
+    for(i in names(covmat)){
+      lvl <- unique(data[,i])
+      data[,i] <- factor(data[,i], levels = sort(lvl))
+      covmat[[i]] <- Diagonal(nlevels(data[,i]))
+    }
+  }
+  
+  # Assemble random effects -------------------------------------------------
+  q <- NULL
+  Z <- vector(mode = "list", length = length(ranterms))
+  for(i in 1:length(ranterms)){
+    form <- paste0("~ 0 + ", ranterms[i])
+    Z[[i]] <- sparse.model.matrix(as.formula(form), data=data, drop.unused.levels = FALSE)
+    colnames(Z[[i]]) <- gsub(pattern = ranterms[i], replacement = "", x = colnames(Z[[i]]))
+    q <- c(q,ncol(Z[[i]]))
+  }
+  names(Z) <- ranterms
+  names(q) <- ranterms
+  vcp.n <- length(ranterms)+1
+  
+  # Sanity check for variance components ------------------------------------
+  if(is.null(vcp.initial) == FALSE){
+    if(length(vcp.initial) != vcp.n){
+      emsg <- paste0("Number of initial values for variance components (",
+                     length(vcp.initial),
+                     ") does not match number of random effects (",
+                     vcp.n,")\n")
+      stop(emsg)
+    }
+    if(identical(sort(names(vcp.initial)), sort(c(ranterms,"Residual"))) == FALSE){
+      emsg <- paste0("Labels of initial values for variance components (",
+                     paste(names(vcp.initial), collapse=","),
+                     ") do not match labels of random effects (",
+                     paste(c(names(ranterms),"Residual"), collapse=","), ")\n")
+      stop(emsg)
+    }
+    vcp.initial <- vcp.initial[c(ranterms,"Residual")]
+  }
+  
+  # Check weights -----------------------------------------------------------
+  if(is.null(weights) == FALSE){
+    w <- sqrt(weights/mean(weights))
+    y <- w*y
+    X <- Diagonal(x = w)%*%X
+    for(i in 1:length(Z)){
+      Z[[i]] <- Diagonal(x = w)%*%Z[[i]]
+    }
+  }
+  
+  # Pre-assemble mixed model components -------------------------------------
+  if(is.null(vcp.initial) == TRUE){
+    vcp.new <- rep(var(y)/vcp.n, times = vcp.n)
+  }else{
+    vcp.new <- unlist(vcp.initial)
+  }
+  names(vcp.new) <- c(ranterms, "Residual")
+  RHS <- crossprod(X, y)
+  LHS <- crossprod(X)
+  W <- X
+  ZtX <- vector(mode = "list", length = vcp.n-1)
+  ZtZ <- vector(mode = "list", length = vcp.n-1)
+  names(ZtX) <- ranterms
+  names(ZtZ) <- ranterms
+  for(i in ranterms){
+    RHS <- rbind(RHS, crossprod(Z[[i]], y))
+    ZtX[[i]] <- crossprod(Z[[i]], X)
+    LHS <- cbind(LHS, t(ZtX[[i]]))
+    ZtZ[[i]] <- vector(mode = "list", length = length(ranterms))
+    names(ZtZ[[i]]) <- ranterms
+    for(j in ranterms){
+      ZtZ[[i]][[j]] <- crossprod(Z[[i]],Z[[j]])
+    }
+    W <- cbind(W, Z[[i]])
+  }
+  for(i in ranterms){
+    tmp <- ZtX[[i]]
+    for(j in ranterms){
+      tmp <- cbind(tmp,ZtZ[[i]][[j]])
+    }
+    LHS <- rbind(LHS, tmp)
+  }
+  
+  # Initialize auxiliary functions ------------------------------------------
+  sparsesolve <- function(X){
+    Xchol <- cholPermute(X)
+    X <- Takahashi_Davis(X, cholQp = Xchol$Qpermchol, P = Xchol$P)
+    return(X)
+  }
+  pcgsolve <- function(A,b,criterion=1e-12){
+    m = 0
+    x <- rep(0, times=length(b))
+    r <- b
+    Minv <- (1/diag(A))
+    z <- Minv*r
+    p <- z
+    rss.new <- sum(r*z)
+    ss <- sum(b^2)
+    conv <- 100
+    while(conv > criterion){
+      m <- m + 1
+      g <- A%*%p
+      alpha <- as.numeric(rss.new/sum(p*g))
+      x <- x + alpha*p
+      if(m %% 50 == 0){
+        r <- b - A%*%x
+      }else{
+        r <- r - alpha*g
+      }
+      z <- Minv*r
+      rss.old <- rss.new
+      rss.new <- sum(r*z)
+      beta <- rss.new/rss.old
+      p <- z + beta*p
+      conv <- rss.new/ss
+    }
+    return(as.numeric(x))
+  }
+  
+  # Log message -------------------------------------------------------------
+  if (verbose == TRUE) {
+    cat("Done.\n")
+    cat(n, " records will be fitted to\n ", s, " fixed effects\n ",
+        sum(q), " random effects\n", sep="")
+  }
+  
+  # Initiate algorithm ------------------------------------------------------
+  convall <- 100
+  k <- 0
+  k.reml <- 0
+  if(verbose == TRUE){
+    cat("\nInitializing fitting algorithm:\n\n",
+        "--------------------------------------------\n", sep="")
+  }
+  while(convall >= vcp.conv){
+    
+    # Increment iteration
+    k <- k + 1
+    k.reml <- k.reml + 1
+    
+    # Update left hand side
+    for(i in 1:length(ranterms)){
+      if(i == 1){
+        idx <- (s+1):(s+q[i])
+      }else{
+        idx <- which(1:length(q) < i)
+        idx <- (s+sum(q[idx])+1):(s+sum(q[1:i]))
+      }
+      LHS[idx,idx] <- ZtZ[[i]][[i]] + covmat[[ranterms[i]]]*(vcp.new["Residual"]/vcp.new[i])
+    }
+    
+    # Solve mixed model equations
+    coef <- pcgsolve(LHS,RHS)
+    
+    # Update fitted values
+    fit <- as.numeric(W%*%coef)
+    e <- y - fit
+    
+    # Update variance components
+    seconddev <- NULL
+    if(vcp.estimate == TRUE){
+      vcp.old <- vcp.new
+      LHSi <- try(sparsesolve(LHS), silent = TRUE)
+      if(inherits(LHSi, "try-error")) {
+        LHSi <- sparsesolve(LHS + Diagonal(nrow(LHS))*tol)
+      }
+      if(k.reml <= em.reml){
+        itermethod <- "EM-REML"
+        vcp.new["Residual"] <- sum(y*e)/(n-rankX)
+        for(i in 1:length(ranterms)){
+          if(i == 1){
+            idx <- (s+1):(s+q[i])      
+          }else{
+            idx <- which(1:length(q) < i)
+            idx <- (s+sum(q[idx])+1):(s+sum(q[1:i]))
+          }
+          su <- as.numeric(t(coef[idx])%*%covmat[[ranterms[i]]]%*%coef[idx])
+          tr <- sum(diag(covmat[[ranterms[i]]]%*%LHSi[idx,idx]))*vcp.old["Residual"]
+          vcp.new[i] <- as.numeric(su + tr)/q[i]
+        }
+        convall <- 100
+      }else{
+        itermethod <- "AI-REML"
+        Rinv <- Diagonal(length(y))/vcp.old["Residual"]
+        Py <- Rinv%*%e
+        firstdev <- NULL
+        Q <- NULL
+        D <- NULL
+        for(i in 1:length(ranterms)){
+          if(i == 1){
+            idx <- (s+1):(s+q[i])
+          }else{
+            idx <- which(1:length(q) < i)
+            idx <- (s+sum(q[idx])+1):(s+sum(q[1:i]))
+          }
+          su <- as.numeric(t(coef[idx])%*%covmat[[ranterms[i]]]%*%coef[idx])
+          tr <- sum(diag(covmat[[ranterms[i]]]%*%LHSi[idx,idx]))*vcp.old["Residual"]
+          firstdev <- c(firstdev, (q[i] - (su + tr)/vcp.old[i])/vcp.old[i])
+          Q <- cbind(Q, Z[[i]]%*%as.numeric((coef[idx]/vcp.old[i])))
+          RHSf <- crossprod(X, Q[,i])
+          for(j in 1:length(ranterms)){
+            RHSf <- rbind(RHSf, crossprod(Z[[ranterms[j]]], Q[,i]))
+          }
+          D <- cbind(D, pcgsolve(LHS, RHSf))
+        }
+        Q <- cbind(Q, Py)
+        RHSf <- crossprod(X,Py)
+        for(i in ranterms){
+          RHSf <- rbind(RHSf, crossprod(Z[[i]], Py))
+        }
+        D <- cbind(D, pcgsolve(LHS, RHSf))
+        trP <- sum(diag(Rinv)) - sum(diag(LHSi%*%crossprod(Rinv%*%W)))*vcp.old["Residual"]
+        firstdev <- c(firstdev, as.numeric(trP - crossprod(Py)))
+        RinvQ <- Rinv%*%Q
+        WtRinvQ <- crossprod(W, RinvQ)
+        seconddev <- solve(crossprod(Q, RinvQ) - crossprod(D,WtRinvQ))
+        delta <- as.numeric(seconddev%*%firstdev)
+        vcp.new <- vcp.old - delta
+        if(any(vcp.new < 0)){
+          k.reml <- 0
+          vcp.new <- vcp.old
+        }
+        convall <- sum((vcp.new - vcp.old)^2)/(sum(vcp.new)^2)
+      }
+      if(verbose == TRUE){
+        if(itermethod == "EM-REML"){
+          cat(
+            "Variance components iteration: ", k, "\n",
+            "Method: ", itermethod, "\n  ",
+            paste(paste(c(ranterms,"Residual"), "=", sprintf("%.12f", vcp.new)), collapse = "\n  "),
+            "\n  Convergence = ---",
+            "\n--------------------------------------------\n", sep="")
+        }else{
+          cat(
+            "Variance components iteration: ", k, "\n",
+            "Method: ", itermethod, "\n  ",
+            paste(paste(c(ranterms,"Residual"), "=", sprintf("%.12f", vcp.new)), collapse = "\n  "),
+            "\n  Convergence = ", convall,
+            "\n--------------------------------------------\n", sep="")
+        }
+
+      }
+    }else{
+      if(verbose == TRUE){
+        convall <- 0
+        cat(
+          "Variance components assumed known\n  ",
+          paste(paste(c(ranterms,"Residual"), "=", sprintf("%.12f", vcp.new)), collapse = "\n  "), "\n  ",
+          "Convergence = ", convall,
+          "\n--------------------------------------------\n", sep="")
       }
     }
   }
   
-  #Assemble fixed effects for lme4
-  mf <- model.frame(subbars(form),data=data)
-  if(is.null(weights) == TRUE){
-    w <- rep(1,times=nrow(mf))
-  }else{
-    w <- sqrt(weights/mean(weights))
-  }
-  mf[,1] <- w*mf[,1]
-  X <- w*sparse.model.matrix(nobars(form),mf)
-  
-  #Assemble random effects for lme4
-  rt <- mkReTrms(bars = findbars(form),fr = mf, drop.unused.levels = FALSE)
-  for(i in 1:length(rt$Ztlist)){
-    rt$Ztlist[[i]] <- rt$Ztlist[[i]]%*%Diagonal(x = w)
-  }
-  if(is.null(covmat) == FALSE){
-    for(i in cov.labels){
-      linklab <- paste("1 | ",i,sep="")
-      rt$Ztlist[[linklab]] <- covmat[[i]]%*%rt$Ztlist[[linklab]]
-      rt$Ztlist[[linklab]] <- as(rt$Ztlist[[linklab]], 'dgCMatrix')
-    }
-  }
-  Zt <- rt$Ztlist[[1]]
-  map <- rep(rand.labels[1],times=nrow(rt$Ztlist[[1]]))
-  if(length(rt$Ztlist) > 1){
-    for(i in 2:length(rt$Ztlist)){
-      Zt <- rbind(Zt, rt$Ztlist[[i]])
-      map <- rep(rand.labels[i],times=nrow(rt$Ztlist[[i]]))
-    }
-  }
-  rt$Zt <- as(Zt,'dgCMatrix')
-  rm(Zt); a<-gc()
-  lmod <- list(fr = mf, X = X, reTrms = rt, start = rt$theta, REML = REML)
-  
-  #Number of parameters
-  n <- nrow(mf)
-  s <- ncol(X)
-  q <- nrow(rt$Zt)
-  
-  #Log message
-  if(verbose==TRUE){
-    cat("Done.\n")
-    cat(n,"records will be fitted to an intercept,",s-1,"fixed effects and",q,"random effects.\n")
-    if(REML == TRUE & family$family == "gaussian" & family$link == "identity"){
-      cat("\nMaximizing restricted likelihood... ")
+  # Get solutions -----------------------------------------------------------
+  for(i in 1:length(ranterms)){
+    if(i == 1){
+      idx <- (s+1):(s+q[i])
     }else{
-      cat("\nMaximizing likelihood... ")
+      idx <- which(1:length(q) < i)
+      idx <- (s+sum(q[idx])+1):(s+sum(q[1:i]))
+    }
+    LHS[idx,idx] <- ZtZ[[i]][[i]] + covmat[[ranterms[i]]]*(vcp.new["Residual"]/vcp.new[i])
+  }
+  coef <- pcgsolve(LHS,RHS)
+  
+  # Calculate standard errors -----------------------------------------------
+  if(verbose == TRUE & vcp.estimate == TRUE){
+    cat("\n\nVariance components converged.\n")
+  }
+  if(errors == TRUE){
+    if(verbose == TRUE){
+      cat("Computing standard errors... ")      
+    }
+    LHSi <- try(sparsesolve(LHS), silent = TRUE)
+    if(inherits(LHSi, "try-error")) {
+      LHSi <- sparsesolve(LHS + Diagonal(nrow(LHS))*tol)
+    }
+    stde <- sqrt(diag(LHSi)*vcp.new["Residual"])
+    if(is.null(seconddev) == FALSE){
+      vcp.stde <- sqrt(diag(seconddev))
+    }
+    if(verbose == TRUE){
+      cat("Done.")     
     }
   }
   
-  #Maximize
-  if(family$family == "gaussian" & family$link == "identity"){
-    devfun <- do.call(mkLmerDevfun,lmod)
-    opt <- optimizeLmer(devfun, optimizer = "Nelder_Mead")
-    lmout <- mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr)
-  }else{
-    lmod$family <- family
-    devfun <- do.call(mkGlmerDevfun,lmod)
-    opt <- optimizeGlmer(devfun, optimizer = "Nelder_Mead")
-    lmout <- mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr)
-  }
-  
-  #Assemble results
+  # Return results ----------------------------------------------------------
   results <- NULL
-  results$fixed <- fixef(lmout)
-  results$random <- ranef(lmout)
-  results$residuals <- as.numeric(residuals(lmout))/w
-  vcp <- as.data.frame(VarCorr(lmout))
-  results$vcp <- vcp$vcov
-  names(results$vcp) <- vcp$grp
-  for(i in names(results$random)){
-    if(i %in% cov.labels){
-      rnames <- rownames(results$random[[i]])
-      ref <- as.numeric(covmat[[i]]%*%unlist(results$random[[i]]))
-      results$random[[i]] <- NULL
-      results$random[[i]] <- ref
-      names(results$random[[i]]) <- rnames
+  tmp <- as.data.frame(matrix(data = NA, nrow = s, ncol = 4))
+  colnames(tmp) <- c("Estimate", "Std. Error", "t value", "Pr(>|t|)")
+  rownames(tmp) <- colnames(X)
+  tmp[,1] <- coef[1:s]
+  if(errors == TRUE){
+    tmp[,2] <- stde[1:s]
+    tmp[,3] <- tmp[,1]/tmp[,2]
+    a <- pt(q = -abs(tmp[,3]), df = n - s, lower.tail = T, log.p = TRUE)
+    b <- pt(q = abs(tmp[,3]), df = n - s, lower.tail = F, log.p = TRUE)
+    tmp[,4] <- 10^((a + log(1 + exp(b - a)))/log(10))
+  }
+  results$fixed <- tmp
+  results$random <- vector(mode = "list", length = length(ranterms))
+  names(results$random) <- ranterms
+  for(i in 1:length(ranterms)){
+    if(i == 1){
+      idx <- (s+1):(s+q[i])
     }else{
-      rnames <- rownames(results$random[[i]])
-      ref <- as.numeric(unlist(results$random[[i]]))
-      results$random[[i]] <- NULL
-      results$random[[i]] <- ref
-      names(results$random[[i]]) <- rnames
+      idx <- which(1:length(q) < i)
+      idx <- (s+sum(q[idx])+1):(s+sum(q[1:i]))
+    }
+    tmp <- as.data.frame(matrix(data = NA, nrow = length(idx), ncol = 3))
+    colnames(tmp) <- c("Estimate", "Std. Error", "Accuracy")
+    rownames(tmp) <- colnames(Z[[ranterms[i]]])
+    tmp[,1] <- coef[idx]
+    if(errors == TRUE){
+      tmp[,2] <- stde[idx]
+      tmp[,3] <- sqrt(1 - (stde[idx]^2)/(vcp.new[i]))      
+    }
+    results$random[[ranterms[i]]] <- tmp
+  }
+  if(is.null(weights) == TRUE){
+    w <- rep(1, times = length(y))
+  }
+  tmp <- as.data.frame(matrix(data = NA, nrow = length(y), ncol = 3))
+  colnames(tmp) <- c("All", "Fixed", "Random")
+  tmp[,1] <- as.numeric(W%*%coef)/w
+  if(s == 1){
+    tmp[,2] <- as.numeric(W[,1]*coef[1])/w
+  }else{
+    tmp[,2] <- as.numeric(W[,1:s]%*%coef[1:s])/w
+  }
+  
+  tmp[,3] <- as.numeric(W[,-c(1:s)]%*%coef[-c(1:s)])/w
+  results$fitted <- tmp
+  tmp <- as.data.frame(matrix(data = NA, nrow = length(y), ncol = 3))
+  colnames(tmp) <- c("All", "Fixed", "Random")
+  tmp[,1] <- (y/w) - results$fitted[,1]
+  tmp[,2] <- (y/w) - results$fitted[,2]
+  tmp[,3] <- (y/w) - results$fitted[,3]
+  results$residuals <- tmp
+  tmp <- as.data.frame(matrix(data = NA, nrow = vcp.n, ncol = 4))
+  colnames(tmp) <- c("Estimate", "Std. Error", "Proportion", "Prop. Error")
+  rownames(tmp) <- names(vcp.new)
+  tmp[,1] <- vcp.new
+  tmp[-vcp.n,3] <- tmp[-vcp.n,1]/sum(tmp[,1])
+  if(is.null(seconddev) == FALSE & errors == TRUE){
+    tmp[,2] <- vcp.stde
+    for(j in 1:(vcp.n-1)){
+      a <- (tmp[j,2]^2)*(sum(tmp[-j,1])/(sum(tmp[,1])^2))^2
+      b <- (tmp[-j,2]^2)*((-1*tmp[j,1])/(sum(tmp[,1])^2))^2
+      tmp[j,4] <- sqrt(a + sum(b))
     }
   }
-  results$lme4 <- lmout
-  
-  #Log message
-  if(verbose == TRUE){
-    cat("Done.\n")
-  }
-  
-  #Results
+  results$vcp <- tmp
   return(results)
-  
   
 }
