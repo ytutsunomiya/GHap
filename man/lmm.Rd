@@ -8,19 +8,18 @@ Linear mixed model
 Linear mixed model fitting for fixed effects, random effects and variance components.
 }
 \usage{
-ghap.lmm(fixed, random, covmat = NULL, data, weights = NULL, 
-         family = "gaussian", REML = TRUE, verbose = TRUE)
+ghap.lmm(formula, data, covmat = NULL, weights = NULL,
+         vcp.initial = NULL, vcp.estimate = TRUE,
+         vcp.conv = 1e-12, errors = TRUE, em.reml = 10,
+         tol = 1e-10, verbose = TRUE)
 }
 
 \arguments{
-  \item{fixed}{
-   Formula describing the fixed effects part of the model, e.g. y ~ a + b + c ... If the model does not include any covariate simply state the response variable with an intercept, i.e. y ~ 1.
-  }
-  \item{random}{
-   Formula describing the random effects part of the model, e.g., ~ x + w + z.
+  \item{formula}{
+   Formula describing the model. The synthax is consistent with lme4. The response is declared first, followed by the ~ operator. Predictors are then separated by + operators. Currently only random intercepts are supported, which are distinguished from fixed effects by the notation (1|x).
   }
   \item{covmat}{
-   A list of covariance matrices for each group of random effects. If a matrix is not defined for a given group, an identity matrix will be used.
+   A list of inverse covariance matrices for each group of random effects. If a matrix is not defined for a given group, an identity matrix will be used.
  }
   \item{data}{
    A dataframe containing the data.
@@ -28,11 +27,23 @@ ghap.lmm(fixed, random, covmat = NULL, data, weights = NULL,
   \item{weights}{
    A numeric vector with weights for observations. These weights are treated as diagonal elements of the inverse weight matrix. If not supplied, the analysis is carried out assuming all observations are equally important.
  }
- \item{family}{
-  A GLM family, see \code{\link{glm}} and \code{\link{family}}. Default is "gaussian".
+ \item{vcp.initial}{
+  A list of initial values for variance components. If not provided, the sample variance will be equally divided across the variance components.
  }
- \item{REML}{
-  A logical value specifying whether the likelihood should be restricted regarding fixed effects (default = TRUE). Only relevant for the gaussian family with identity link function.
+ \item{vcp.estimate}{
+  A logical value specifying whether variance components should be estimated (default = TRUE). If FALSE, values passed to vcp.initial will be regarded as known variances.
+ }
+ \item{vcp.conv}{
+  A numeric value specifying the convergence criterion for variance components (default = 1e-12).
+ }
+ \item{errors}{
+  A logical value specifying whether standard errors should be computed (default = TRUE).
+ }
+ \item{em.reml}{
+  A numeric value specifying the number of EM-REML iterations to carry out before switching to AI-REML (default = 10).
+ }
+ \item{tol}{
+  A numeric value specifying the scalar to add to the diagonal of the left hand side of mixed models equations if it is not inversible (default = 1e-12).
  }
  \item{verbose}{
    A logical value specifying whether log messages should be printed (default = TRUE).
@@ -42,19 +53,19 @@ ghap.lmm(fixed, random, covmat = NULL, data, weights = NULL,
 \value{
 The returned GHap.lmm object is a list with the following items:
  \item{fixed}{
-  A numeric vector containing the fixed effects.
+  A dataframe containing estimates, standard errors, t values and p-values of fixed effects.
  }
-  \item{random}{
-  A numeric vector containing the random effects.
+ \item{random}{
+  A list of dataframes, one for each group of random effects, containing estimates, standard errors and accuracy of random effects.
  }
-  \item{vcp}{
-  A numeric vector with variance components.
+ \item{fitted}{
+  A dataframe with fitted values using all effects, only fixed effects and only random effects.
  }
-  \item{residuals}{
-  A numeric vector containing residuals.
+ \item{residuals}{
+  A dataframe with residuals from subtracting fitted values using all effects, only fixed effects and only random effects.
  }
-  \item{lme4}{
-  An object of class \code{\link{merMod}}.
+ \item{vcp}{
+  A dataframe with estimates and standard errors of variance components.
  }
 
 
@@ -62,7 +73,7 @@ The returned GHap.lmm object is a list with the following items:
 
 \details{
 
-The function fits mixed models with correlated random effects using Cholesky factorization of covariance matrices. The default behaviour is to use the REstricted Maximum Likelihood (REML) algorithm implemented in \code{\link{lmer}} assuming a Gaussian family and an identity link function. However, regular Maximum Likelihood (ML) fit can be specified by setting the REML argument to FALSE. Additionally, generalized linear mixed models (GLMM) can be fit by specifying a different family and link function.
+The function fits mixed models using a combination of EM-REML, AI-REML and PCG. Random regression and multivariate analyses are currently not supported.
 
 }
 
@@ -70,71 +81,10 @@ The function fits mixed models with correlated random effects using Cholesky fac
 Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 }
 
-\examples{
-
-# #### DO NOT RUN IF NOT NECESSARY ###
-# 
-# # Copy the example data in the current working directory
-# exfiles <- ghap.makefile()
-# file.copy(from = exfiles, to = "./")
-# 
-# # Compress phase data
-# ghap.compress(input.file = "human", out.file = "human")
-# 
-# # Load phase data
-# phase <- ghap.loadphase(input.file = "human")
-# 
-# # Generate blocks of 5 markers sliding 5 markers at a time
-# blocks <- ghap.blockgen(phase, windowsize = 5, slide = 5, unit = "marker")
-# 
-# # Haplotyping
-# ghap.haplotyping(phase = phase, blocks = blocks, outfile = "human",
-#                  binary = T, ncores = 1)
-#
-# # Load haplotype genotypes
-# haplo <- ghap.loadhaplo(input.file = "human")
-#
-# # Subset common haplotypes in Europeans
-# EUR.ids <- haplo$id[which(haplo$pop \%in\% c("TSI","CEU"))]
-# haplo <- ghap.subsethaplo(haplo,EUR.ids,haplo$allele.in)
-# hapstats <- ghap.hapstats(haplo, ncores = 1)
-# common <- hapstats$TYPE \%in\% c("REGULAR","MAJOR") &
-#  hapstats$FREQ > 0.05 &
-#  hapstats$FREQ < 0.95
-# haplo <- ghap.subsethaplo(haplo,EUR.ids,common)
-# 
-# #Compute relationship matrix
-# K <- ghap.kinship(haplo, ncores = 1)
-# 
-# # Quantitative trait with 50\% heritability
-# # Unbalanced repeated measurements (0 to 30)
-# # Two major haplotypes accounting for 50\% of the genetic variance
-# myseed <- 123456789
-# set.seed(myseed)
-# major <- sample(which(haplo$allele.in == TRUE), size = 2)
-# g2 <- runif(n = 2, min = 0, max = 1)
-# g2 <- (g2/sum(g2))*0.5
-# sim <- ghap.simpheno(haplo, kinship = K, h2 = 0.5, g2 = g2, nrep = 30,
-#                      balanced = FALSE, major = major, seed = myseed)
-# 
-#
-# ### RUN ###
-#
-# #Fit model using REML
-# model <- ghap.lmm(fixed = phenotype ~ 1, random = ~ individual,
-#                   covmat = list(individual = K), data = sim$data)
-# 
-# #Estimated heritability and repeatability
-# model$vcp/sum(model$vcp)
-# 
-# #True versus estimated breeding values
-# plot(model$random$individual, sim$u, xlab = "Estimated BV", ylab = "True BV"); abline(0, 1)
-# summary(lm(sim$u ~ as.numeric(model$random$individual)))
-
-}
-
 \references{
 D. Bates et al. Fitting Linear Mixed-Effects Models Using lme4. J. Stat. Soft., 67:1-48.
+         
+J. Jensen et al. Residual maximum likelihood estimation of (Co)variance components in multivariate mixed linear models using average information. J. Ind. Soc. Ag. Statistics 1997. 49, 215-236.
 
 A. I. Vazquez. Technical note: An R package for fitting generalized linear mixed models in animal breeding. J. Anim. Sci. 2010. 88, 497-504.
 }
