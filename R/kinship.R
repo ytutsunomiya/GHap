@@ -1,6 +1,6 @@
 #Function: ghap.kinship
 #License: GPLv3 or later
-#Modification date: 25 Sep 2021
+#Modification date: 20 Oct 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute relationship matrix
@@ -54,22 +54,6 @@ ghap.kinship <- function(
   #Check weights
   if (is.null(weights) == FALSE & length(weights) != var.n) {
     stop("Vector of weights must have the same length as the number of variants.")
-  }
-  
-  # Initialize lookup table ----------------------------------------------------
-  lookup <- rep(NA,times=256)
-  lookup[1:2] <- c(0,1)
-  d <- 10
-  i <- 3
-  while(i <= 256){
-    b <- d + lookup[1:(i-1)]
-    lookup[i:(length(b)+i-1)] <- b
-    i <- i + length(b)
-    d <- d*10
-  }
-  lookup <- sprintf(fmt="%08d", lookup)
-  if(class(object) != "GHap.phase"){
-    lookup <- sapply(lookup, function(i){intToUtf8(rev(utf8ToInt(i)))})
   }
   
   # Generate batch index -------------------------------------------------------
@@ -171,7 +155,7 @@ ghap.kinship <- function(
   scaleval[[4]] <- scaleval[[2]]
   scaleval[[5]] <- function(){return(4*sum(p^2*(1-p)^2))}
   scaleval[[6]] <- scaleval[[1]]
-    
+  
   #Initialize kinship matrix ---------------------------------------------------
   if(verbose == TRUE){
     cat("Preparing", id.n, "x", id.n, "kinship matrix.\n")
@@ -191,7 +175,6 @@ ghap.kinship <- function(
                        index = TRUE,
                        unphase = TRUE,
                        impute = TRUE,
-                       lookup = lookup,
                        ncores = ncores)
     p <- apply(X = Ztmp, MARGIN = 1, FUN = freqfun)
     exc <- which(pmin(p,1-p) == 0)
