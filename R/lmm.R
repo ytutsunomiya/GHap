@@ -1,6 +1,6 @@
 #Function: ghap.lmm
 #License: GPLv3 or later
-#Modification date: 20 Oct 2021
+#Modification date: 27 Oct 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: mixed model fitting
@@ -203,46 +203,55 @@ ghap.lmm <- function(
         sum(q), " random effects\n", sep="")
   }
   
-  # Initiate algorithm ------------------------------------------------------
-  convall <- 100
-  k <- 0
-  k.reml <- 0
-  if(verbose == TRUE){
-    cat("\nInitializing fitting algorithm:\n\n",
-        "--------------------------------------------\n", sep="")
-  }
-  while(convall >= vcp.conv){
-    
-    # Increment iteration
-    k <- k + 1
-    k.reml <- k.reml + 1
-    
-    # Update left hand side
-    for(i in 1:length(ranterms)){
-      if(i == 1){
-        idx <- (s+1):(s+q[i])
-      }else{
-        idx <- which(1:length(q) < i)
-        idx <- (s+sum(q[idx])+1):(s+sum(q[1:i]))
-      }
-      LHS[idx,idx] <- ZtZ[[i]][[i]] + covmat[[ranterms[i]]]*(vcp.new["Residual"]/vcp.new[i])
+  # Variance components estimation ------------------------------------------
+  if(vcp.estimate == TRUE){
+    convall <- 100
+    k <- 0
+    k.reml <- 0
+    if(verbose == TRUE){
+      cat("\nVariance components:\n\n",
+          "--------------------------------------------\n", sep="")
     }
-    
-    # Solve mixed model equations
-    coef <- pcgsolve(LHS,RHS)
-    
-    # Update fitted values
-    fit <- as.numeric(W%*%coef)
-    e <- y - fit
-    
-    # Update variance components
-    seconddev <- NULL
-    if(vcp.estimate == TRUE){
-      vcp.old <- vcp.new
-      LHSi <- try(sparsesolve(LHS), silent = TRUE)
-      if(inherits(LHSi, "try-error")) {
-        LHSi <- sparsesolve(LHS + Diagonal(nrow(LHS))*tol)
+    while(convall >= vcp.conv){
+      
+      # Increment iteration
+      k <- k + 1
+      k.reml <- k.reml + 1
+      
+      # Include variance components in mixed model equations
+      for(i in 1:length(ranterms)){
+        if(i == 1){
+          idx <- (s+1):(s+q[i])
+        }else{
+          idx <- which(1:length(q) < i)
+          idx <- (s+sum(q[idx])+1):(s+sum(q[1:i]))
+        }
+        LHS[idx,idx] <- ZtZ[[i]][[i]] + covmat[[ranterms[i]]]*(vcp.new["Residual"]/vcp.new[i])
       }
+      LHS <- LHS/vcp.new["Residual"]
+      RHS <- RHS/vcp.new["Residual"]
+      
+      # Solve mixed model equations
+      coef <- pcgsolve(LHS,RHS)
+      
+      # Update fitted values
+      fit <- as.numeric(W%*%coef)
+      e <- y - fit
+      
+      # Get sparse solution of left hand side
+      LHSi <- try(sparsesolve(LHS), silent = TRUE)
+      if(inherits(LHSi, "try-error")){
+        LHSi <- try(sparsesolve(LHS + Diagonal(nrow(LHS))*tol), silent = TRUE)
+        if(inherits(LHSi, "try-error")){
+          emsg <- paste0("\nUnable to solve LHS even after adding a tolerance of ",
+                         tol)
+          stop(emsg)
+        }
+      }
+      
+      # Get REML updates of variance components
+      seconddev <- NULL
+      vcp.old <- vcp.new
       if(k.reml <= em.reml){
         itermethod <- "EM-REML"
         vcp.new["Residual"] <- sum(y*e)/(n-rankX)
@@ -254,13 +263,13 @@ ghap.lmm <- function(
             idx <- (s+sum(q[idx])+1):(s+sum(q[1:i]))
           }
           su <- as.numeric(t(coef[idx])%*%covmat[[ranterms[i]]]%*%coef[idx])
-          tr <- sum(diag(covmat[[ranterms[i]]]%*%LHSi[idx,idx]))*vcp.old["Residual"]
+          tr <- sum(diag(covmat[[ranterms[i]]]%*%LHSi[idx,idx]))
           vcp.new[i] <- as.numeric(su + tr)/q[i]
         }
         convall <- 100
       }else{
         itermethod <- "AI-REML"
-        Rinv <- Diagonal(length(y))/vcp.old["Residual"]
+        Rinv <- Diagonal(length(y))/vcp.new["Residual"]
         Py <- Rinv%*%e
         firstdev <- NULL
         Q <- NULL
@@ -273,13 +282,14 @@ ghap.lmm <- function(
             idx <- (s+sum(q[idx])+1):(s+sum(q[1:i]))
           }
           su <- as.numeric(t(coef[idx])%*%covmat[[ranterms[i]]]%*%coef[idx])
-          tr <- sum(diag(covmat[[ranterms[i]]]%*%LHSi[idx,idx]))*vcp.old["Residual"]
-          firstdev <- c(firstdev, (q[i] - (su + tr)/vcp.old[i])/vcp.old[i])
-          Q <- cbind(Q, Z[[i]]%*%as.numeric((coef[idx]/vcp.old[i])))
+          tr <- sum(diag(covmat[[ranterms[i]]]%*%LHSi[idx,idx]))
+          firstdev <- c(firstdev, (q[i] - (su + tr)/vcp.new[i])/vcp.new[i])
+          Q <- cbind(Q, Z[[i]]%*%as.numeric((coef[idx]/vcp.new[i])))
           RHSf <- crossprod(X, Q[,i])
           for(j in 1:length(ranterms)){
             RHSf <- rbind(RHSf, crossprod(Z[[ranterms[j]]], Q[,i]))
           }
+          RHSf <- RHSf/vcp.new["Residual"]
           D <- cbind(D, pcgsolve(LHS, RHSf))
         }
         Q <- cbind(Q, Py)
@@ -287,8 +297,9 @@ ghap.lmm <- function(
         for(i in ranterms){
           RHSf <- rbind(RHSf, crossprod(Z[[i]], Py))
         }
+        RHSf <- RHSf/vcp.new["Residual"]
         D <- cbind(D, pcgsolve(LHS, RHSf))
-        trP <- sum(diag(Rinv)) - sum(diag(LHSi%*%crossprod(Rinv%*%W)))*vcp.old["Residual"]
+        trP <- sum(diag(Rinv)) - sum(diag(LHSi%*%crossprod(Rinv%*%W)))
         firstdev <- c(firstdev, as.numeric(trP - crossprod(Py)))
         RinvQ <- Rinv%*%Q
         WtRinvQ <- crossprod(W, RinvQ)
@@ -301,6 +312,12 @@ ghap.lmm <- function(
         }
         convall <- sum((vcp.new - vcp.old)^2)/(sum(vcp.new)^2)
       }
+      
+      # Remove residual variance from mixed model equations
+      LHS <- LHS*vcp.old["Residual"]
+      RHS <- RHS*vcp.old["Residual"]
+      
+      # Log message for variance components update
       if(verbose == TRUE){
         if(itermethod == "EM-REML"){
           cat(
@@ -317,17 +334,14 @@ ghap.lmm <- function(
             "\n  Convergence = ", convall,
             "\n--------------------------------------------\n", sep="")
         }
-
       }
-    }else{
-      if(verbose == TRUE){
-        convall <- 0
-        cat(
-          "Variance components assumed known\n  ",
-          paste(paste(c(ranterms,"Residual"), "=", sprintf("%.12f", vcp.new)), collapse = "\n  "), "\n  ",
-          "Convergence = ", convall,
-          "\n--------------------------------------------\n", sep="")
-      }
+    }
+  }else{
+    if(verbose == TRUE){
+      cat(
+        "Variance components assumed known\n  ",
+        paste(paste(c(ranterms,"Residual"), "=", sprintf("%.12f", vcp.new)), collapse = "\n  "), "\n  ",
+        "\n--------------------------------------------\n", sep="")
     }
   }
   
@@ -341,6 +355,8 @@ ghap.lmm <- function(
     }
     LHS[idx,idx] <- ZtZ[[i]][[i]] + covmat[[ranterms[i]]]*(vcp.new["Residual"]/vcp.new[i])
   }
+  LHS <- LHS/vcp.new["Residual"]
+  RHS <- RHS/vcp.new["Residual"]
   coef <- pcgsolve(LHS,RHS)
   
   # Calculate standard errors -----------------------------------------------
@@ -355,7 +371,7 @@ ghap.lmm <- function(
     if(inherits(LHSi, "try-error")) {
       LHSi <- sparsesolve(LHS + Diagonal(nrow(LHS))*tol)
     }
-    stde <- sqrt(diag(LHSi)*vcp.new["Residual"])
+    stde <- sqrt(diag(LHSi))
     if(is.null(seconddev) == FALSE){
       vcp.stde <- sqrt(diag(seconddev))
     }
