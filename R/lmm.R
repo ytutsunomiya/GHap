@@ -338,11 +338,10 @@ ghap.lmm <- function(
     }
   }else{
     if(verbose == TRUE){
-      cat(
-        "Variance components assumed known\n  ",
-        paste(paste(c(ranterms,"Residual"), "=", sprintf("%.12f", vcp.new)), collapse = "\n  "), "\n  ",
-        "\n--------------------------------------------\n", sep="")
+      cat("Variance components assumed known\n  ",
+        paste(paste(c(ranterms,"Residual"), "=", sprintf("%.12f", vcp.new)), collapse = "\n  "), "\n", sep="")
     }
+    seconddev <- NULL
   }
   
   # Get solutions -----------------------------------------------------------
