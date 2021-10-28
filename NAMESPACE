@@ -9,9 +9,8 @@ importFrom("grDevices", "hsv")
 importFrom("utils", "download.file", "unzip", "write.table")
 importFrom("graphics", "axis", "barplot", "par", "plot", "rect",
            "segments", "text", "abline", "layout", "legend", "points")
-importFrom("lme4","VarCorr","findbars","fixef","mkLmerDevfun","mkMerMod",
-           "mkReTrms","nobars","optimizeGlmer","optimizeLmer",
-           "mkGlmerDevfun","ranef","subbars")
+importFrom("sparseinv","cholPermute","Takahashi_Davis")
+importFrom("pedigreemm","getA","getAinv","editPed","pedigree")
 importFrom("stats", "as.formula", "lm", "lm.fit", "model.frame",
            "model.matrix", "model.response", "na.omit", "pbinom",
            "pchisq", "pf", "pnorm", "ppois", "rpois", "qchisq", "qnorm",
