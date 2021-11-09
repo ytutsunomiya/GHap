@@ -1,6 +1,6 @@
 #Function: ghap.lmm
 #License: GPLv3 or later
-#Modification date: 27 Oct 2021
+#Modification date: 09 Nov 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: mixed model fitting
@@ -339,7 +339,7 @@ ghap.lmm <- function(
   }else{
     if(verbose == TRUE){
       cat("Variance components assumed known\n  ",
-        paste(paste(c(ranterms,"Residual"), "=", sprintf("%.12f", vcp.new)), collapse = "\n  "), "\n", sep="")
+          paste(paste(c(ranterms,"Residual"), "=", sprintf("%.12f", vcp.new)), collapse = "\n  "), "\n", sep="")
     }
     seconddev <- NULL
   }
@@ -432,20 +432,19 @@ ghap.lmm <- function(
   tmp[,2] <- (y/w) - results$fitted[,2]
   tmp[,3] <- (y/w) - results$fitted[,3]
   results$residuals <- tmp
-  tmp <- as.data.frame(matrix(data = NA, nrow = vcp.n, ncol = 4))
-  colnames(tmp) <- c("Estimate", "Std. Error", "Proportion", "Prop. Error")
+  tmp <- as.data.frame(matrix(data = NA, nrow = vcp.n, ncol = 2))
+  colnames(tmp) <- c("Estimate", "Std. Error")
   rownames(tmp) <- names(vcp.new)
   tmp[,1] <- vcp.new
-  tmp[-vcp.n,3] <- tmp[-vcp.n,1]/sum(tmp[,1])
   if(is.null(seconddev) == FALSE & errors == TRUE){
     tmp[,2] <- vcp.stde
-    for(j in 1:(vcp.n-1)){
-      a <- (tmp[j,2]^2)*(sum(tmp[-j,1])/(sum(tmp[,1])^2))^2
-      b <- (tmp[-j,2]^2)*((-1*tmp[j,1])/(sum(tmp[,1])^2))^2
-      tmp[j,4] <- sqrt(a + sum(b))
-    }
+    results$vcp <- tmp
+    results$AI <- seconddev
+    colnames(results$AI) <- names(vcp.new)
+    rownames(results$AI) <- names(vcp.new)
+  }else{
+    results$vcp <- tmp
   }
-  results$vcp <- tmp
   return(results)
   
 }
