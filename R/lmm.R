@@ -304,6 +304,9 @@ ghap.lmm <- function(
         RinvQ <- Rinv%*%Q
         WtRinvQ <- crossprod(W, RinvQ)
         seconddev <- solve(crossprod(Q, RinvQ) - crossprod(D,WtRinvQ))
+        if(isSymmetric(seconddev) == FALSE){
+          seconddev[upper.tri(seconddev)] <- seconddev[lower.tri(seconddev)]
+        }
         delta <- as.numeric(seconddev%*%firstdev)
         vcp.new <- vcp.old - delta
         if(any(vcp.new < 0)){
