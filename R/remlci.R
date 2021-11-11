@@ -17,7 +17,7 @@ ghap.remlci <- function(
 ){
   
   # Compute cholesky factor
-  L <- t(chol(ai))
+  L <- t(chol(as.matrix(ai)))
   
   # Initialize sampling function
   samp <- function(i){
