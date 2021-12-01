@@ -1,6 +1,6 @@
 #Function: ghap.getHinv
 #License: GPLv3 or later
-#Modification date: 01 Dec 2021
+#Modification date: 28 Oct 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute the inverse of H
@@ -159,21 +159,24 @@ ghap.getHinv <- function(
   if(verbose == TRUE){
     cat("Computing inverse of blend matrix (H)... ")
   }
-  Hinv <- Ainv
-  a <- Sys.time()
-  #Agginv <- solve(Agg)
-  #Hinv[g,g] <- Hinv[g,g] + (Kinv - Agginv)
-  Hinv[g,g] <- Kinv + Ainv[g,n]%*%solve(Ainv[n,n])%*%Ainv[n,g]
+  #Hinv <- Ainv
+  #Hinv[g,g] <- Hinv[g,g] + (Kinv - solve(Agg))
+  #Hinv[g,g] <- Kinv + Ainv[g,n]%*%solve(Ainv[n,n])%*%Ainv[n,g]
+  Hinv <- rbind(cbind(Ainv[n,n], Ainv[n,g]),
+                cbind(Ainv[g,n], Kinv + Ainv[g,n]%*%solve(Ainv[n,n])%*%Ainv[n,g]))
   if(verbose == TRUE){
-    cat("Done. ", Sys.time()-a, "\n")
+    cat("Done.\n")
   }
   
   # Return H inverse ---------------------------------------------------------------
   if(verbose == TRUE){
+    Hinv <- drop0(Hinv)
     nz <- nnzero(Hinv)
     de <- prod(dim(Hinv))
     sparsity <- 100*(de - nz)/de
-    out <- paste0("Final H inverse has a sparsity of ", sprintf("%.1f", sparsity), "%.\n")
+    out <- paste0("Final H inverse has a sparsity of ", sprintf("%.1f", sparsity), "%.\n",
+                  length(g), " genotyped and ", length(n), " non-genotyped individuals.\n")
+    cat(out)
   }
   return(Hinv)
   
