@@ -1,6 +1,6 @@
 #Function: ghap.getHinv
 #License: GPLv3 or later
-#Modification date: 28 Oct 2021
+#Modification date: 01 Dec 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute the inverse of H
@@ -35,14 +35,14 @@ ghap.getHinv <- function(
     nodam <- length(which(is.na(ped$sire) == FALSE & is.na(ped$dam) == TRUE))
     noparents <- length(which(is.na(ped$sire) == TRUE & is.na(ped$dam) == TRUE))
     siredam <- table(c(sires,dams))
-    siredam <- names(siredam)[which(siredam > 1)]
+    siredam <- length(which(siredam > 1))
     self <- length(which(ped$sire == ped$dam))
     out <- paste0("Raw pedigree summary:\n",
                   sprintf(pad,nrow(ped)), " total records\n",
                   sprintf(pad,length(ids)), " unique individuals in the pedigree\n",
                   sprintf(pad,length(sires)), " individuals listed as sires\n",
                   sprintf(pad,length(dams)), " individuals listed as dams\n",
-                  sprintf(pad,noparents), " individuals listed as both sire and dam\n",
+                  sprintf(pad,siredam), " individuals listed as both sire and dam\n",
                   sprintf(pad,self), " records with sire = dam (self-fertilization)\n",
                   sprintf(pad,nosire), " records with missing sire\n",
                   sprintf(pad,nodam), " records with missing dam\n",
@@ -99,7 +99,7 @@ ghap.getHinv <- function(
     nodam <- length(which(is.na(ped$sire) == FALSE & is.na(ped$dam) == TRUE))
     noparents <- length(which(is.na(ped$sire) == TRUE & is.na(ped$dam) == TRUE))
     siredam <- table(c(sires,dams))
-    siredam <- names(siredam)[which(siredam > 1)]
+    siredam <- length(which(siredam > 1))
     self <- length(which(ped$sire == ped$dam))
     out <- paste0("\nFiltered pedigree summary (", depth, " generations):\n",
                   sprintf(pad,length(ids)), " unique individuals in the pedigree\n",
@@ -123,7 +123,7 @@ ghap.getHinv <- function(
   if(verbose == TRUE){
     cat("Done.\n")
   }
-
+  
   # Re-organize matrices -----------------------------------------------------------
   g <- colnames(K)
   n <- colnames(A)[which(colnames(A) %in% g == F)]
@@ -159,11 +159,13 @@ ghap.getHinv <- function(
   if(verbose == TRUE){
     cat("Computing inverse of blend matrix (H)... ")
   }
-  Agginv <- solve(Agg)
   Hinv <- Ainv
-  Hinv[g,g] <- Hinv[g,g] + (Kinv - Agginv)
+  a <- Sys.time()
+  #Agginv <- solve(Agg)
+  #Hinv[g,g] <- Hinv[g,g] + (Kinv - Agginv)
+  Hinv[g,g] <- Kinv + Ainv[g,n]%*%solve(Ainv[n,n])%*%Ainv[n,g]
   if(verbose == TRUE){
-    cat("Done.\n")
+    cat("Done. ", Sys.time()-a, "\n")
   }
   
   # Return H inverse ---------------------------------------------------------------
@@ -174,5 +176,5 @@ ghap.getHinv <- function(
     out <- paste0("Final H inverse has a sparsity of ", sprintf("%.1f", sparsity), "%.\n")
   }
   return(Hinv)
-
+  
 }
