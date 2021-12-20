@@ -10,7 +10,7 @@ importFrom("utils", "download.file", "unzip", "write.table")
 importFrom("graphics", "axis", "barplot", "par", "plot", "rect",
            "segments", "text", "abline", "layout", "legend", "points")
 importFrom("sparseinv","cholPermute","Takahashi_Davis")
-importFrom("pedigreemm","getA","getAinv","editPed","pedigree")
+importFrom("pedigreemm","getA","getAInv","editPed","pedigree")
 importFrom("stats", "as.formula", "lm", "lm.fit", "model.frame",
            "model.matrix", "model.response", "na.omit", "pbinom",
            "pchisq", "pf", "pnorm", "ppois", "rpois", "qchisq", "qnorm",
