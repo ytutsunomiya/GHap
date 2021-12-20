@@ -14,7 +14,7 @@ ghap.getHinv(K, ped, include = NULL, depth = 3,
 
 \arguments{
   \item{K}{
-   An additive genomic relationship matrix, as provided for example by type=3 in \function(ghap.kinship).
+   An additive genomic relationship matrix, as provided for example by type=3 in \code{\link{ghap.kinship}}.
   }
   \item{ped}{
    A dataframe with columns "id", "sire" and "dam" containing pedigree data.
