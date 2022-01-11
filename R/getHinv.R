@@ -105,7 +105,7 @@ ghap.getHinv <- function(
                   sprintf(pad,length(ids)), " unique individuals in the pedigree\n",
                   sprintf(pad,length(sires)), " individuals listed as sires\n",
                   sprintf(pad,length(dams)), " individuals listed as dams\n",
-                  sprintf(pad,noparents), " individuals listed as both sire and dam\n",
+                  sprintf(pad,siredam), " individuals listed as both sire and dam\n",
                   sprintf(pad,self), " records with sire = dam (self-fertilization)\n",
                   sprintf(pad,nosire), " records with missing sire\n",
                   sprintf(pad,nodam), " records with missing dam\n",
