@@ -72,7 +72,7 @@
     A character vector indicating dam names, as provided in the fourth column of the sample file (optional).
   }
   \item{sex}{
-    A character vector indicating individual sex, as provided in the sixth column of the fam file (optional). Codes are converted as follows: 0 = NA, 1 = Male and 2 = Female.
+    A character vector indicating individual sex, as provided in the fifth column of the sample file (optional). Codes are converted as follows: 0 = NA, 1 = Male and 2 = Female.
   }
   \item{chr}{
     A character vector indicating chromosome identity for each marker.
