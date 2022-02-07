@@ -1,6 +1,6 @@
 #Function: ghap.phase2plink
 #License: GPLv3 or later
-#Modification date: 04 Feb 2022
+#Modification date: 07 Feb 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Convert phase object into plink file
@@ -60,8 +60,8 @@ ghap.phase2plink <- function(
   sire[which(is.na(sire) == TRUE)] <- "0"
   dam[which(is.na(dam) == TRUE)] <- "0"
   sex[which(is.na(sex) == TRUE)] <- "0"
-  sex[which(is.na(sex) == "M")] <- "1"
-  sex[which(is.na(sex) == "F")] <- "2"
+  sex[which(sex == "M")] <- "1"
+  sex[which(sex == "F")] <- "2"
   
   # Output fam.file file -------------------------------------------------------
   fwrite(x = as.data.table(cbind(pop,id,sire,dam,sex,"-9")), file = fam.file,
