@@ -63,6 +63,6 @@ S. Purcell et al. PLINK: a tool set for whole-genome association and population-
 # ### RUN ###
 #
 # # Convert to plink
-# ghap.phase2plink(object = phase, out.file = "human_hapmap3_chr2" ncores = 1)
+# ghap.phase2plink(object = phase, out.file = "human_hapmap3_chr2", ncores = 1)
 #
 }
