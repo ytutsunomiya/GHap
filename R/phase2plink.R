@@ -169,8 +169,8 @@ ghap.phase2plink <- function(
   marker <- object$marker[var.in]
   cm <- object$cm[var.in]
   bp <- object$bp[var.in]
-  a1 <- object$A1[var.in]
-  a2 <- object$A0[var.in]
+  a1 <- object$A0[var.in]
+  a2 <- object$A1[var.in]
   fwrite(x = as.data.table(cbind(chr,marker,cm,bp,a1,a2)), file = bim.file,
          quote = FALSE, sep=" ", row.names = FALSE, col.names=FALSE)
   
