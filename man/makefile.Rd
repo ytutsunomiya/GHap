@@ -8,7 +8,8 @@
  Create example files to test the package.
 }
 \usage{
- ghap.makefile(dataset = "human_hapmap3_chr2", format = "phase",
+ ghap.makefile(dataset = "human_hapmap3_chr2",
+               format = "phase",
                verbose = TRUE) 
 }
 \arguments{
@@ -47,8 +48,23 @@ Marco Milanesi <marco.milanesi.mm@gmail.com>
 # exlist <- ghap.exfiles()
 # View(exlist)
 #
-# # Copy an example dataset to the current working directory
+# # Copy human hapmap3 data in phase format
 # exfiles <- ghap.makefile()
+# file.copy(from = exfiles, to = "./")
+#
+# # Copy human hapmap3 data in pink format
+# exfiles <- ghap.makefile(dataset = "human_hapmap3_chr2",
+#                          format = "plink", verbose = TRUE)
+# file.copy(from = exfiles, to = "./")
+#
+# # Copy bovine hapmap data in phase format
+# exfiles <- ghap.makefile(dataset = "bovine_hapmap_50k",
+#                          format = "phase", verbose = TRUE)
+# file.copy(from = exfiles, to = "./")
+#
+# # Copy bovine hapmap data in plink format
+# exfiles <- ghap.makefile(dataset = "bovine_hapmap_50k",
+#                          format = "plink", verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
 }
 
