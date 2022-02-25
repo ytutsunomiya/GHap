@@ -57,7 +57,7 @@
       \item \strong{.pedrigree}: space-delimited file without header containing three columns: individual number, sire ID and dam ID. 
     }
     
-  The user can then treat these files as a regular GHap input, or use them to build the Oxford HAPS/SAMPLES format for analysis with other software. The simulated data can be useful in the evaluation of mating plans, since the in silico progeny can help in the characterization of the expected distribution of genomic inbreeding coefficients and GEBVs in the progeny.
+  The user can then treat these files as a regular GHap input, or use them to build the Oxford HAPS/SAMPLES format for analysis with other software. The simulated data can be useful in the evaluation of mating plans, since the in silico progeny can help in the characterization of the expected distribution of genomic inbreeding coefficients, ancestry proportions and EBVs in the progeny. Since the function does not check for sex differences between parents, the user can perform simulations of self-fertilization (relevant for plant breeders) and same sex matings.
   
 }
 
@@ -67,36 +67,31 @@
 
 \examples{
 
-# #### DO NOT RUN IF NOT NECESSARY ###
-# 
-# # Copy the example data in the current working directory
-# exfiles <- ghap.makefile()
-# file.copy(from = exfiles, to = "./")
-# 
-# # Compress phase data
-# ghap.compress(input.file = "human", out.file = "human")
-# 
-# # Load phase data
-# phase <- ghap.loadphase(input.file = "human")
-#
-# ### RUN ###
-# 
-# # Simulation using only two specific parents
-# parent1 <- phase$id[1]
-# parent2 <- phase$id[3]
-# ghap.simmating(phase, n.individuals = 100,
-#                parent1 = parent1, parent2 = parent2,
-#                out.file = "sim1", ncores = 1)
-#
-# # Simulation using candidates with unequal probabilities
-# parent1 <- c(0.5,0.25,0.25)
-# names(parent1) <- phase$id[c(1,3,5)]
-# parent2 <- c(0.7,0.2,0.1)
-# names(parent2) <- phase$id[c(7,9,11)]
-# ghap.simmating(phase, n.individuals = 100,
-#                parent1 = parent1, parent2 = parent2,
-#                out.file = "sim2", ncores = 1)
+#### DO NOT RUN IF NOT NECESSARY ###
 
+# Copy the example data in the current working directory
+exfiles <- ghap.makefile()
+file.copy(from = exfiles, to = "./")
 
+# Load phase data
+phase <- ghap.loadphase(input.file = "human_hapmap3_chr2")
+
+### RUN ###
+
+# Simulation using only two specific parents
+parent1 <- phase$id[1]
+parent2 <- phase$id[3]
+ghap.simmating(phase, n.individuals = 100,
+               parent1 = parent1, parent2 = parent2,
+               out.file = "sim1", ncores = 1)
+
+# Simulation using candidates with unequal probabilities
+parent1 <- c(0.5,0.25,0.25)
+names(parent1) <- phase$id[c(1,3,5)]
+parent2 <- c(0.7,0.2,0.1)
+names(parent2) <- phase$id[c(7,9,11)]
+ghap.simmating(phase, n.individuals = 100,
+               parent1 = parent1, parent2 = parent2,
+               out.file = "sim2", ncores = 1)
 
 }
