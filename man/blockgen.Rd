@@ -63,11 +63,8 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # exfiles <- ghap.makefile()
 # file.copy(from = exfiles, to = "./")
 # 
-# # Compress phase data
-# ghap.compress(input.file = "human", out.file = "human")
-# 
 # # Load phase data
-# phase <- ghap.loadphase(input.file = "human")
+# phase <- ghap.loadphase(input.file = "human_hapmap3_chr2")
 # 
 # 
 # ### RUN ###
@@ -78,5 +75,5 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # # Generate blocks of 100 kbp sliding 100 kbp at a time
 # blocks.kb <- ghap.blockgen(phase, windowsize = 100, slide = 100, unit = "kbp")
 
-}
 
+}
