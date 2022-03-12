@@ -1,6 +1,6 @@
 #Function: ghap.inbcoef
 #License: GPLv3 or later
-#Modification date: 06 Mar 2022
+#Modification date: 12 Mar 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute inbreeding coeficients
@@ -8,7 +8,6 @@
 ghap.inbcoef <- function(
   object,
   freq,
-  type=1,
   batchsize=NULL,
   only.active.samples=TRUE,
   only.active.variants=TRUE,
@@ -37,21 +36,15 @@ ghap.inbcoef <- function(
   # Map number of variants -----------------------------------------------------
   id.n <- object$nsamples.in
   id.in <- which(object$id.in)
-  if(class(object) == "GHap.haplo"){
-    var.n <- object$nalleles.in
-    var.in <- which(object$allele.in)
-  }else{
-    var.n <- object$nmarkers.in
-    var.in <- which(object$marker.in)
-  }
+  var.n <- object$nmarkers.in
+  var.in <- which(object$marker.in)
   
   # Check if vector of allele frequencies is acceptable ------------------------
   if(sum(names(freq) %in% object$marker[var.in]) != length(freq)){
     stop("The vector of allele frequencies contains unknown markers")
   }
   freq <- freq[object$marker[var.in]]
-  freq[which(freq == 0)] <- 1e-12
-
+  
   # Generate batch index -------------------------------------------------------
   if(is.null(batchsize) == TRUE){
     batchsize <- ceiling(var.n/10)
@@ -76,26 +69,23 @@ ghap.inbcoef <- function(
   }
   
   #Initialize inbreeding functions ---------------------------------------------
-  inbcoef <- vector(mode = "list", length = 3)
-  inbcoef[[1]] <- function(x, p){
-    mysum <- sum((x^2 - (1+2*p)*x + 2*p^2)/(2*p*(1-p)))
-    return(mysum)
+  inbcoef <- function(x, p){
+    usable <- which(p > 0 & p < 1 & is.na(x) == FALSE)
+    x <- x[usable]
+    p <- p[usable]
+    h <- 2*p*(1-p)
+    mysum1 <- sum(((x - 2*p)^2/h))
+    mysum2 <- sum(x*(2-x)/h)
+    mysum3 <- sum((x^2 - (1+2*p)*x + 2*p^2)/h)
+    return(c(mysum1,mysum2,mysum3,length(usable)))
   }
-  inbcoef[[2]] <- function(x, p){
-    mysum <- sum(((x - 2*p)^2)/(2*p*(1-p)))
-    return(mysum)
-  }
-  inbcoef[[3]] <- function(x, p){
-    mysum <- sum((x*(2-x))/(2*p*(1-p)))
-    return(mysum)
-  }
-  s <- c(1,-1,1)
-  k <- c(0,1,-1)
   
   #Inbreeding iterate function -------------------------------------------------
   ncores <- min(c(detectCores(), ncores))
   sumvariants <- 0
-  f <- rep(x = 0, times = length(id.in))
+  fhat1 <- rep(x = 0, times = length(id.in))
+  fhat2 <- fhat1; fhat3 <- fhat1
+  n <- rep(x = 0, times = length(id.in))
   for(i in 1:length(id1)){
     idx <- id1[i]:id2[i]
     Ztmp <- ghap.slice(object = object,
@@ -103,27 +93,29 @@ ghap.inbcoef <- function(
                        variants = var.in[idx],
                        index = TRUE,
                        unphase = TRUE,
-                       impute = TRUE,
+                       impute = FALSE,
                        ncores = ncores)
-    tmp <- apply(X = Ztmp, MARGIN = 2, FUN = inbcoef[[type]],
+    tmp <- apply(X = Ztmp, MARGIN = 2, FUN = inbcoef,
                  p = freq[object$marker[var.in[idx]]])
-    f <- f + tmp
+    tmp <- matrix(data = unlist(tmp), ncol = 4, byrow = TRUE)
+    fhat1 <- fhat1 + tmp[,1]
+    fhat2 <- fhat2 + tmp[,2]
+    fhat3 <- fhat3 + tmp[,3]
+    n <- n + tmp[,4]
     if(verbose == TRUE){
       sumvariants <- sumvariants + length(idx)
       cat(sumvariants, "variants processed.\r")
     }
   }
-  f <- k[type] + s[type]*f/var.n
-  if(type == 1){
-    f[which(f < 0)] <- 0
-    f[which(f > 1)] <- 1
-  }
+  fhat1 <- (fhat1/n)-1
+  fhat2 <- 1-(fhat2/n)
+  fhat3 <- fhat3/n
   tmp <- object$pop
   names(tmp) <- object$id
   tmp <- tmp[which(duplicated(names(tmp)) == FALSE)]
-  out <- data.frame(POP = tmp[names(f)], ID = names(f), C = f)
-  mycol <- c("UNI","HOM","GRM")
-  colnames(out)[3] <- paste0("F",mycol[type])
+  out <- data.frame(POP = tmp[colnames(Ztmp)], ID = colnames(Ztmp), N = n,
+                    fhat1, fhat2, fhat3)
+  colnames(out)[4:6] <- c("Fhat1","Fhat2","Fhat3")
   
   #Return output --------------------------------------------------------------
   return(out)
