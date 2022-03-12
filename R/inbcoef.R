@@ -1,6 +1,6 @@
 #Function: ghap.inbcoef
 #License: GPLv3 or later
-#Modification date: 12 Mar 2022
+#Modification date: 06 Mar 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute inbreeding coeficients
@@ -114,7 +114,7 @@ ghap.inbcoef <- function(
   names(tmp) <- object$id
   tmp <- tmp[which(duplicated(names(tmp)) == FALSE)]
   out <- data.frame(POP = tmp[colnames(Ztmp)], ID = colnames(Ztmp), N = n,
-                    fhat1, fhat2, fhat3)
+                    fhat1, fhat2, fhat3, stringsAsFactors = FALSE)
   colnames(out)[4:6] <- c("Fhat1","Fhat2","Fhat3")
   
   #Return output --------------------------------------------------------------
