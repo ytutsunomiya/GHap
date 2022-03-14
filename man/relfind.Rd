@@ -8,7 +8,7 @@ Find relatives in IBD estimates
 This function infers relationships from IBD sharing.
 }
 \usage{
-ghap.inbcoef(ibdpairs, v = 50, break3 = FALSE, ncores=1)
+ghap.relfind(ibdpairs, v = 50, break3 = FALSE, ncores=1)
 }
 
 \arguments{
@@ -43,7 +43,9 @@ This function implements a method based on composite likelihood scores to infer 
 3 = other types of relationships \cr
 4 = unrelated \cr
 
-Briefly, for each relationship type, the likelihood of each of the four IBD values is computed from a beta distribution with parameters a = m*v and b = m*(1-m)*v, where m is the expected value according to the relationship type and v is a hyperparameter controling the variance around the expected value (default v = 50). The composite likelihood is computed by summing the log-likelihoods for the four IBD values. The prediction is then given by adopting the relationship type with the highest composite likelihood score. Details of the expected values of each relationship type is found in our vignette. Importantly, relationship type 3 is in fact modeled through four different composite likelihoods, which are combined in order to achieve more robust and stable predictions. The user can choose to break down those four subclasses via the argument 'break3 = TRUE'. Although not recommended due to the reduced accuracy in distinguishing the four subclasses - in addition to the limitation of other possible relationships not implicitly modeled in this version of the package - breaking down these four subclasses may be useful for some users seeking specific relatives or willing to perform simulations. The additional subclasses are:
+Briefly, for each relationship type, the likelihood of each of the four IBD values is computed from a beta distribution with parameters a = m*v and b = m*(1-m)*v, where m is the expected value according to the relationship type and v is a hyperparameter controling the variance around the expected value (default v = 50). The composite likelihood is computed by summing the log-likelihoods for the four IBD values. The prediction is made by adopting the relationship type with the highest composite likelihood score. Details of the expected values of each relationship type is found in our vignette. This classification strategy is inspired by the method reported by Staples et al. (2014), albeit it is a different method. While Staples and collaborators infer relationships through Gaussian Kernel Density Estimation using only Z0 and Z1 values, our strategy uses the composite score formed by the sum of beta log-likelihoods for all IBD values.
+
+An important detail is that relationship type 3 is in fact modelled through four different composite likelihoods, which are combined in order to achieve more robust and stable predictions. The user can choose to break down those four subclasses via the argument 'break3 = TRUE'. Reporting the four subclasses is not default due to the reduced accuracy in distinguishing them. In addition, other relationship types not implicitly modelled in this version of the package may be confused with one of those subclasses. However, breaking these four subclasses down may be useful for users seeking specific relationships in the data, as well as for those willing to perform pedigree simulations. The additional subclasses are:
 
 3.1 = half-siblings, grandparent-grandchild or avuncular with inbreeding \cr
 3.2 = half-siblings, grandparent-grandchild or avuncular \cr
