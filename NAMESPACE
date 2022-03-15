@@ -12,7 +12,7 @@ importFrom("graphics", "axis", "barplot", "par", "plot", "rect",
 importFrom("sparseinv","cholPermute","Takahashi_Davis")
 importFrom("pedigreemm","getA","getAInv","editPed","pedigree")
 importFrom("stats", "as.formula", "lm", "lm.fit", "model.frame",
-           "model.matrix", "model.response", "na.omit", "pbeta", "pbinom",
+           "model.matrix", "model.response", "na.omit", "dbeta", "pbinom",
            "pchisq", "pf", "pnorm", "ppois", "rpois", "qchisq", "qnorm",
            "rchisq", "rnorm", "runif", "sd", "var","terms",
            "na.exclude","residuals","family","predict",
