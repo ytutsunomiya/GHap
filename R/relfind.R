@@ -1,6 +1,6 @@
 #Function: ghap.relfind
 #License: GPLv3 or later
-#Modification date: 12 Mar 2022
+#Modification date: 14 Mar 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Find relatives in IBD estimates
@@ -25,83 +25,77 @@ ghap.relfind <- function(
   ibdfun <- function(i){
     
     # Test pihat and Z values
-    Z0 = ibdpairs$Z0[i]
-    Z1 = ibdpairs$Z1[i]
-    Z2 = ibdpairs$Z2[i]
-    pihat <- ibdpairs$PI_HAT[i]
+    x <- unlist(ibdpairs[i,c("PI_HAT","Z0","Z1","Z2")])
+    x[which(x == 0)] <- 1e-5
+    x[which(x == 1)] <- 0.99999
+    pihat <- x[1]
+    Z0 = x[2]
+    Z1 = x[3]
+    Z2 = x[4]
     s <- rep(NA, times = 7)
     
     # 1 - Duplicates or monozygotic twins (-1)
     m <- c(0.01,0.01,0.01,0.01)
     a <- m*v
     b <- (1-m)*v
-    p <- pbeta(q = c(1-pihat,Z0,Z1,1-Z2), shape1 = a, shape2 = b, lower.tail = F, log.p = T)
+    p <- dbeta(x = c(1-pihat,Z0,Z1,1-Z2), shape1 = a, shape2 = b, log = T)
     s[1] <- sum(p)
-    print(s[1])
     
     # 2 - Parent-offspring with inbreeding (0)
     m <- c(0.75,0.01,0.50,0.50)
     a <- m*v
     b <- (1-m)*v
-    p <- pbeta(q = c(pihat,Z0,Z1,Z2), shape1 = a, shape2 = b, lower.tail = F, log.p = T)
+    p <- dbeta(x = c(pihat,Z0,Z1,Z2), shape1 = a, shape2 = b, log = T)
     s[2] <- sum(p)
-    print(s[2])
     
     # 3 - Parent-offspring (1)
     m <- c(0.50,0.01,0.01,0.01)
     a <- m*v
     b <- (1-m)*v
-    p <- pbeta(q = c(pihat,Z0,1-Z1,Z2), shape1 = a, shape2 = b, lower.tail = F, log.p = T)
+    p <- dbeta(x = c(pihat,Z0,1-Z1,Z2), shape1 = a, shape2 = b, log = T)
     s[3] <- sum(p)
-    print(s[3])
     
     # 4 - Full-siblings (2)
     m <- c(0.50,0.25,0.50,0.25)
     a <- m*v
     b <- (1-m)*v
-    p <- pbeta(q = c(pihat,Z0,Z1,Z2), shape1 = a, shape2 = b, lower.tail = F, log.p = T)
+    p <- dbeta(x = c(pihat,Z0,Z1,Z2), shape1 = a, shape2 = b, log = T)
     s[4] <- sum(p)
-    print(s[4])
     
     # 5 - Half-siblings, Grandparent-grandchild or avuncular with inbreeding (3.1)
     m <- c(0.375,0.375,0.50,0.125)
     a <- m*v
     b <- (1-m)*v
-    p <- pbeta(q = c(pihat,Z0,Z1,Z2), shape1 = a, shape2 = b, lower.tail = F, log.p = T)
+    p <- dbeta(x = c(pihat,Z0,Z1,Z2), shape1 = a, shape2 = b, log = T)
     s[5] <- sum(p)
-    print(s[5])
     
     # 6 - Half-siblings, Grandparent-grandchild or avuncular (3.2)
     m <- c(0.25,0.50,0.50,0.01)
     a <- m*v
     b <- (1-m)*v
-    p <- pbeta(q = c(pihat,Z0,Z1,Z2), shape1 = a, shape2 = b, lower.tail = F, log.p = T)
+    p <- dbeta(x = c(pihat,Z0,Z1,Z2), shape1 = a, shape2 = b, log = T)
     s[6] <- sum(p)
-    print(s[6])
     
     # 7 - Cousin or Half-avuncular (3.3)
     m <- c(0.125,0.75,0.25,0.01)
     a <- m*v
     b <- (1-m)*v
-    p <- pbeta(q = c(pihat,Z0,Z1,Z2), shape1 = a, shape2 = b, lower.tail = F, log.p = T)
+    p <- dbeta(x = c(pihat,Z0,Z1,Z2), shape1 = a, shape2 = b, log = T)
     s[7] <- sum(p)
-    print(s[7])
     
     # 8 - Half-cousin (3.4)
     m <- c(0.0625,0.875,0.125,0.01)
     a <- m*v
     b <- (1-m)*v
-    p <- pbeta(q = c(pihat,Z0,Z1,Z2), shape1 = a, shape2 = b, lower.tail = F, log.p = T)
+    p <- dbeta(x = c(pihat,Z0,Z1,Z2), shape1 = a, shape2 = b, log = T)
     s[8] <- sum(p)
-    print(s[8])
     
     # 9 - Unrelated (4)
     m <- c(0.01,0.01,0.01,0.01)
     a <- m*v
     b <- (1-m)*v
-    p <- pbeta(q = c(pihat,1-Z0,Z1,Z2), shape1 = a, shape2 = b, lower.tail = F, log.p = T)
+    p <- dbeta(x = c(pihat,1-Z0,Z1,Z2), shape1 = a, shape2 = b, log = T)
     s[9] <- sum(p)
-    print(s[9])
     
     # Class
     if(break3 == FALSE){
