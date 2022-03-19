@@ -100,10 +100,10 @@ ghap.relfind <- function(
     # Class
     if(break3 == FALSE){
       scores <- c(-1,0,1,2,3,3,3,3,4)
-      s <- scores[which(s == max(s))]
+      s <- min(scores[which(s == max(s))])
     }else{
       scores <- c(-1,0,1,2,3.1,3.2,3.3,3.4,4)
-      s <- scores[which(s == max(s))]
+      s <- min(scores[which(s == max(s))])
     }
     return(s)
     
