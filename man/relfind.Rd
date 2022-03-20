@@ -8,7 +8,7 @@ Find relatives in IBD estimates
 This function infers relationships from IBD sharing.
 }
 \usage{
-ghap.relfind(ibdpairs, v = 50, break3 = FALSE, ncores=1)
+ghap.relfind(ibdpairs, v = 50, breakclass = FALSE, ncores=1)
 }
 
 \arguments{
@@ -18,8 +18,8 @@ ghap.relfind(ibdpairs, v = 50, break3 = FALSE, ncores=1)
   \item{v}{
     A hyperparameter controling the variance of the likelihood functions (smaller values lead to more variance).
   }
-  \item{break3}{
-    A logical value indicating if relationship type 3 should be reported using its subclasses (default = FALSE).
+  \item{breakclass}{
+    A logical value indicating if relationship types 2 and 3 should be reported using their subclasses (default = FALSE).
   }
   \item{ncores}{
    A numeric value specifying the number of cores to be used in parallel computations (default = 1).
@@ -45,14 +45,16 @@ This function implements a method based on composite likelihood scores to infer 
 
 Briefly, for each relationship type, the likelihood of each of the four IBD values is computed from a beta distribution with parameters a = m*v and b = (1-m)*v, where m is the expected value according to the relationship type and v is a hyperparameter controling the variance around the expected value (default v = 50). The composite likelihood is computed by summing the log-likelihoods for the four IBD values. The prediction is made by adopting the relationship type with the highest composite likelihood score. Details of the expected values of each relationship type is found in our vignette. This classification strategy is inspired by the method reported by Staples et al. (2014), albeit it is a different method. While Staples and collaborators infer relationships through Gaussian Kernel Density Estimation using only Z0 and Z1 values, our strategy uses the composite score formed by the sum of beta log-likelihoods for all IBD values.
 
-An important detail is that relationship type 3 is in fact modelled through four different composite likelihoods, which are combined in order to achieve more robust and stable predictions. The user can choose to break down those four subclasses via the argument 'break3 = TRUE'. Reporting the four subclasses is not default due to the reduced accuracy in distinguishing them. In addition, other relationship types not implicitly modelled in this version of the package may be confused with one of those subclasses. However, breaking these four subclasses down may be useful for users seeking specific relationships in the data, as well as for those willing to perform pedigree simulations. The additional subclasses are:
+An important detail is that relationship types 2 and 3 are in fact modelled through two and four different composite likelihoods, respectively, which are combined in order to achieve more robust and stable predictions. The user can choose to break down the subclasses via the argument 'breakclass = TRUE'. Reporting the subclasses is not default due to the reduced accuracy in distinguishing them. In addition, other relationship types not implicitly modelled in this version of the package may be confused with one of those subclasses. However, breaking these subclasses down may be useful for users seeking specific relationships in the data, as well as for those willing to perform pedigree simulations. The additional subclasses are:
 
+2.1 = full-siblings\cr
+2.2 = full-siblings from a self-fertilized parent (or related parents)\cr
 3.1 = half-siblings, grandparent-grandchild or avuncular with inbreeding \cr
 3.2 = half-siblings, grandparent-grandchild or avuncular \cr
 3.3 = first-cousin or half-avuncular \cr
 3.4 = half-cousin and distant relatives \cr
 
-If the user chooses to run the analysis with 'break3 = TRUE', beware that other types of cryptic relationships will be misclassified as pertaining to one of those four subclasses.
+If the user chooses to run the analysis with 'breakclass = TRUE', beware that other types of cryptic relationships will be misclassified as pertaining to one of those four subclasses.
 }
 
 \author{
