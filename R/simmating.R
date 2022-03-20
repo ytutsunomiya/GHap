@@ -1,6 +1,6 @@
 #Function: ghap.simmating
 #License: GPLv3 or later
-#Modification date: 10 Sep 2021
+#Modification date: 20 Mar 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Simulate individuals from specified matings
@@ -10,7 +10,7 @@ ghap.simmating <- function(
   n.individuals = 1,
   parent1 = NULL,
   parent2 = NULL,
-  model = "uniform",
+  model = "proportional",
   out.file,
   only.active.markers = TRUE,
   ncores = 1,
