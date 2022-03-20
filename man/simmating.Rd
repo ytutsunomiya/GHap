@@ -10,7 +10,7 @@
 \usage{
   ghap.simmating(object, n.individuals = 1,
                  parent1 = NULL, parent2 = NULL,
-                 model = "uniform", out.file,
+                 model = "proportional", out.file,
                  only.active.markers = TRUE,
                  ncores = 1, verbose = TRUE)
 }
@@ -30,7 +30,7 @@
    Vector containing the ids of candidate dams. When a character vector is provided, all candidates are considered equally likely to be selected. Alternatively, a named numeric vector of probabilities (with dam ids used as names) can be used in order to make specific dams more likely to be selected.
   }
   \item{model}{
-   The model used for sampling the number of recombinations per chromosome. By default ("uniform"), this number is sampled from a Poisson distribution with mean 1 for each chromosome. Option "proportional" assumes that the number of recombinations per meiosis across all chromosomes follows a Poisson distribution with mean equal to nchr (the number of chromosome pairs), such that the number of recombinations for a given chromosome is sampled from a Poisson distribution with mean prop*nchr, where prop is the proportion of the genome size covered by that chromosome. Therefore, this option takes chromosome size in consideration while sampling the number of recombination events. Alternatively, the argument can also take a named vector of chromosome-specific recombination rates in cM/Mb. In this last option, the number of recombinations for a given chromosome is sampled from a Poisson distribution with mean chrsize*chrrate/100, where chrsize is the size of the chromosome in Mb and chrrate is the recombination rate in cM/Mb.
+   The model used for sampling the number of recombinations per chromosome (default = "proportional"). See details for more options.
   }
   \item{out.file}{
     Output file name.
@@ -48,8 +48,14 @@
 }
 
 \details{
-  Given a list of candidate parents, this function samples sire i with probability p_i and dam j with probability p_j (these probabilities should be provided by the user, otherwise matings will occur at random). Once sire and dam are sampled, gametes are simulated using their observed haplotypes. Recombination is assumed uniform across the genome with 1 Mb ~ cM. The number of recombination events per chromosome are sampled from a Poisson distribuition with mean = 1. The progeny is then obtained by uniting the simulated gametes. The process is repeated for each simulated individual. If model = "proportional" is used, then the number of recombination events for a given chromosome is sampled from a Poisson distribution with mean = prop*nchr, where prop is the proportion of the genome size covered by that chromosome and nchr is the number of chromosomes. The function outputs the following files:
+  Given a list of candidate parents, this function samples sire i with probability p_i and dam j with probability p_j (these probabilities should be provided by the user, otherwise matings will occur at random). Once sire and dam are sampled, gametes are simulated by creating recombinant parental haplotypes. The progeny is then obtained by uniting the simulated gametes.
   
+The default model ("proportional") assumes that the number of recombinations per meiosis across all chromosomes follows a Poisson distribution with mean equal to nchr (the number of chromosome pairs), such that the number of recombinations for a given chromosome is sampled from a Poisson distribution with mean prop*nchr, where prop is the proportion of the genome size covered by that chromosome. Therefore, this option takes chromosome size in consideration while sampling the number of recombination events. In option "uniform", the number of recombinations is sampled from a Poisson distribution with mean 1 for each chromosome instead. Alternatively, the model argument can also take a named vector of chromosome-specific recombination rates in cM/Mb. In this last option, the number of recombinations for a given chromosome is sampled from a Poisson distribution with mean chrsize*chrrate/100, where chrsize is the size of the chromosome in Mb and chrrate is the recombination rate in cM/Mb.  
+}
+
+\value{
+The function outputs the following files:
+
     \itemize{
       \item \strong{.samples}: space-delimited file without header containing two columns: Population and ID of simulated individuals (numbered from 1 to n). The first column is filled with "SIM". 
       \item \strong{.markers}: space-delimited file without header containing five columns: Chromosome, Marker, Position (in bp), Reference Allele (A0) and Alternative Allele (A1).
@@ -67,31 +73,31 @@
 
 \examples{
 
-#### DO NOT RUN IF NOT NECESSARY ###
-
-# Copy the example data in the current working directory
-exfiles <- ghap.makefile()
-file.copy(from = exfiles, to = "./")
-
-# Load phase data
-phase <- ghap.loadphase(input.file = "human_hapmap3_chr2")
-
-### RUN ###
-
-# Simulation using only two specific parents
-parent1 <- phase$id[1]
-parent2 <- phase$id[3]
-ghap.simmating(phase, n.individuals = 100,
-               parent1 = parent1, parent2 = parent2,
-               out.file = "sim1", ncores = 1)
-
-# Simulation using candidates with unequal probabilities
-parent1 <- c(0.5,0.25,0.25)
-names(parent1) <- phase$id[c(1,3,5)]
-parent2 <- c(0.7,0.2,0.1)
-names(parent2) <- phase$id[c(7,9,11)]
-ghap.simmating(phase, n.individuals = 100,
-               parent1 = parent1, parent2 = parent2,
-               out.file = "sim2", ncores = 1)
+# #### DO NOT RUN IF NOT NECESSARY ###
+# 
+# # Copy the example data in the current working directory
+# exfiles <- ghap.makefile()
+# file.copy(from = exfiles, to = "./")
+# 
+# # Load phase data
+# phase <- ghap.loadphase(input.file = "human_hapmap3_chr2")
+# 
+# ### RUN ###
+# 
+# # Simulation using only two specific parents
+# parent1 <- phase$id[1]
+# parent2 <- phase$id[3]
+# ghap.simmating(phase, n.individuals = 100,
+#                parent1 = parent1, parent2 = parent2,
+#                out.file = "sim1", ncores = 1)
+# 
+# # Simulation using candidates with unequal probabilities
+# parent1 <- c(0.5,0.25,0.25)
+# names(parent1) <- phase$id[c(1,3,5)]
+# parent2 <- c(0.7,0.2,0.1)
+# names(parent2) <- phase$id[c(7,9,11)]
+# ghap.simmating(phase, n.individuals = 100,
+#                parent1 = parent1, parent2 = parent2,
+#                out.file = "sim2", ncores = 1)
 
 }
