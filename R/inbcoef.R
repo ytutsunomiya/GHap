@@ -1,6 +1,6 @@
 #Function: ghap.inbcoef
 #License: GPLv3 or later
-#Modification date: 06 Mar 2022
+#Modification date: 20 Mar 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute inbreeding coeficients
@@ -73,19 +73,28 @@ ghap.inbcoef <- function(
     usable <- which(p > 0 & p < 1 & is.na(x) == FALSE)
     x <- x[usable]
     p <- p[usable]
-    h <- 2*p*(1-p)
-    mysum1 <- sum(((x - 2*p)^2/h))
-    mysum2 <- sum(x*(2-x)/h)
-    mysum3 <- sum((x^2 - (1+2*p)*x + 2*p^2)/h)
-    return(c(mysum1,mysum2,mysum3,length(usable)))
+    q <- 1 - p
+    hom <- which(x != 1)
+    het <- which(x == 1)
+    P.hom.ibd <- 1
+    P.het.ibd <- 0
+    P.hom.ibs <- p^2 + q^2
+    P.het.ibs <- 2*p*q
+    mysum1 <- sum(((x - 2*p)^2/P.het.ibs))
+    mysum2 <- sum(x*(2-x)/P.het.ibs)
+    mysum3 <- sum((x^2 - (1+2*p)*x + 2*p^2)/P.het.ibs)
+    mysum4 <- length(het)
+    mysum5 <- sum(P.het.ibs)
+    return(c(mysum1,mysum2,mysum3,mysum4,mysum5,length(usable)))
   }
   
   #Inbreeding iterate function -------------------------------------------------
   ncores <- min(c(detectCores(), ncores))
   sumvariants <- 0
   fhat1 <- rep(x = 0, times = length(id.in))
-  fhat2 <- fhat1; fhat3 <- fhat1
+  fhat2 <- fhat1; fhat3 <- fhat1; fhat4 <- fhat1
   n <- rep(x = 0, times = length(id.in))
+  ibsexp <- n
   for(i in 1:length(id1)){
     idx <- id1[i]:id2[i]
     Ztmp <- ghap.slice(object = object,
@@ -97,11 +106,13 @@ ghap.inbcoef <- function(
                        ncores = ncores)
     tmp <- apply(X = Ztmp, MARGIN = 2, FUN = inbcoef,
                  p = freq[object$marker[var.in[idx]]])
-    tmp <- matrix(data = unlist(tmp), ncol = 4, byrow = TRUE)
+    tmp <- matrix(data = unlist(tmp), ncol = 6, byrow = TRUE)
     fhat1 <- fhat1 + tmp[,1]
     fhat2 <- fhat2 + tmp[,2]
     fhat3 <- fhat3 + tmp[,3]
-    n <- n + tmp[,4]
+    fhat4 <- fhat4 + tmp[,4]
+    ibsexp <- ibsexp + tmp[,5]
+    n <- n + tmp[,6]
     if(verbose == TRUE){
       sumvariants <- sumvariants + length(idx)
       cat(sumvariants, "variants processed.\r")
@@ -110,12 +121,13 @@ ghap.inbcoef <- function(
   fhat1 <- (fhat1/n)-1
   fhat2 <- 1-(fhat2/n)
   fhat3 <- fhat3/n
+  fhat4 <- 1-(fhat4/ibsexp)
   tmp <- object$pop
   names(tmp) <- object$id
   tmp <- tmp[which(duplicated(names(tmp)) == FALSE)]
   out <- data.frame(POP = tmp[colnames(Ztmp)], ID = colnames(Ztmp), N = n,
-                    fhat1, fhat2, fhat3, stringsAsFactors = FALSE)
-  colnames(out)[4:6] <- c("Fhat1","Fhat2","Fhat3")
+                    fhat1, fhat2, fhat3, fhat4, stringsAsFactors = FALSE)
+  colnames(out)[4:7] <- c("Fhat1","Fhat2","Fhat3","Fhat4")
   
   #Return output --------------------------------------------------------------
   return(out)
