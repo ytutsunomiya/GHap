@@ -1,6 +1,6 @@
 #Function: ghap.relfind
 #License: GPLv3 or later
-#Modification date: 14 Mar 2022
+#Modification date: 20 Mar 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Find relatives in IBD estimates
@@ -8,7 +8,7 @@
 ghap.relfind <- function(
   ibdpairs,
   v = 50,
-  break3 = FALSE,
+  breakclass = FALSE,
   ncores=1
 ){
   
@@ -41,7 +41,7 @@ ghap.relfind <- function(
     p <- dbeta(x = c(1-pihat,Z0,Z1,1-Z2), shape1 = a, shape2 = b, log = T)
     s[1] <- sum(p)
     
-    # 2 - Parent-offspring with inbreeding (0)
+    # 2 - Parent-offspring self-feritilization (0)
     m <- c(0.75,0.01,0.50,0.50)
     a <- m*v
     b <- (1-m)*v
@@ -55,54 +55,61 @@ ghap.relfind <- function(
     p <- dbeta(x = c(pihat,Z0,1-Z1,Z2), shape1 = a, shape2 = b, log = T)
     s[3] <- sum(p)
     
-    # 4 - Full-siblings (2)
+    # 4 - Full-siblings (2.1)
     m <- c(0.50,0.25,0.50,0.25)
     a <- m*v
     b <- (1-m)*v
     p <- dbeta(x = c(pihat,Z0,Z1,Z2), shape1 = a, shape2 = b, log = T)
     s[4] <- sum(p)
     
-    # 5 - Half-siblings, Grandparent-grandchild or avuncular with inbreeding (3.1)
-    m <- c(0.375,0.375,0.50,0.125)
+    # 5 - Full-siblings self-fertilization (2.2)
+    m <- c(0.50,0.50,0.01,0.50)
     a <- m*v
     b <- (1-m)*v
     p <- dbeta(x = c(pihat,Z0,Z1,Z2), shape1 = a, shape2 = b, log = T)
     s[5] <- sum(p)
     
-    # 6 - Half-siblings, Grandparent-grandchild or avuncular (3.2)
-    m <- c(0.25,0.50,0.50,0.01)
+    # 6 - Half-siblings, Grandparent-grandchild or avuncular with inbreeding (3.1)
+    m <- c(0.375,0.375,0.50,0.125)
     a <- m*v
     b <- (1-m)*v
     p <- dbeta(x = c(pihat,Z0,Z1,Z2), shape1 = a, shape2 = b, log = T)
     s[6] <- sum(p)
     
-    # 7 - Cousin or Half-avuncular (3.3)
-    m <- c(0.125,0.75,0.25,0.01)
+    # 7 - Half-siblings, Grandparent-grandchild or avuncular (3.2)
+    m <- c(0.25,0.50,0.50,0.01)
     a <- m*v
     b <- (1-m)*v
     p <- dbeta(x = c(pihat,Z0,Z1,Z2), shape1 = a, shape2 = b, log = T)
     s[7] <- sum(p)
     
-    # 8 - Half-cousin (3.4)
-    m <- c(0.0625,0.875,0.125,0.01)
+    # 8 - Cousin or Half-avuncular (3.3)
+    m <- c(0.125,0.75,0.25,0.01)
     a <- m*v
     b <- (1-m)*v
     p <- dbeta(x = c(pihat,Z0,Z1,Z2), shape1 = a, shape2 = b, log = T)
     s[8] <- sum(p)
     
-    # 9 - Unrelated (4)
+    # 9 - Half-cousin (3.4)
+    m <- c(0.0625,0.875,0.125,0.01)
+    a <- m*v
+    b <- (1-m)*v
+    p <- dbeta(x = c(pihat,Z0,Z1,Z2), shape1 = a, shape2 = b, log = T)
+    s[9] <- sum(p)
+    
+    # 10 - Unrelated (4)
     m <- c(0.01,0.01,0.01,0.01)
     a <- m*v
     b <- (1-m)*v
     p <- dbeta(x = c(pihat,1-Z0,Z1,Z2), shape1 = a, shape2 = b, log = T)
-    s[9] <- sum(p)
+    s[10] <- sum(p)
     
     # Class
-    if(break3 == FALSE){
-      scores <- c(-1,0,1,2,3,3,3,3,4)
+    if(breakclass == FALSE){
+      scores <- c(-1,0,1,2,2,3,3,3,3,4)
       s <- min(scores[which(s == max(s))])
     }else{
-      scores <- c(-1,0,1,2,3.1,3.2,3.3,3.4,4)
+      scores <- c(-1,0,1,2.1,2.2,3.1,3.2,3.3,3.4,4)
       s <- min(scores[which(s == max(s))])
     }
     return(s)
