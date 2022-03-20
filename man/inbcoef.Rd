@@ -49,19 +49,19 @@ The inbreeding measures are computed as k + s*sum(f)/d, where k is a constant, s
 Type = 1 (based on genomic relationship)\cr
 k = -1\cr
 s = 1\cr
-f = ((m - 2*p)^2)/(2p*(1-p))\cr
+f = ((m - 2*p)^2)/(2*p*(1-p))\cr
 d = n\cr
 
 Type = 2 (excess homozygosity)\cr
 k = 1\cr
 s = -1\cr
-f = m*(2-m)/(2p*(1-p))\cr
+f = m*(2-m)/(2*p*(1-p))\cr
 d = n\cr
 
 Type = 3 (correlation between uniting gametes)\cr
 k = 0\cr
 s = 1\cr
-f = (m^2 - (1+2*p) + 2*p^2)/(2p*(1-p))\cr
+f = (m^2 - (1+2*p) + 2*p^2)/(2*p*(1-p))\cr
 d = n\cr
 
 Type = 4 (method-of-moments)\cr
