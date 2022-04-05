@@ -1,6 +1,6 @@
 #Function: ghap.simmating
 #License: GPLv3 or later
-#Modification date: 20 Mar 2022
+#Modification date: 5 Apr 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Simulate individuals from specified matings
@@ -78,7 +78,8 @@ ghap.simmating <- function(
     crossovers1 <- rpois(n = 1, lambda = chrmean[chr])
     crossovers2 <- rpois(n = 1, lambda = chrmean[chr])
     if(crossovers1 > 0){
-      breakpoints1 <- sample(x = 1:m, size = crossovers1, replace = F)
+      breakpoints1 <- sample(x = 1:m, size = crossovers1,
+                             replace = F, prob = probchr)
       breakpoints1 <- sort(breakpoints1)
       parent1idx <- which(colnames(parenthap) == indtbl$parent1[i])
       parent1idx <- sample(parent1idx, size=2, replace=F)
@@ -98,7 +99,8 @@ ghap.simmating <- function(
       hap1 <- parenthap[,parent1idx[1]]
     }
     if(crossovers2 > 0){
-      breakpoints2 <- sample(x = 1:m, size = crossovers2, replace = F)
+      breakpoints2 <- sample(x = 1:m, size = crossovers2,
+                             replace = F, prob = probchr)
       breakpoints2 <- sort(breakpoints2)
       parent2idx <- which(colnames(parenthap) == indtbl$parent2[i])
       parent2idx <- sample(parent2idx, size=2, replace=F)
@@ -145,16 +147,32 @@ ghap.simmating <- function(
   if("proportional" %in% model & length(model) == 1){
     chrprop <- chrsize/sum(chrsize)
     chrmean <- chrprop*length(chrsize)
+    probs <- NULL
   }else if("uniform" %in% model & length(model) == 1){
     chrmean <- nmkrchr
     chrmean[1:length(chrmean)] <- 1
+    probs <- NULL
   }else if(identical(names(model), names(chrsize)) & is.numeric(model) == TRUE){
     chrmean <- model*(chrsize/1e+6)/100
+    model <- "chromosome"
+    probs <- NULL
+  }else if(sum(names(model) %in% object$marker) == length(model) & is.numeric(model) == TRUE){
+    chrmean <- rep(x = NA, times = length(uniqchr))
+    names(chrmean) <- uniqchr
+    probs <- NULL
+    for(k in 1:length(chrmean)){
+      mkrtmp <- object$marker[which(object$chr == names(chrmean)[k])]
+      mkrtmp <- mkrtmp[which(mkrtmp %in% names(model))]
+      chrmean[k] <- mean(model[mkrtmp])*(chrsize[k]/1e+6)/100
+      probs <- c(probs,model[mkrtmp]/sum(model[mkrtmp]))
+    }
+    model <- "marker"
   }else{
     emsg <- paste0("\nArgument model has to be one of the following:\n",
                    "a) 'uniform'\n",
                    "b) 'proportional'\n",
-                   "c) named vector with chromosome-specific recombination rates\n")
+                   "c) named vector with chromosome-specific recombination rates\n",
+                   "d) named vector with marker-specific recombination rates\n")
     stop(emsg)
   }
   for(chr in uniqchr){
@@ -164,6 +182,11 @@ ghap.simmating <- function(
     m <- nmkrchr[chr]
     mkrsidx <- which(object$marker.in & object$chr == chr)
     mkrs <- object$marker[mkrsidx]
+    if(model == "marker"){
+      probchr <- probs[mkrs]
+    }else{
+      probchr <- NULL
+    }
     parenthap <- ghap.slice(object = object, ids = unique(c(indtbl$parent1,indtbl$parent2)),
                             variants = mkrs, ncores = ncores)
     if(Sys.info()["sysname"] == "Windows"){
