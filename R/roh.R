@@ -1,6 +1,6 @@
 #Function: ghap.roh
 #License: GPLv3 or later
-#Modification date: 05 Oct 2021
+#Modification date: 09 Apr 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Map streches of homozygous genotypes
@@ -10,6 +10,7 @@ ghap.roh <- function(
   minroh = 1e+6,
   method = "hmm",
   freq = NULL,
+  genpos = NULL,
   inbcoef = NULL,
   error = 0.25/100,
   only.active.samples = TRUE,
@@ -65,7 +66,7 @@ ghap.roh <- function(
       emiss.n <- list(freqchr^2 + (1-freqchr)^2, 2*freqchr*(1-freqchr))
       
       #Transition probabilities
-      expr <- exp(-2*(c(bps[1],diff(bps))/1e+6)/100)
+      expr <- exp(-2*gendistchr)
       trans.roh2roh <- expr + (1-expr)*f
       trans.roh2n <- (1-expr)*(1-f)
       trans.n2n <- expr + (1-expr)*(1-f)
@@ -178,10 +179,16 @@ ghap.roh <- function(
     }
     mkrs <- object$marker[which(object$chr == chr & object$marker.in == TRUE)]
     m <- length(mkrs)
-    bps <- object$bp
-    names(bps) <- object$marker
-    bps <- bps[mkrs]
     freqchr <- freq[mkrs]
+    if(is.null(genpos)){
+      bps <- object$bp
+      names(bps) <- object$marker
+      bps <- bps[mkrs]
+      gendistchr <- (c(bps[1],diff(bps))/1e+6)/100
+    }else{
+      genposchr <- genpos[mkrs]
+      gendistchr <- c(genposchr[1],diff(genposchr))/100
+    }
     geno <- ghap.slice(object = object, ids = ids, ncores = ncores,
                        variants = mkrs, unphase = TRUE, impute = TRUE)
     if(Sys.info()["sysname"] == "Windows"){
