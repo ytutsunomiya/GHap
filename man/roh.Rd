@@ -9,8 +9,9 @@
 }
 \usage{
  ghap.roh(object, minroh = 1e+6, method = "hmm", freq = NULL,
-          inbcoef = NULL, error = 0.25/100, only.active.samples = TRUE,
-          only.active.markers = TRUE, ncores = 1, verbose = TRUE)
+          genpos = NULL, inbcoef = NULL, error = 0.25/100,
+          only.active.samples = TRUE, only.active.markers = TRUE,
+          ncores = 1, verbose = TRUE)
 }
 
 \arguments{
@@ -44,11 +45,14 @@
   \item{freq}{
    Named numeric vector of allele frequencies, such as provided by function \code{\link{ghap.freq}}.
   }
+  \item{genpos}{
+   Named numeric vector of genetic positions. If not supplied, 1 cM = 1 Mb is assumed and genetic distances between consecutive markers are set to d/1e+6, where d is the distance in base pairs.
+  }
   \item{inbcoef}{
    Named numeric vector of starting values for genomic inbreeding (i.e., guess for the proportion of the genome covered by ROH).
   }
   \item{error}{
-   Numeric value representing the expected genotyping error rate (default = 0.001).
+   Numeric value representing the expected genotyping error rate (default = 0.25/100).
   }
 
 
@@ -89,7 +93,7 @@ This function searchs for runs of homozygosity (ROH) via two different methods: 
 
 The 'naive' method simply finds streches of homozygous genotypes in the observed haplotypes that are larger then a user-definied minimum size (default is 1 Mbp). The 'hmm' method uses a Hidden Markov Model that takes genotyping error and recombination into account while detecting ROHs. The 'hmm' model in GHap is similar to the ones described by Narasimhan et al (2016) and Druet & Gautier (2017), differing slightly in model fitting and definition of transition and emission probabilities (details are covered in our vignette). \cr
 
-The 'hmm' method requires allele frequencies for each marker, as well as starting values for the expected proportion of the genome covered by ROH (genomic inbreeding) for each individual. Estimates of allele frequencies can be either based on a reference or estimated from the data with the \code{\link{ghap.freq}} function. Starting values for genomic inbreeding can be obtained by running the function with the 'naive' method first and then computing starting values with \code{\link{ghap.froh}} (see the examples).\cr
+The 'hmm' method requires allele frequencies for each marker, as well as starting values for the expected proportion of the genome covered by ROH (genomic inbreeding) for each individual. Estimates of allele frequencies can be either based on a reference or estimated from the data with the \code{\link{ghap.freq}} function. Starting values for genomic inbreeding can be obtained by running the function with the 'naive' method first and then computing starting values with \code{\link{ghap.froh}} (see the examples). A genetic map with positions in cM can be provided by the user via the genpos argument. If genetic positions are not provided, 1 cM = 1 Mb is assumed.\cr
 }
 
 \author{
