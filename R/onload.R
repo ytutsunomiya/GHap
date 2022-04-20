@@ -4,6 +4,6 @@
   mymsg <- paste(mymsg,"For more information use: help(package = 'GHap')\n")
   mymsg <- paste(mymsg,"                          citation(package = 'GHap')\n")
   mymsg <- paste(mymsg,"                          browseVignettes(package = 'GHap')\n\n")
-  mymsg <- paste(mymsg,"Version date: 6 Apr 2022\n\n")
+  mymsg <- paste(mymsg,"Version date: 20 Apr 2022\n\n")
   packageStartupMessage(mymsg)
 }
