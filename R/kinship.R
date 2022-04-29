@@ -1,6 +1,6 @@
 #Function: ghap.kinship
 #License: GPLv3 or later
-#Modification date: 20 Oct 2021
+#Modification date: 29 Apr 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute relationship matrix
@@ -176,6 +176,7 @@ ghap.kinship <- function(
                        unphase = TRUE,
                        impute = TRUE,
                        ncores = ncores)
+    zids <- colnames(Ztmp)
     p <- apply(X = Ztmp, MARGIN = 1, FUN = freqfun)
     exc <- which(pmin(p,1-p) == 0)
     if(length(exc) > 0){
@@ -203,7 +204,7 @@ ghap.kinship <- function(
     q <- scaleval[[type]]() 
   }
   K <- K/q
-  colnames(K) <- object$id[id.in]
+  colnames(K) <- zids
   rownames(K) <- colnames(K)
   
   #Induce sparsity ------------------------------------------------------------
