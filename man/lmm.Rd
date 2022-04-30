@@ -11,7 +11,7 @@ Linear mixed model fitting for fixed effects, random effects and variance compon
 ghap.lmm(formula, data, covmat = NULL, weights = NULL,
          vcp.initial = NULL, vcp.estimate = TRUE,
          vcp.conv = 1e-12, errors = TRUE, em.reml = 10,
-         tol = 1e-10, verbose = TRUE)
+         tol = 1e-10, extras = NULL, verbose = TRUE)
 }
 
 \arguments{
@@ -45,6 +45,9 @@ ghap.lmm(formula, data, covmat = NULL, weights = NULL,
  \item{tol}{
   A numeric value specifying the scalar to add to the diagonal of the left hand side of mixed models equations if it is not inversible (default = 1e-12).
  }
+ \item{extras}{
+  A character vector indicating extra output to be included in the results list. Currently supported extras are the full inverse of the coefficient matrix ("LHSi") and the phenotypic (co)variance matrix ("V").
+ }
  \item{verbose}{
    A logical value specifying whether log messages should be printed (default = TRUE).
  }
@@ -67,7 +70,9 @@ The returned GHap.lmm object is a list with the following items:
  \item{vcp}{
   A dataframe with estimates and standard errors of variance components.
  }
-
+ \item{extras}{
+  A list of extra outputs requested by the user (see arguments for possible extras).
+ }
 
 }
 
