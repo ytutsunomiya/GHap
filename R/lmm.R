@@ -1,6 +1,6 @@
 #Function: ghap.lmm
 #License: GPLv3 or later
-#Modification date: 09 Nov 2021
+#Modification date: 30 Apr 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: mixed model fitting
@@ -412,7 +412,9 @@ ghap.lmm <- function(
     tmp[,1] <- coef[idx]
     if(errors == TRUE){
       tmp[,2] <- stde[idx]
-      tmp[,3] <- sqrt(1 - (stde[idx]^2)/(vcp.new[i]))      
+      tmp[,3] <- 1 - (stde[idx]^2)/vcp.new[i]
+      tmp[which(tmp[,3] <= 0),3] <- 1e-6
+      tmp[,3] <- sqrt(tmp[,3])      
     }
     results$random[[ranterms[i]]] <- tmp
   }
