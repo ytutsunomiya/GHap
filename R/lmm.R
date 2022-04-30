@@ -16,6 +16,7 @@ ghap.lmm <- function(
   errors = TRUE,
   em.reml = 10,
   tol = 1e-10,
+  extras = NULL,
   verbose = TRUE
 ){
   
@@ -42,6 +43,7 @@ ghap.lmm <- function(
   # Assemble fixed effects -------------------------------------------------
   form <- paste0(response, "~", paste(fixterms, collapse = "+"))
   X <- sparse.model.matrix(as.formula(form), data=data)
+  fixnames <- colnames(X)
   y <- data[,response]
   n <- length(y)
   s <- ncol(X)
@@ -88,9 +90,11 @@ ghap.lmm <- function(
   # Assemble random effects -------------------------------------------------
   q <- NULL
   Z <- vector(mode = "list", length = length(ranterms))
+  rannames <- NULL
   for(i in 1:length(ranterms)){
     form <- paste0("~ 0 + ", ranterms[i])
     Z[[i]] <- sparse.model.matrix(as.formula(form), data=data, drop.unused.levels = FALSE)
+    rannames <- c(rannames, colnames(Z[[i]]))
     colnames(Z[[i]]) <- gsub(pattern = ranterms[i], replacement = "", x = colnames(Z[[i]]))
     q <- c(q,ncol(Z[[i]]))
   }
@@ -340,6 +344,9 @@ ghap.lmm <- function(
         }
       }
     }
+    if(verbose == TRUE & vcp.estimate == TRUE){
+      cat("\n\nVariance components converged.\n")
+    }
   }else{
     if(verbose == TRUE){
       cat("Variance components assumed known\n  ",
@@ -362,17 +369,55 @@ ghap.lmm <- function(
   RHS <- RHS/vcp.new["Residual"]
   coef <- pcgsolve(LHS,RHS)
   
-  # Calculate standard errors -----------------------------------------------
-  if(verbose == TRUE & vcp.estimate == TRUE){
-    cat("\n\nVariance components converged.\n")
+  # Check extras ---------------------------------------------------------------
+  
+  # Full LHSi
+  if("LHSi" %in% extras){
+    if(verbose == TRUE){
+      cat("Computing full inverse of coefficient matrix... ")
+    }
+    LHSi <- try(solve(LHS), silent = TRUE)
+    if(inherits(LHSi, "try-error")) {
+      LHSi <- solve(LHS + Diagonal(nrow(LHS))*tol)
+    }
+    colnames(LHSi) <- c(fixnames,rannames)
+    rownames(LHSi) <- colnames(LHSi)
+    if(verbose == TRUE){
+      cat("Done.\n")     
+    }
   }
+  
+  # Phenotypic variance-covariance matrix
+  if("V" %in% extras){
+    if(verbose == TRUE){
+      cat("Computing phenotypic (co)variance matrix... ")
+    }
+    V <- Diagonal(n)
+    diag(V) <- 0
+    for(i in ranterms){
+      V <- V + tcrossprod(Z[[i]]%*%solve(covmat[[i]]),Z[[i]])
+    }
+    if(is.null(weights) == TRUE){
+      w <- rep(1, times = n)
+    }
+    Dw <- Diagonal(n)
+    diag(Dw) <- w
+    V <- V + Dw*vcp.new["Residual"]
+    if(verbose == TRUE){
+      cat("Done.\n")     
+    }
+  }
+  
+  # Calculate standard errors --------------------------------------------------
   if(errors == TRUE){
     if(verbose == TRUE){
       cat("Computing standard errors... ")      
     }
-    LHSi <- try(sparsesolve(LHS), silent = TRUE)
-    if(inherits(LHSi, "try-error")) {
-      LHSi <- sparsesolve(LHS + Diagonal(nrow(LHS))*tol)
+    if("LHSi" %in% extras == FALSE){
+      LHSi <- try(sparsesolve(LHS), silent = TRUE)
+      if(inherits(LHSi, "try-error")) {
+        LHSi <- sparsesolve(LHS + Diagonal(nrow(LHS))*tol)
+      }
     }
     stde <- sqrt(diag(LHSi))
     if(is.null(seconddev) == FALSE){
@@ -450,6 +495,13 @@ ghap.lmm <- function(
     rownames(results$AI) <- names(vcp.new)
   }else{
     results$vcp <- tmp
+  }
+  results$extras <- NULL
+  if("LHSi" %in% extras){
+    results$extras$LHSi <- LHSi
+  }
+  if("V" %in% extras){
+    results$extras$V <- V
   }
   return(results)
   
