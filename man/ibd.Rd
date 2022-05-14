@@ -21,7 +21,7 @@ ghap.ibd(object, pairlist, freq, mafcut=0.05,
     A dataframe containing columns ID1 and ID2 specifying the pairs of individual ids to compare.
   }
   \item{freq}{
-    A numeric vector with allele frequencies computed in a reference sample.
+    A named numeric vector with (A1) allele frequencies computed in a reference sample.
   }
   \item{mafcut}{
    A numeric value specifying the minor allele frequency threshold for IBD calculations (default = 0.05).
