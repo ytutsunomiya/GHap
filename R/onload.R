@@ -1,9 +1,9 @@
 .onAttach <- function(libname, pkgname) {
   mymsg <- "Loading required package: GHap\n\n\n"
-  mymsg <- paste(mymsg,"Thanks for using GHap v2.1.0beta!\n")
+  mymsg <- paste(mymsg,"Thanks for using GHap v3.0.0beta!\n")
   mymsg <- paste(mymsg,"For more information use: help(package = 'GHap')\n")
   mymsg <- paste(mymsg,"                          citation(package = 'GHap')\n")
   mymsg <- paste(mymsg,"                          browseVignettes(package = 'GHap')\n\n")
-  mymsg <- paste(mymsg,"Version date: 30 Apr 2022\n\n")
+  mymsg <- paste(mymsg,"Version date: 14 May 2022\n\n")
   packageStartupMessage(mymsg)
 }
