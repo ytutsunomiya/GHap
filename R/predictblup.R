@@ -11,7 +11,7 @@ ghap.predictblup <- function(
   covmat,
   errormat = NULL,
   include.ref = TRUE,
-  inbreeding = FALSE,
+  diagonals = FALSE,
   tol = 1e-10,
 ){
   
@@ -40,7 +40,7 @@ ghap.predictblup <- function(
   if(include.ref == FALSE){
     test <- test[which(test %in% ref == FALSE)]
   }
-  if(inbreeding == FALSE){
+  if(diagonals == FALSE){
     diag(covmat) <- 1    
   }
   
