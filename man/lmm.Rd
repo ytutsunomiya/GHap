@@ -10,8 +10,9 @@ Linear mixed model fitting for fixed effects, random effects and variance compon
 \usage{
 ghap.lmm(formula, data, covmat = NULL, weights = NULL,
          vcp.initial = NULL, vcp.estimate = TRUE,
-         vcp.conv = 1e-12, errors = TRUE, em.reml = 10,
-         tol = 1e-10, extras = NULL, verbose = TRUE)
+         vcp.conv = 1e-12, errors = TRUE, invcov = FALSE,
+         em.reml = 10, tol = 1e-10, extras = NULL,
+         verbose = TRUE)
 }
 
 \arguments{
@@ -19,7 +20,7 @@ ghap.lmm(formula, data, covmat = NULL, weights = NULL,
    Formula describing the model. The synthax is consistent with lme4. The response is declared first, followed by the ~ operator. Predictors are then separated by + operators. Currently only random intercepts are supported, which are distinguished from fixed effects by the notation (1|x).
   }
   \item{covmat}{
-   A list of inverse covariance matrices for each group of random effects. If a matrix is not defined for a given group, an identity matrix will be used.
+   A list of covariance matrices for each group of random effects. If a matrix is not defined for a given group, an identity matrix will be used. Inverse covariance matrices can also be provided, as long as argument invcov = TRUE is used.
  }
   \item{data}{
    A dataframe containing the data.
@@ -38,6 +39,9 @@ ghap.lmm(formula, data, covmat = NULL, weights = NULL,
  }
  \item{errors}{
   A logical value specifying whether standard errors should be computed (default = TRUE).
+ }
+ \item{invcov}{
+  A logical value specifying whether the provided covariance matrices are already inverted (default = FALSE).
  }
  \item{em.reml}{
   A numeric value specifying the number of EM-REML iterations to carry out before switching to AI-REML (default = 10).
