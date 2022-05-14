@@ -1,6 +1,6 @@
 #Function: ghap.lmm
 #License: GPLv3 or later
-#Modification date: 30 Apr 2022
+#Modification date: 14 May 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: mixed model fitting
@@ -14,6 +14,7 @@ ghap.lmm <- function(
   vcp.estimate = TRUE,
   vcp.conv = 1e-12,
   errors = TRUE,
+  invcov = FALSE,
   em.reml = 10,
   tol = 1e-10,
   extras = NULL,
@@ -205,6 +206,28 @@ ghap.lmm <- function(
     cat("Done.\n")
     cat(n, " records will be fitted to\n ", s, " fixed effects\n ",
         sum(q), " random effects\n", sep="")
+  }
+  
+  # Check if covariance matrices should be inverted -------------------------
+  if(invcov == FALSE){
+    if(verbose == TRUE){
+      cat("Inverting covariance matrices...")
+    }
+    for(i in names(covmat)){
+      icov <- try(solve(covmat[[i]]), silent = TRUE)
+      if(inherits(icov, "try-error")){
+        icov <- try(solve(covmat[[i]] + Diagonal(nrow(covmat[[i]]))*tol), silent = TRUE)
+        if(inherits(icov, "try-error")){
+          emsg <- paste0("\nUnable to invert covariance matrix for effect ",
+                         ranterms[[i]], " even after adding a tolerance of ", tol)
+          stop(emsg)
+        }
+      }
+      covmat[[i]] <- icov
+    }
+    if(verbose == TRUE){
+      cat(" Done.\n")
+    }
   }
   
   # Variance components estimation ------------------------------------------
