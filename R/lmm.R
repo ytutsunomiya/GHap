@@ -423,9 +423,9 @@ ghap.lmm <- function(
     diag(V) <- w*vcp.new["Residual"]
     for(i in ranterms){
       if(invcov == TRUE){
-        V <- V + tcrossprod(Z[[i]]%*%solve(covmat[[i]]),Z[[i]])
+        V <- V + tcrossprod(Z[[i]]%*%solve(covmat[[i]])*vcp.new[i],Z[[i]])
       }else{
-        V <- V + tcrossprod(Z[[i]]%*%solve(oricovmat[[i]]),Z[[i]])
+        V <- V + tcrossprod(Z[[i]]%*%oricovmat[[i]]*vcp.new[i],Z[[i]])
       }
     }
     if(verbose == TRUE){
