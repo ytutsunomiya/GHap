@@ -1,6 +1,6 @@
 #Function: ghap.lmm
 #License: GPLv3 or later
-#Modification date: 14 May 2022
+#Modification date: 18 May 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: mixed model fitting
@@ -213,6 +213,7 @@ ghap.lmm <- function(
     if(verbose == TRUE){
       cat("Inverting covariance matrices...")
     }
+    oricovmat <- covmat
     for(i in names(covmat)){
       icov <- try(solve(covmat[[i]]), silent = TRUE)
       if(inherits(icov, "try-error")){
@@ -415,19 +416,20 @@ ghap.lmm <- function(
     if(verbose == TRUE){
       cat("Computing phenotypic (co)variance matrix... ")
     }
-    V <- Diagonal(n)
-    diag(V) <- 0
-    for(i in ranterms){
-      V <- V + tcrossprod(Z[[i]]%*%solve(covmat[[i]]),Z[[i]])
-    }
     if(is.null(weights) == TRUE){
       w <- rep(1, times = n)
     }
-    Dw <- Diagonal(n)
-    diag(Dw) <- w
-    V <- V + Dw*vcp.new["Residual"]
+    V <- Diagonal(n)
+    diag(V) <- w*vcp.new["Residual"]
+    for(i in ranterms){
+      if(invcov == TRUE){
+        V <- V + tcrossprod(Z[[i]]%*%solve(covmat[[i]]),Z[[i]])
+      }else{
+        V <- V + tcrossprod(Z[[i]]%*%solve(oricovmat[[i]]),Z[[i]])
+      }
+    }
     if(verbose == TRUE){
-      cat("Done.\n")     
+      cat("Done.\n")
     }
   }
   
