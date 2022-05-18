@@ -332,7 +332,10 @@ ghap.assoc <- function(
   }
   results$CHISQ.EXP <- qchisq(p = rank(results$CHISQ.OBS)/(nrow(results)+1),
                               df = 1)
-  ranvars <- sample(x = 1:nrow(results), size = nlambda)
+  chisq.mean <- mean(results$CHISQ.OBS)
+  chisq.dev <- sd(results$CHISQ.OBS)
+  chisq.sub <- which(results$CHISQ.OBS < chisq.mean + 3*chisq.dev)
+  ranvars <- sample(x = chisq.sub, size = nlambda)
   lambda <- lm(formula = CHISQ.OBS ~ CHISQ.EXP, data = results[ranvars,])
   lambda <- as.numeric(lambda$coefficients[2])
   results$CHISQ.GC <- results$CHISQ.OBS/lambda
