@@ -37,7 +37,7 @@ ghap.assoc(object, formula, data, covmat,
  \item{recalibrate}{
   A numeric value for the proportion of top scoring variants to re-analyze without the grammar-gamma approximation (default = 0.01). Not relevant if ngamma = 0.
  }
- \item{only.active.alleles}{
+ \item{only.active.variants}{
   A logical value specifying whether only active variants should be included in the output (default = TRUE).
   }
  \item{ncores}{
