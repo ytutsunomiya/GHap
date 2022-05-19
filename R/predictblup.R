@@ -13,7 +13,7 @@ ghap.predictblup <- function(
   errorname = "",
   include.ref = TRUE,
   diagonals = FALSE,
-  tol = 1e-10,
+  tol = 1e-12
 ){
   
   # Sanity check for input objects ---------------------------------------------
