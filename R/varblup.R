@@ -66,13 +66,13 @@ ghap.varblup <- function(
   }
   
   # Check weights --------------------------------------------------------------
-  if(is.null(varweights) == TRUE){
-    varweights <- rep(1,times=length(vidx))
+  if(is.null(weights) == TRUE){
+    weights <- rep(1,times=length(vidx))
   }
-  if(length(varweights) != length(vidx)){
+  if(length(weights) != length(vidx)){
     stop("\nNumber of variant weights differs from the number of active variants.")
   }
-  varweights <- varweights/mean(varweights)
+  weights <- weights/mean(weights)
   
   # Calculate offset and bitloss -----------------------------------------------
   offset <- ceiling((2*object$nsamples)/8)
@@ -132,11 +132,11 @@ ghap.varblup <- function(
       freq <- sum(x)/(2*length(x))
       cent <- mean(x)
       x <- x - cent
-      b <- sum(varweights[i]*x*k)
+      b <- sum(weights[i]*x*k)
       varxb <- var(x*b)
-      varx <- varweights[i]*var(x)
+      varx <- weights[i]*var(x)
       if(is.null(errormat) == FALSE){
-        varb <- (varweights[i]^2)*as.numeric(t(x)%*%B%*%x)
+        varb <- (weights[i]^2)*as.numeric(t(x)%*%B%*%x)
       }else{
         varb <- NA
       }
@@ -161,11 +161,11 @@ ghap.varblup <- function(
       freq <- sum(x)/(2*length(x))
       cent <- mean(x)
       x <- x - cent
-      b <- sum(varweights[i]*x*k)
+      b <- sum(weights[i]*x*k)
       varxb <- var(x*b)
-      varx <- varweights[i]*var(x)
+      varx <- weights[i]*var(x)
       if(is.null(errormat) == FALSE){
-        varb <- (varweights[i]^2)*as.numeric(t(x)%*%B%*%x)
+        varb <- (weights[i]^2)*as.numeric(t(x)%*%B%*%x)
       }else{
         varb <- NA
       }
@@ -185,7 +185,7 @@ ghap.varblup <- function(
   }
   if(Sys.info()["sysname"] == "Windows"){
     cl <- makeCluster(ncores)
-    mylist <- list("object","vidx","k","varweights","B")
+    mylist <- list("object","vidx","k","weights","B")
     clusterExport(cl = cl, varlist = mylist, envir=environment())
     vareff <- unlist(parLapply(cl = cl, fun = varFun, X = 1:length(vidx)))
     stopCluster(cl)
