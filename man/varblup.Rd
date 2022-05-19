@@ -42,7 +42,7 @@ ghap.varblup(object, gebv, covmat,
     A square error matrix for GEBVs. This matrix can be obtained with argument extras = "LHSi" in the \code{\link{ghap.lmm}} function. If provided, calculation of standard errors and test statistics for the variants is activated.
   }
   \item{errorname}{
-    The name used for the random effect representing GEBVs in the \code{\link{ghap.lmm}} function. If the error matrix was imported from somewhere else, this argument can be ignored provided that the names in the erro matrix match the ones in the relationship matrix.
+    The name used for the random effect representing GEBVs in the \code{\link{ghap.lmm}} function. If the error matrix was imported from somewhere else, this argument can be ignored provided that the names in the error matrix match the ones in the relationship matrix.
   }
   \item{nlambda}{
   A numeric value for the number of variants to be used in the estimation of the inflation factor (default = 1000).
