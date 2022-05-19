@@ -10,9 +10,10 @@
 \usage{
   ghap.predictblup(refblup, vcp, covmat,
                    errormat = NULL,
+                   errorname = "",
                    include.ref = TRUE,
                    diagonals = FALSE,
-                   tol = 1e-10)
+                   tol = 1e-12)
 }
 
 \arguments{
@@ -38,7 +39,7 @@
     A logical value indicating if diagonals of the covariance matrix should be used in calculations of accuracy and standard errors (default = FALSE). The default is to set diagonals to 1. For genomic estimated breeding values, using TRUE will account for inbreeding in the computation of accuracies and standard errors.
   }
   \item{tol}{
-    A numeric value specifying the scalar to add to the diagonal of the covariance matrix if it is not inversible (default = 1e-10).
+    A numeric value specifying the scalar to add to the diagonal of the covariance matrix if it is not inversible (default = 1e-12).
   }
 }
 
