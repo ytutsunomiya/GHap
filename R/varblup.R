@@ -9,13 +9,14 @@ ghap.varblup <- function(
   object,
   gebv,
   covmat,
-  vcp = NULL,
+  only.active.variants = TRUE,
   weights = NULL,
-  errormat = NULL,
+  tol = 1e-12,
+  vcp = NULL,
+  errormat = NULL, 
   errorname = "",
   nlambda = 1000,
-  tol = 1e-10,
-  only.active.variants = TRUE,
+  ncores = 1,
   verbose = TRUE
 ){
   
