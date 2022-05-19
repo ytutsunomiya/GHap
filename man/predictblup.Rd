@@ -28,6 +28,9 @@
   \item{errormat}{
     A square error matrix for reference individuals. This matrix can be obtained with argument extras = "LHSi" in the \code{\link{ghap.lmm}} function.
   }
+  \item{errorname}{
+    The name used for the random effect in the \code{\link{ghap.lmm}} function. If the error matrix was imported from somewhere else, this argument can be ignored provided that the names in the error matrix match the ones in the covariance matrix.
+  }
   \item{include.ref}{
     A logical value indicating if reference individuals should be included in the output (default = TRUE).
   }
