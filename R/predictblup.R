@@ -1,6 +1,6 @@
 #Function: ghap.predictblup
 #License: GPLv3 or later
-#Modification date: 14 May 2022
+#Modification date: 19 May 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Predict blup solutions based on reference values
@@ -10,6 +10,7 @@ ghap.predictblup <- function(
   vcp,
   covmat,
   errormat = NULL,
+  errorname = "",
   include.ref = TRUE,
   diagonals = FALSE,
   tol = 1e-10,
@@ -29,11 +30,17 @@ ghap.predictblup <- function(
     if(identical(rownames(errormat),colnames(errormat)) == FALSE){
       stop("\nRow and column names in 'errormat' are not identical.\n")
     }
+    mycol <- grep(pattern = errorname, x = colnames(errormat))
+    errormat <- errormat[mycol,mycol]
+    colnames(errormat) <- gsub(pattern = errorname,
+                               replacement = "", x = colnames(errormat))
+    rownames(errormat) <- colnames(errormat)
     if(identical(sort(rownames(errormat)),sort(names(refblup))) == FALSE){
       stop("\nNames in 'errormat' must match the names in 'refblup'.\n")
     }
+    errormat <- errormat[names(refblup),names(refblup)]
   }
-
+  
   # Map test and reference -----------------------------------------------------
   ref <- names(refblup)
   test <- colnames(covmat)
@@ -72,7 +79,7 @@ ghap.predictblup <- function(
     results$Accuracy <- sqrt(varuhat/varu)
     results$`Std. Error` <- sqrt((1 - results$Accuracy^2)*varu)
   }
-
+  
   #Return output --------------------------------------------------------------
   return(results)
   
