@@ -33,7 +33,7 @@ ghap.kinship(object, weights = NULL, sparsity = NULL, type = 1,
   \item{only.active.samples}{
     A logical value specifying whether only active samples should be included in the output (default = TRUE).
   }
-  \item{only.active.alleles}{
+  \item{only.active.variants}{
     A logical value specifying whether only active variants should be included in the output (default = TRUE).
   }
   \item{ncores}{
@@ -52,14 +52,14 @@ The function returns a \emph{n} x \emph{n} relationship matrix, where \emph{n} i
 
 Let \eqn{\mathbf{M}} be the \emph{n} x \emph{m} matrix of genotypes, where \emph{n} is the number of individuals and \emph{m} is the number of variants (i.e, markers or HapAlleles). Prior to computation, genotypes in matrix \eqn{\mathbf{M}} are transformed according to the desired relationship type. After that transformation, the relationship matrix is computed as:
 
-\deqn{\mathbf{K} = q\mathbf{MDM}'}
+\deqn{\mathbf{K} = q^{-1}\mathbf{MDM}'}
 where \eqn{\mathbf{D} = diag(d_i)}, \eqn{d_i} is the weight of variant \emph{i} (default \eqn{d_i = 1}), and \eqn{q} is a scaling factor. The argument type controls the genotype transformation and the scaling factor, and includes the following option:
 
 \cr
 
 Type = 1 (General additive 1)\cr
 Genotype transformation: m - mean(m)\cr
-Scaling factor: \eqn{tr(\mathbf{MDM}')^{-1}m}
+Scaling factor: \eqn{tr(\mathbf{MDM}')^{-1}n}
 
 Type = 2 (General additive 2)\cr
 Genotype transformation: (m - mean(m))/sd(m)\cr
@@ -86,7 +86,7 @@ Genotype transformation:\cr
 1 = 2*p[j]*(1-p[j])\cr
 2 = -2*(1-p[j])^2\cr
 Scaling factor:\cr
-\eqn{tr(\mathbf{MDM}')^{-1}m}.
+\eqn{tr(\mathbf{MDM}')^{-1}n}.
 
 }
 
