@@ -9,7 +9,7 @@ ghap.varblup <- function(
   object,
   gebv,
   covmat,
-  type=1,
+  type = 2,
   only.active.variants = TRUE,
   weights = NULL,
   tol = 1e-12,
