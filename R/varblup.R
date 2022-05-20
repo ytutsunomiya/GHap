@@ -1,6 +1,6 @@
 #Function: ghap.varblup
 #License: GPLv3 or later
-#Modification date: 19 May 2022
+#Modification date: 20 May 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: convert blup of individuals into blup of variants
@@ -9,6 +9,7 @@ ghap.varblup <- function(
   object,
   gebv,
   covmat,
+  type=1,
   only.active.variants = TRUE,
   weights = NULL,
   tol = 1e-12,
@@ -47,6 +48,9 @@ ghap.varblup <- function(
       stop("\nNames in 'errormat' must match the names in 'gebv'.\n")
     }
     errormat <- errormat[names(gebv),names(gebv)]
+  }
+  if(type %in% c(2:4) == FALSE){
+    stop("Covariance matrix types currently supported are 2, 3 or 4.")
   }
   
   # Check if inactive variants should be reactivated ---------------------------
@@ -110,6 +114,64 @@ ghap.varblup <- function(
     B <- Diagonal(n = length(gebv))
   }
   
+  # Initialize scaling function ------------------------------------------------
+  scalefun <- vector(mode = "list", length = 6)
+  scalefun[[1]] <- function(x){
+    m <- mean(x)
+    s <- 1
+    p <- sum(x)/(2*length(x))
+    aa <- which(x == 0)
+    ab <- which(x == 1)
+    bb <- which(x == 2)
+    x[aa] <- -m
+    x[ab] <- 1 - m
+    x[bb] <- 2 - m
+    return(c(m,s,p,x))
+  }
+  scalefun[[2]] <- function(x){
+    m <- mean(x)
+    s <- sd(x)
+    p <- sum(x)/(2*length(x))
+    aa <- which(x == 0)
+    ab <- which(x == 1)
+    bb <- which(x == 2)
+    x[aa] <- -m/s
+    x[ab] <- (1-m)/s
+    x[bb] <- (2-m)/s
+    return(c(m,s,p,x))
+  }
+  scalefun[[3]] <- function(x){
+    p <- sum(x)/(2*length(x))
+    m <- 2*p
+    s <- 1
+    aa <- which(x == 0)
+    ab <- which(x == 1)
+    bb <- which(x == 2)
+    x[aa] <- -m
+    x[ab] <- 1 - m
+    x[bb] <- 2 - m
+    return(c(m,s,p,x))
+  }
+  scalefun[[4]] <- function(x){
+    p <- sum(x)/(2*length(x))
+    s <- sqrt(2*p*(1-p))
+    m <- 2*p
+    aa <- which(x == 0)
+    ab <- which(x == 1)
+    bb <- which(x == 2)
+    x[aa] <- -m/s
+    x[ab] <- (1-m)/s
+    x[bb] <- (2-m)/s
+    return(c(m,s,p,x))
+  }
+  
+  # Initialize denominators ----------------------------------------------------
+  scaleval <- vector(mode = "list", length = 4)
+  scaleval[[1]] <- function(){return(mean(diag(covmat)))}
+  scaleval[[2]] <- function(){return(length(vidx))}
+  scaleval[[3]] <- function(){return(2*sum(results$FREQ*(1-results$FREQ)))}
+  scaleval[[4]] <- scaleval[[2]]
+  
   # Auxiliary functions --------------------------------------------------------
   if(class(object) %in% c("GHap.plink","GHap.haplo")){
     varFun <- function(i){
@@ -129,9 +191,11 @@ ghap.varblup <- function(
       x <- x[1:object$nsamples]
       names(x) <- object$id
       x <- x[names(gebv)]
-      freq <- sum(x)/(2*length(x))
-      cent <- mean(x)
-      x <- x - cent
+      x <- scalefun[[type]](x)
+      m <- x[1]
+      s <- x[2]
+      p <- x[3]
+      x <- x[-c(1:3)]
       b <- sum(weights[i]*x*k)
       varxb <- var(x*b)
       varx <- weights[i]*var(x)
@@ -141,7 +205,7 @@ ghap.varblup <- function(
         varb <- NA
       }
       close.connection(object.con)
-      return(c(freq,b,varxb,cent,varx,varb))
+      return(c(p,b,varxb,m,s,varx,varb))
     }
   }else{
     varFun <- function(i){
@@ -158,9 +222,11 @@ ghap.varblup <- function(
       x <- x1 + x2
       names(x) <- object$id[1:length(object$id) %% 2 == 0]
       x <- x[names(gebv)]
-      freq <- sum(x)/(2*length(x))
-      cent <- mean(x)
-      x <- x - cent
+      x <- scalefun[[type]](x)
+      m <- x[1]
+      s <- x[2]
+      p <- x[3]
+      x <- x[-c(1:3)]
       b <- sum(weights[i]*x*k)
       varxb <- var(x*b)
       varx <- weights[i]*var(x)
@@ -170,7 +236,7 @@ ghap.varblup <- function(
         varb <- NA
       }
       close.connection(object.con)
-      return(c(freq,b,varxb,cent,varx,varb))
+      return(c(p,b,varxb,m,s,varx,varb))
     }
   }
   
@@ -195,7 +261,7 @@ ghap.varblup <- function(
   if(verbose == TRUE){
     cat("Done.\n")
   }
-  vareff <- matrix(data = vareff, ncol = 6, byrow = T)
+  vareff <- matrix(data = vareff, ncol = 7, byrow = T)
   if(class(object) == "GHap.haplo"){
     results <- matrix(data = NA, nrow = length(vidx), ncol = 17)
     results <- as.data.frame(results)
@@ -220,15 +286,15 @@ ghap.varblup <- function(
     results$BP <- object$bp[vidx]
     results$ALLELE <- object$A1[vidx]
   }
-  sumvar <- sum(vareff[,5])
   results$FREQ <- vareff[,1]
+  sumvar <- scaleval[[type]]()
   results$SCORE <- vareff[,2]/sumvar
   results$VAR <- vareff[,3]*(1/sumvar)^2
   results$pVAR <- results$VAR/sum(results$VAR)
   results$CENTER <- vareff[,4]
-  results$SCALE <- 1
+  results$SCALE <- vareff[,5]
   if(is.null(errormat) == FALSE){
-    results$SE <- sqrt(vareff[,6]*(1/sumvar)^2)
+    results$SE <- sqrt(vareff[,7]*(1/sumvar)^2)
     results$CHISQ.OBS <- (results$SCORE/results$SE)^2
     results$LOGP <- -1*pchisq(q = results$CHISQ.OBS, df = 1,
                               lower.tail = FALSE, log.p = TRUE)/log(10)
