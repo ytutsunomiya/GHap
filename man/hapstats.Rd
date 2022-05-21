@@ -8,12 +8,12 @@ Haplotype allele statistics
 Summary statistics for HapAlleles.
 }
 \usage{
-ghap.hapstats(haplo, alpha = c(1, 1), batchsize = NULL, only.active.samples = TRUE,
+ghap.hapstats(object, alpha = c(1, 1), batchsize = NULL, only.active.samples = TRUE,
               only.active.alleles = TRUE, ncores = 1, verbose = TRUE)
 }
 
 \arguments{
-  \item{haplo}{
+  \item{object}{
     A GHap.haplo object.
   }
   \item{alpha}{
