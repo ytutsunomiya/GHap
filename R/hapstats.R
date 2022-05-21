@@ -1,12 +1,12 @@
 #Function: ghap.hapstats
 #License: GPLv3 or later
-#Modification date: 12 May 2021
+#Modification date: 21 May 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Summary statistics for haplotype alleles
 
 ghap.hapstats <- function(
-  haplo,
+  object,
   alpha=c(1,1),
   batchsize=NULL,
   only.active.samples=TRUE,
@@ -16,53 +16,39 @@ ghap.hapstats <- function(
 ){
   
   
-  #Check if haplo is a GHap.haplo object
-  if(class(haplo) != "GHap.haplo"){
-    stop("Argument haplo must be a GHap.haplo object.")
+  #Check if object is a GHap.haplo object
+  if(class(object) != "GHap.haplo"){
+    stop("Argument object must be a GHap.haplo object.")
   }
   
   #Check if inactive alleles and samples should be reactived
   if(only.active.alleles == FALSE){
-    haplo$allele.in <- rep(TRUE,times=haplo$nalleles)
-    haplo$nalleles.in <- length(which(haplo$allele.in))
+    object$allele.in <- rep(TRUE,times=object$nalleles)
+    object$nalleles.in <- length(which(object$allele.in))
   }
   if(only.active.samples == FALSE){
-    haplo$id.in <- rep(TRUE,times=haplo$nsamples)
-    haplo$nsamples.in <- length(which(haplo$id.in))
+    object$id.in <- rep(TRUE,times=object$nsamples)
+    object$nsamples.in <- length(which(object$id.in))
   }
-  
-  # Generate lookup table
-  lookup <- rep(NA,times=256)
-  lookup[1:2] <- c(0,1)
-  d <- 10
-  i <- 3
-  while(i <= 256){
-    b <- d + lookup[1:(i-1)]
-    lookup[i:(length(b)+i-1)] <- b
-    i <- i + length(b)
-    d <- d*10
-  }
-  lookup <- sprintf(fmt="%08d", lookup)
-  lookup <- sapply(lookup, function(i){intToUtf8(rev(utf8ToInt(i)))})
   
   #Generate batch index
   if(is.null(batchsize) == TRUE){
-    batchsize <- ceiling(haplo$nalleles.in/10)
+    batchsize <- ceiling(object$nalleles.in/10)
   }
-  if(batchsize > haplo$nalleles.in){
-    batchsize <- haplo$nalleles.in
+  if(batchsize > object$nalleles.in){
+    batchsize <- object$nalleles.in
   }
-  activealleles <- which(haplo$allele.in)
-  nbatches <- round(haplo$nalleles.in/(batchsize),digits=0) + 1
+  activealleles <- which(object$allele.in)
+  nbatches <- round(object$nalleles.in/(batchsize),digits=0) + 1
   mybatch <- paste("B",1:nbatches,sep="")
   batch <- rep(mybatch,each=batchsize)
-  batch <- batch[1:haplo$nalleles.in]
+  batch <- batch[1:object$nalleles.in]
   mybatch <- unique(batch)
   nbatches <- length(mybatch)
   
   #Log message
   if(verbose == TRUE){
-    cat("Processing ", haplo$nalleles.in, " HapAlleles in ", nbatches, " batches.\n", sep="")
+    cat("Processing ", object$nalleles.in, " HapAlleles in ", nbatches, " batches.\n", sep="")
     cat("Inactive alleles will be ignored.\n")
   }
   
@@ -79,21 +65,22 @@ ghap.hapstats <- function(
   #Iterate batches
   ncores <- min(c(detectCores(), ncores))
   hapstats <- NULL
-  hapstats$BLOCK <- haplo$block[haplo$allele.in]
-  hapstats$CHR <- haplo$chr[haplo$allele.in]
-  hapstats$BP1 <- haplo$bp1[haplo$allele.in]
-  hapstats$BP2 <- haplo$bp2[haplo$allele.in]
-  hapstats$ALLELE<- haplo$allele[haplo$allele.in]
-  hapstats$N <- rep(NA, times=haplo$nalleles.in)
-  hapstats$FREQ <- rep(NA, times=haplo$nalleles.in)
-  hapstats$O.HOM <- rep(NA, times=haplo$nalleles.in)
-  hapstats$O.HET <- rep(NA, times=haplo$nalleles.in)
+  hapstats$BLOCK <- object$block[object$allele.in]
+  hapstats$CHR <- object$chr[object$allele.in]
+  hapstats$BP1 <- object$bp1[object$allele.in]
+  hapstats$BP2 <- object$bp2[object$allele.in]
+  hapstats$ALLELE<- object$allele[object$allele.in]
+  hapstats$N <- rep(NA, times=object$nalleles.in)
+  hapstats$FREQ <- rep(NA, times=object$nalleles.in)
+  hapstats$O.HOM <- rep(NA, times=object$nalleles.in)
+  hapstats$O.HET <- rep(NA, times=object$nalleles.in)
   sumalleles <- 0
   for(i in 1:nbatches){
     idx <- which(batch == mybatch[i])
     slice <- activealleles[idx]
-    hap.geno <- ghap.slice(object = haplo, ids = which(haplo$id.in), variants = slice,
-                           index = TRUE, lookup = lookup, ncores = ncores)
+    hap.geno <- ghap.slice(object = object, ids = which(object$id.in),
+                           variants = slice,
+                           index = TRUE, ncores = ncores)
     if(Sys.info()["sysname"] == "Windows"){
       cl <- makeCluster(ncores)
       a <- unlist(parLapply(cl = cl, fun = hapstats.FUN, X = 1:nrow(hap.geno)))
@@ -111,9 +98,9 @@ ghap.hapstats <- function(
       cat(sumalleles, "HapAlleles processed.\r")
     }
   }
-  hapstats$E.HOM <- (hapstats$FREQ^2)*haplo$nsamples.in
+  hapstats$E.HOM <- (hapstats$FREQ^2)*object$nsamples.in
   hapstats$RATIO <- (hapstats$E.HOM+alpha[1])/(hapstats$O.HOM+alpha[2])
-  hapstats$BIN.logP <- -1*pbinom(q = hapstats$O.HOM,size = haplo$nsamples.in,prob = hapstats$FREQ^2,lower.tail=TRUE,log.p = TRUE)/log(10)
+  hapstats$BIN.logP <- -1*pbinom(q = hapstats$O.HOM,size = object$nsamples.in,prob = hapstats$FREQ^2,lower.tail=TRUE,log.p = TRUE)/log(10)
   hapstats$POI.logP <- -1*ppois(q = hapstats$O.HOM,lambda = hapstats$E.HOM,lower.tail=TRUE,log.p = TRUE)/log(10)
   hapstats <- data.frame(hapstats,stringsAsFactors = FALSE)
   hapstats$TYPE <- NA
