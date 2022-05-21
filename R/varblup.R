@@ -1,6 +1,6 @@
 #Function: ghap.varblup
 #License: GPLv3 or later
-#Modification date: 20 May 2022
+#Modification date: 21 May 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: convert blup of individuals into blup of variants
@@ -9,7 +9,7 @@ ghap.varblup <- function(
   object,
   gebv,
   covmat,
-  type = 2,
+  type=1,
   only.active.variants = TRUE,
   weights = NULL,
   tol = 1e-12,
@@ -49,8 +49,8 @@ ghap.varblup <- function(
     }
     errormat <- errormat[names(gebv),names(gebv)]
   }
-  if(type %in% c(2:4) == FALSE){
-    stop("Covariance matrix types currently supported are 2, 3 or 4.")
+  if(type %in% 1:4 == FALSE){
+    stop("Covariance matrix types currently supported are 1, 2, 3 or 4.")
   }
   
   # Check if inactive variants should be reactivated ---------------------------
@@ -118,7 +118,7 @@ ghap.varblup <- function(
   scalefun <- vector(mode = "list", length = 6)
   scalefun[[1]] <- function(x){
     m <- mean(x)
-    s <- 1
+    s <- sd(x)
     p <- sum(x)/(2*length(x))
     aa <- which(x == 0)
     ab <- which(x == 1)
@@ -143,7 +143,7 @@ ghap.varblup <- function(
   scalefun[[3]] <- function(x){
     p <- sum(x)/(2*length(x))
     m <- 2*p
-    s <- 1
+    s <- sqrt(2*p*(1-p))
     aa <- which(x == 0)
     ab <- which(x == 1)
     bb <- which(x == 2)
@@ -167,9 +167,9 @@ ghap.varblup <- function(
   
   # Initialize denominators ----------------------------------------------------
   scaleval <- vector(mode = "list", length = 4)
-  scaleval[[1]] <- function(){return(mean(diag(covmat)))}
+  scaleval[[1]] <- function(){return(sum(vareff[,5]^2))}
   scaleval[[2]] <- function(){return(length(vidx))}
-  scaleval[[3]] <- function(){return(2*sum(results$FREQ*(1-results$FREQ)))}
+  scaleval[[3]] <- scaleval[[1]]
   scaleval[[4]] <- scaleval[[2]]
   
   # Auxiliary functions --------------------------------------------------------
@@ -292,7 +292,11 @@ ghap.varblup <- function(
   results$VAR <- vareff[,3]*(1/sumvar)^2
   results$pVAR <- results$VAR/sum(results$VAR)
   results$CENTER <- vareff[,4]
-  results$SCALE <- vareff[,5]
+  if(type %in% c(1,3)){
+    results$SCALE <- 1
+  }else{
+    results$SCALE <- vareff[,5]    
+  }
   if(is.null(errormat) == FALSE){
     results$SE <- sqrt(vareff[,7]*(1/sumvar)^2)
     results$CHISQ.OBS <- (results$SCORE/results$SE)^2
