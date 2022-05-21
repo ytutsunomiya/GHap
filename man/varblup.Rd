@@ -8,7 +8,7 @@ Convert BLUP of individuals into BLUP of variants
 Given genomic estimated breeding values (GEBVs), compute Best Linear Unbiased Predictor (BLUP) solutions for variant effects.
 }
 \usage{
-ghap.varblup(object, gebv, covmat, type = 2,
+ghap.varblup(object, gebv, covmat, type = 1,
              only.active.variants = TRUE,
              weights = NULL, tol = 1e-12,
              vcp = NULL, errormat = NULL, 
@@ -139,7 +139,7 @@ The function uses the equation:
 
 \deqn{\mathbf{\hat{a}} = q\mathbf{DM}^T\mathbf{K}^{-1}\mathbf{\hat{u}}}
 
-where \eqn{\mathbf{M}} is the \emph{N} x \emph{H} centered matrix of variants observed for \emph{N} individuals and \emph{H} variants, \eqn{\mathbf{D} = diag(d_i)}, \eqn{d_i} is the weight of variant \emph{i} (default \eqn{d_i = 1}), \eqn{q} is the inverse weighted sum of variances in the columns of \eqn{\mathbf{M}}, \eqn{\mathbf{K}} is the additive genomic relationship matrix and \eqn{\hat{u}} is the vector of GEBVs.
+where \eqn{\mathbf{M}} is the \emph{n} x \emph{m} matrix of genotypes, where \emph{n} is the number of individuals and \emph{m} is the number of variants (i.e, markers or HapAlleles), \eqn{\mathbf{D} = diag(d_i)} with \eqn{d_i} being the weight of variant \emph{i} (default \eqn{d_i = 1}), \eqn{q} is the inverse weighted sum of variances in the columns of \eqn{\mathbf{M}}, \eqn{\mathbf{K}} is the additive genomic relationship matrix and \eqn{\hat{u}} is the vector of GEBVs.
 
 }
 
