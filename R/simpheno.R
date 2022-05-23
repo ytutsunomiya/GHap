@@ -1,167 +1,121 @@
 #Function: ghap.simpheno
 #License: GPLv3 or later
-#Modification date: 12 May 2021
+#Modification date: 23 May 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Simulate phenotypes
 
 ghap.simpheno<-function(
-  haplo,
-  kinship,
+  object,
   h2,
-  g2,
   r2=0,
   nrep=1,
   balanced=TRUE,
-  major=NULL,
   seed=NULL,
-  ncores=1
+  only.active.samples=TRUE,
+  ncores=1,
+  verbose=TRUE
 ){
   
-  #Check if haplo is a GHap.haplo object
-  if(class(haplo) != "GHap.haplo"){
-    stop("Argument haplo must be a GHap.haplo object.")
+  # Sanity check for input objects ---------------------------------------------
+  obtype <- c("GHap.phase","GHap.plink")
+  fac <- c(2,1)
+  names(fac) <- obtype
+  if(class(object) %in% obtype == FALSE){
+    stop("\nInput must be a valid GHap.phase or GHap.plink object.")
+  }
+  if(nrep > 1 & r2 <= 0){
+    stop("\nRepeatability must be greater than 0")
+  }
+  h2tot <- sum(h2)
+  if(h2tot < 0 | h2tot > 1){
+    stop("\nThe sum of variant heritabilities must be between 0 and 1.")
   }
   
-  #Check if kinship matrix is symmetrical
-  if(identical(colnames(kinship),rownames(kinship)) == FALSE){
-    stop("Names in rows and columns must be identical.")
+  # Check if inactive samples should be reactived ------------------------------
+  if(only.active.samples == FALSE){
+    object$id.in <- rep(TRUE,times=fac[class(object)]*object$nsamples)
+    object$nsamples.in <- length(which(object$id.in))/fac[class(object)]
   }
+  ids <- unique(phase$id[phase$id.in])
+  object <- ghap.subset(object = object, ids = ids,
+                        variants = names(h2), index = FALSE, verbose = FALSE)
+  vidx <- which(phase$marker.in)
+  h2 <- h2[phase$marker[vidx]]
   
-  #Check if names in the kinship matrix match with the GHap.haplo object
-  if (length(which(colnames(kinship) %in% haplo$id)) != ncol(kinship)) {
-    stop("All ids in the kinship matrix must be present in the GHap.haplo object.")
-  }
+  # Compute allele frequencies -------------------------------------------------
+  p <- ghap.freq(object = object, type = "A1", only.active.samples = TRUE,
+                 only.active.markers = TRUE)
+  p[which(p < 0.01)] <- 0.01
+  p[which(p > 0.99)] <- 0.99
   
-  # Generate lookup table
-  lookup <- rep(NA,times=256)
-  lookup[1:2] <- c(0,1)
-  d <- 10
-  i <- 3
-  while(i <= 256){
-    b <- d + lookup[1:(i-1)]
-    lookup[i:(length(b)+i-1)] <- b
-    i <- i + length(b)
-    d <- d*10
-  }
-  lookup <- sprintf(fmt="%08d", lookup)
-  lookup <- sapply(lookup, function(i){intToUtf8(rev(utf8ToInt(i)))})
-  
-  # Simulate uncorrelated random effects
+  # Make additive effects ------------------------------------------------------
   if(is.null(seed) == FALSE){
     set.seed(seed)
   }
-  g <- rnorm(ncol(kinship),sd=sqrt(h2 - sum(g2*h2)))
+  a <- sqrt(h2/(2*p*(1-p)))
+  a <- a*sample(x = c(-1,1), size = length(a), replace = TRUE)
   
-  # Make random effects correlated by kinship
-  # Now g = polygenic effect (sum of genome-wide haplotype effects) - major effect
-  g <- crossprod(chol(nearPD(kinship)$mat),g)
-  g <- as.vector(g)
+  # Compute true breeding value ------------------------------------------------
+  score <- data.frame(MARKER = object$marker[vidx], CHR = object$chr[vidx],
+                      BP = object$bp[vidx], ALLELE = object$A1[vidx],
+                      SCORE = a, CENTER = 0, SCALE = 1)
+  scoreid <- ghap.profile(object = object, score = score, verbose = verbose,
+                          ncores = ncores, only.active.samples = TRUE)
+  u <- as.numeric(scoreid$SCORE)
   
-  # Simulate major haplotypes
-  if(is.null(major) == FALSE){
-    cond <- which(g2 < 0 | g2 > 1)
-    if(length(cond) > 0){
-      stop("Argument g2 must be between zero and one.")
-    }
-    if(length(g2) != length(major)){
-      stop("Vectors g2 and major must have equal length.")
-    }
-    if(sum(g2) > 1){
-      stop("The sum of vector g2 must not exceed 1.")
-    }
-    ids <- 1:haplo$nsamples
-    names(ids) <- haplo$id
-    ids <- ids[colnames(kinship)]
-    X <- ghap.slice(object = haplo, ids = ids, variants = major,
-                    index = TRUE, lookup = lookup, ncores = ncores)
-    if(length(major) > 1){
-      X <- scale(t(X))
-      X <- scale(X)
-      b <- sqrt(g2*h2)
-      Xb <- X%*%b
-    }else{
-      X <- scale(X)
-      b <- sqrt(g2*h2)
-      Xb <- X%*%b
-    }
-    if(is.null(seed) == FALSE){
-      set.seed(seed)
-    }
-  }else{
-    Xb <- 0
-  }
-  
-  # Simulate breeding value
-  u <- Xb + g
-  
-  # Simulate repeatability
+  # Simulate repeatability -----------------------------------------------------
   if(nrep > 1){
     if(is.null(seed) == FALSE){
       set.seed(seed)
     }
-    p <- rnorm(ncol(kinship),sd=sqrt(r2))
+    p <- rnorm(length(u),sd=sqrt(r2))
   }
   
-  # Simulate residuals
+  # Simulate residuals ---------------------------------------------------------
   if(is.null(seed) == FALSE){
     set.seed(seed)
   }
   if(nrep > 1){
-    e <- rnorm(nrep*ncol(kinship), sd=sqrt(1-h2-r2))
+    e <- rnorm(nrep*length(u), sd=sqrt(1-h2tot-r2))
   }else{
-    e <- rnorm(ncol(kinship), sd=sqrt(1-h2))
+    e <- rnorm(length(u), sd=sqrt(1-h2tot))
   }
   
-  # Simulate phenotypes
+  # Simulate phenotypes --------------------------------------------------------
   if(nrep > 1){
     y <- rep(u,each=nrep) + rep(p,each=nrep) + e
   }else{
     y <- u + e
   }
   
-  #Assemble output
-  sim <- NULL
-  sim$h2 <- h2
-  sim$g2 <- g2
-  sim$major <- major
-  sim$major.effect <- b
-  sim$u <- as.vector(u)
-  names(sim$u) <- colnames(kinship)
+  # Assemble output ------------------------------------------------------------
   if(nrep > 1){
-    sim$p <- as.vector(p)
-    names(sim$p) <- colnames(kinship)
-  }
-  sim$varu <- as.numeric(var(u))
-  sim$vare <- var(e)
-  if(nrep > 1){
-    sim$varp <- var(p)
-  }
-  if(nrep > 1){
-    sim$data <- data.frame(y,rep(colnames(kinship),each=nrep))
-  }else{
-    sim$data <- data.frame(y,colnames(kinship))
-  }
-  colnames(sim$data) <- c("phenotype","individual")
-  sim$data$individual <- as.factor(sim$data$individual)
-  
-  #Generate unbalanced data
-  if(balanced == FALSE){
-    x <- rep(FALSE,times=nrow(sim$data))
-    for(i in colnames(kinship)){
-      if(is.null(seed) == FALSE){
-        seed <- seed + 1
-        set.seed(seed)
+    df <- data.frame(POP = rep(scoreid$POP, each=nrep),
+                     ID = rep(scoreid$ID, each=nrep),
+                     PHENO = y,
+                     TBV = rep(u, each=nrep),
+                     REP = rep(p, each=nrep),
+                     RESIDUAL = e)
+    if(balanced == FALSE){
+      keep <- NULL
+      for(i in unique(df$ID)){
+        nkeep <- ceiling(runif(n = 1, min = 0, max = nrep))
+        idx <- which(df$ID == i)
+        idx <- sample(x = idx, size = nkeep)
+        keep <- c(keep, idx)
       }
-      nrep.samp <- as.integer(runif(n = 1, min = 0, max = nrep))
-      samp <- which(sim$data$individual == i)
-      samp <- sample(samp, size = nrep.samp, replace = F)
-      x[samp] <- TRUE
+      df <- df[sort(keep),]
     }
-    sim$data <- sim$data[x,]
+  }else{
+    df <- data.frame(POP = scoreid$POP,
+                     ID = scoreid$ID,
+                     PHENO = y,
+                     TBV = u,
+                     RESIDUAL = e)
   }
   
   #Return output
-  return(sim)
+  return(df)
   
 }
