@@ -102,7 +102,7 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # 
 # # Copy phase data in the current working directory
 # exfiles <- ghap.makefile(dataset = "example",
-#                          format = "plink",
+#                          format = "phase",
 #                          verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
 # 
