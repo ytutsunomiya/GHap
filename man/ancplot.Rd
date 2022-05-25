@@ -8,9 +8,11 @@
   Given smoothed ancestry predictions obtained with the \code{\link{ghap.ancsmooth}} function, an admixture barplot is generated.
 }
 \usage{
- ghap.ancplot(ancsmooth, labels = TRUE, pop.ang = 45, group.ang = 0,
-              colors = NULL, pop.order = NULL, sortby = NULL,
-              use.unk = FALSE, legend = TRUE)
+ ghap.ancplot(ancsmooth, labels = TRUE,
+              pop.ang = 45, group.ang = 0,
+              colors = NULL, pop.order = NULL,
+              sortby = NULL, use.unk = FALSE,
+              legend = TRUE)
 }
 
 \arguments{
@@ -57,15 +59,17 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 
 # #### DO NOT RUN IF NOT NECESSARY ###
 # 
-# # Copy the example data in the current working directory
-# exfiles <- ghap.makefile()
+# # Copy phase data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "phase",
+#                          verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
 # 
-# # Compress phase data
-# #ghap.compress(input.file = "human", out.file = "human")
-# 
 # # Load phase data
-# phase <- ghap.loadphase(input.file = "human_hapmap3_chr2")
+# 
+# phase <- ghap.loadphase("example")
+# 
+# ### RUN ###
 # 
 # # Calculate marker density
 # mrkdist <- diff(phase$bp)
@@ -79,27 +83,34 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # window <- (100e+6)/(2*g)
 # window <- ceiling(window/density)
 # step <- ceiling(window/4)
-# blocks <- ghap.blockgen(phase, windowsize = window, slide = step, unit = "marker")
+# blocks <- ghap.blockgen(phase, windowsize = window,
+#                         slide = step, unit = "marker")
+# 
+# # BestK analysis
+# bestK <- ghap.anctrain(object = phase, K = 5, tune = TRUE)
+# plot(bestK$ssq, type = "b", xlab = "K",
+#      ylab = "Within-cluster sum of squares")
 # 
 # # Unsupervised analysis with best K
-# prototypes <- ghap.anctrain(object = phase, K = 3, ncores = 1)
-# hapadmix <- ghap.anctest(object = phase, blocks = blocks, prototypes = prototypes,
-#                          test = unique(phase$id), ncores = 1)
-# anctracks <- ghap.ancsmooth(object = phase, admix = hapadmix, ncores = 1)
+# prototypes <- ghap.anctrain(object = phase, K = 2)
+# hapadmix <- ghap.anctest(object = phase,
+#                          blocks = blocks,
+#                          prototypes = prototypes,
+#                          test = unique(phase$id))
+# anctracks <- ghap.ancsmooth(object = phase, admix = hapadmix)
+# ghap.ancplot(ancsmooth = anctracks)
 # 
-# ### RUN ###
-#
-# # List of population orders to plot
-# pop.order <- vector("list",5)
-# names(pop.order) <- c("Africa","Europe","East Asia","S. Asia","America")
-# pop.order[[1]] <- c("YRI","LWK","MKK")
-# pop.order[[2]] <- c("CEU","TSI")
-# pop.order[[3]] <- c("CHB","JPT","CHD")
-# pop.order[[4]] <- "GIH"
-# pop.order[[5]] <- c("ASW","MEX")
-# 
-# # Plot results
-# ghap.ancplot(ancsmooth = anctracks, pop.order = pop.order)
+# # Supervised analysis
+# train <- unique(phase$id[which(phase$pop != "Cross")])
+# prototypes <- ghap.anctrain(object = phase, train = train,
+#                             method = "supervised")
+# hapadmix <- ghap.anctest(object = phase,
+#                          blocks = blocks,
+#                          prototypes = prototypes,
+#                          test = unique(phase$id))
+# anctracks <- ghap.ancsmooth(object = phase, admix = hapadmix)
+# ghap.ancplot(ancsmooth = anctracks)
+
 }
 
 \seealso{
@@ -107,4 +118,7 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 
 \references{
 Milanesi, M., Capomaccio, S., Vajana, E., Bomba, L., Garcia, J.F., Ajmone-Marsan, P., Colli, L., 2017. BITE: an R package for biodiversity analyses. bioRxiv 181610. https://doi.org/10.1101/181610
+
+Y.T. Utsunomiya et al. Unsupervised detection of ancestry tracks with the GHap R package. Methods in Ecology and Evolution. 2020. 11:1448–54.
+
 }
