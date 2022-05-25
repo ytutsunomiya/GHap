@@ -8,9 +8,10 @@
   This function takes phased genotype data and converts them into a compressed binary format.
 }
 \usage{
-  ghap.compress(input.file = NULL, out.file, samples.file = NULL,
-                markers.file = NULL, phase.file = NULL,
-                batchsize = NULL, ncores = 1, verbose = TRUE)
+  ghap.compress(input.file = NULL, out.file,
+                samples.file = NULL, markers.file = NULL,
+                phase.file = NULL, batchsize = NULL,
+                ncores = 1, verbose = TRUE)
 }
 
 \arguments{
@@ -65,16 +66,24 @@
 
 \examples{
  
+# #### DO NOT RUN IF NOT NECESSARY ###
+# 
+# # Copy the example data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "raw",
+#                          verbose = TRUE)
+# file.copy(from = exfiles, to = "./")
+# 
 # ### RUN ###
 # 
 # # Compress phase data using prefix
-# ghap.compress(input.file = "yourfile", out.file = "yourfile", ncores = 1)
-#
+# ghap.compress(input.file = "example",
+#               out.file = "example")
+# 
 # # Compress phase data using file names
-# ghap.compress(samples.file = "yourfile.samples",
-#               markers.file = "yourfile.markers",
-#               phase.file = "yourfile.phase",
-#               out.file = "yourfile",
-#               ncores = 1)
+# ghap.compress(samples.file = "example.samples",
+#               markers.file = "example.markers",
+#               phase.file = "example.phase",
+#               out.file = "example")
 
 }
