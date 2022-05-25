@@ -46,10 +46,8 @@
 \details{
 The Oxford HAPS/SAMPLE format output of widely used phasing software such as SHAPEIT2 (O'Connell et al., 2014) or Eagle (Loh et al., 2106) is here manipulated to obtain the GHap phase format.
 }
-
 \references{
 R-R. Loh P-R et al. Reference-based phasing using the Haplotype Reference Consortium panel. Nat Genet. 2016. 48(11):1443-1448.
-
 J. O'Connell et al. A general approach for haplotype phasing across the full spectrum of relatedness. PLOS Genet. 2014. 10:e1004234.
 }
 \author{
@@ -60,33 +58,27 @@ Mario Barbato <mario.barbato@unicatt.it>, Yuri Tani Utsunomiya <ytutsunomiya@gma
 }
 \examples{
 
-# # Build toy example data (2 chromosomes, 5 samples and 5 markers per chromosome)
-# samples <- data.frame(V1 = c("ID_1","0","POP1","POP1","POP1","POP2","POP2"),
-#                       V2 = c("ID_2","0","ID1","ID2","ID3","ID4","ID5"),
-#                       V3 = c("missing","0","0","0","0","0","0"),
-#                       stringsAsFactors = FALSE)
-# bases <- c("A","T","C","G")
-# for(i in 1:2){
-#   map <- data.frame(V1 = rep(i, times = 5),
-#                     V2 = paste("C",i,"P",1:5,sep=""),
-#                     V3 = 1:5,
-#                     V4 = sample(x = bases, size = 5, replace = TRUE),
-#                     V5 = sample(x = bases, size = 5, replace = TRUE))
-#   phase <- matrix(data = sample(x = c(0,1), size = 2*5*5, replace = TRUE), nrow = 5, ncol = 2*5)
-#   haps <- cbind(map,phase)
-#   write.table(file = paste("example_chr",i,".sample",sep=""), x = samples,
-#               quote = FALSE, sep = " ", row.names = FALSE, col.names = FALSE)
-#   write.table(file = paste("example_chr",i,".haps",sep=""), x = haps,
-#               quote = FALSE, sep = " ", row.names = FALSE, col.names = FALSE)
-# }
+# #### DO NOT RUN IF NOT NECESSARY ###
 # 
-# # Convert Oxford HAPS/SAMPLES to GHap phase using prefix
-# ghap.oxford2phase(input.files = paste("example_chr",1:2,sep=""),
+# # Copy the example data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "oxford",
+#                          verbose = TRUE)
+# file.copy(from = exfiles, to = "./")
+# 
+# ### RUN ###
+# 
+# # Convert from a single genome-wide file
+# ghap.oxford2phase(input.files = "example",
 #                   out.file = "example")
 # 
-# # Convert Oxford HAPS/SAMPLES to GHap phase using file names
-# ghap.oxford2phase(haps.files = paste("example_chr",1:2,".haps",sep=""),
-#                   sample.files = paste("example_chr",1:2,".sample",sep=""),
+# # Convert from a list of chromosome files
+# ghap.oxford2phase(input.files = paste0("example_chr",1:10),
+#                   out.file = "example")
+# 
+# # Convert using separate lists for file extensions
+# ghap.oxford2phase(haps.files = paste0("example_chr",1:10,".haps"),
+#                   sample.files = paste0("example_chr",1:10,".sample"),
 #                   out.file = "example")
 # 
 # # A more efficient alternative for *nix system users
