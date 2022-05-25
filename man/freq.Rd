@@ -70,8 +70,8 @@
 # 
 # # Calculate allele frequency for plink data
 # plink <- ghap.loadplink("example")
-# q <- ghap.freq(plink, type = 'A0', ncores = 1)
-# p <- ghap.freq(plink, type = 'A1', ncores = 1)
-# maf <- ghap.freq(plink, type = 'maf', ncores = 1)
+# q <- ghap.freq(plink, type = 'A0')
+# p <- ghap.freq(plink, type = 'A1')
+# maf <- ghap.freq(plink, type = 'maf')
 
 }
