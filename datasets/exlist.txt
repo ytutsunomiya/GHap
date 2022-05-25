@@ -3,6 +3,6 @@ human_hapmap3_chr2 phase 1011 20000 11 3520042
 human_hapmap3_chr2 plink 1011 20000 11 2658186
 bovine_hapmap_50k phase 694 37268 30 5055740
 bovine_hapmap_50k plink 694 37268 30 4953326
-example_raw raw 450 15000 3 1831418
-example_phase phase 450 15000 3 1077409
-example_plink plink 450 15000 3 938449
+example_raw raw 450 15000 3 1839161
+example_phase phase 450 15000 3 1085152
+example_plink plink 450 15000 3 946192
