@@ -9,8 +9,9 @@
 }
 \usage{
 ghap.slice(object, ids, variants, index=FALSE,
-           transposed=FALSE, sparse=TRUE, unphase=FALSE,
-           impute=FALSE, ncores=1, verbose=TRUE)
+           transposed=FALSE, sparse=TRUE,
+           unphase=FALSE, impute=FALSE,
+           ncores=1, verbose=TRUE)
 }
 
 \arguments{
@@ -56,4 +57,41 @@ ghap.slice(object, ids, variants, index=FALSE,
 
 \author{
   Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
+}
+
+\examples{
+
+# #### DO NOT RUN IF NOT NECESSARY ###
+# 
+# # Copy phase data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "phase",
+#                          verbose = TRUE)
+# file.copy(from = exfiles, to = "./")
+# 
+# # Load data
+# phase <- ghap.loadphase("example")
+# 
+# ### RUN ###
+# 
+# # Select random individuals and markers
+# ind <- sample(x = unique(phase$id), size = 5)
+# mkr <- sample(x = phase$marker, size = 10)
+# 
+# # Generate slice of the data
+# ghap.slice(object = phase, ids = ind, variants = mkr)
+# 
+# # Unphase data the slice
+# ghap.slice(object = phase, ids = ind, variants = mkr,
+#            unphase = TRUE)
+# 
+# # Return transposed matrix
+# ghap.slice(object = phase, ids = ind, variants = mkr,
+#            unphase = TRUE, transposed = TRUE)
+# 
+# # Display data as non-sparse matrix
+# ghap.slice(object = phase, ids = ind, variants = mkr,
+#            unphase = TRUE, transposed = TRUE,
+#            sparse = FALSE)
+
 }
