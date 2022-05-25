@@ -39,7 +39,7 @@ ghap.hap2plink(object, out.file,
   }
 }
 \details{
- The returned is a standard PLINK (Purcell et al., 2007; Chang et al., 2015) binary file (bed/bim/fam), meaning that phase information will be lost during conversion.
+ The returned output is a standard set of PLINK (Purcell et al., 2007; Chang et al., 2015) binary file (bed/bim/fam), meaning that phase information will be lost during conversion.
 }
 \author{
 Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
@@ -53,16 +53,18 @@ S. Purcell et al. PLINK: a tool set for whole-genome association and population-
 
 # #### DO NOT RUN IF NOT NECESSARY ###
 # 
-# # Copy the example data in the current working directory
-# exfiles <- ghap.makefile()
+# # Copy phase data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "phase",
+#                          verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
 # 
-# # Load phase data
-# phase <- ghap.loadphase(input.file = "human_hapmap3_chr2")
+# # Load data
+# phase <- ghap.loadphase("example")
 # 
 # ### RUN ###
-#
+# 
 # # Convert to plink
-# ghap.phase2plink(object = phase, out.file = "human_hapmap3_chr2", ncores = 1)
-#
+# ghap.phase2plink(object = phase, out.file = "example")
+
 }
