@@ -8,8 +8,10 @@
   Given smoothed ancestry predictions obtained with the \code{\link{ghap.ancsmooth}} function and the name of the indivual, an individual karyotype plot is generated.
 }
 \usage{
- ghap.karyoplot(ancsmooth, ids = NULL, colors = NULL, chr = NULL, 
-                chr.line = 10, plot.line = 25, chr.ang = 45, las = 0)
+ ghap.karyoplot(ancsmooth, ids = NULL,
+                colors = NULL, chr = NULL, 
+                chr.line = 10, plot.line = 25,
+                chr.ang = 45, las = 0)
 }
 
 \arguments{
@@ -51,15 +53,15 @@ Marco Milanesi <marco.milanesi.mm@gmail.com>
 
 # #### DO NOT RUN IF NOT NECESSARY ###
 # 
-# # Copy the example data to the current working directory
-# exfiles <- ghap.makefile()
+# # Copy phase data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "phase",
+#                          verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
 # 
-# # Compress phase data
-# ghap.compress(input.file = "human", out.file = "human")
-# 
 # # Load phase data
-# phase <- ghap.loadphase(input.file = "human")
+# 
+# phase <- ghap.loadphase("example")
 # 
 # # Calculate marker density
 # mrkdist <- diff(phase$bp)
@@ -73,43 +75,32 @@ Marco Milanesi <marco.milanesi.mm@gmail.com>
 # window <- (100e+6)/(2*g)
 # window <- ceiling(window/density)
 # step <- ceiling(window/4)
-# blocks <- ghap.blockgen(phase, windowsize = window, slide = step, unit = "marker")
+# blocks <- ghap.blockgen(phase, windowsize = window,
+#                         slide = step, unit = "marker")
 # 
-# # Unsupervised analysis with best K
-# prototypes <- ghap.anctrain(phase = phase, K = 3, ncores = 1)
-# admix.kmeans <- ghap.anctest(phase = phase, blocks = blocks, prototypes = prototypes,
-#                              test = unique(phase$id), ncores = 1)
-# anctracks <- ghap.ancsmooth(phase = phase, admix = admix.kmeans, ncores = 1)
-# 
-# # Training and test set for supervised analysis
-# pops <- phase$pop
-# labels <- pops
-# labels[which(labels \%in\% c("CEU","TSI"))] <- "Europe"
-# labels[which(labels \%in\% c("CHB","JPT","CHD"))] <- "Asia"
-# labels[which(labels \%in\% c("YRI","LWK"))] <- "Africa"
-# labels[which(labels \%in\% c("MKK","GIH","ASW","MEX"))] <- "Test"
-# phase$pop <- labels
-# train <- unique(phase$id[which(phase$pop != "Test")])
-# test <- unique(phase$id)
-# 
-# # Supervised analysis with best parameters
-# admix.svm <- ghap.ancsvm(phase = phase, blocks = blocks, test = test,
-#                          train = train, ncores = 1)
-# phase$pop <- pops
-# admix.svm$POP <- pops[admix.svm$ID]
-# out.svm <- ghap.ancsmooth(phase = phase, admix = admix.svm, ncores = 1)
+# # Supervised analysis
+# train <- unique(phase$id[which(phase$pop != "Cross")])
+# prototypes <- ghap.anctrain(object = phase, train = train,
+#                             method = "supervised")
+# hapadmix <- ghap.anctest(object = phase,
+#                          blocks = blocks,
+#                          prototypes = prototypes,
+#                          test = unique(phase$id))
+# anctracks <- ghap.ancsmooth(object = phase, admix = hapadmix)
+# ghap.ancplot(ancsmooth = anctracks)
 # 
 # ### RUN ###
 # 
-# # Select some individuals
-# ids <- c("NA19835", "NA12003", "NA18749", "NA17969", "NA21108",
-#          "NA18998", "NA19394", "NA19678", "NA21453", "NA20529", "NA19223")
-# 
-# # Plot karyoplot 
-# ghap.karyoplot(ancsmooth = anctracks, ids = ids[1], chr.line = 11,
-#                plot.line = 50, las=1, chr=NULL)
-# ghap.karyoplot(ancsmooth = out.svm, ids = ids[1], chr.line = 11,
-#                plot.line = 50, las=1)
+# # Plot karyoplot
+# pure1 <- unique(phase$id[which(phase$pop == "Pure1")])
+# pure2 <- unique(phase$id[which(phase$pop == "Pure2")])
+# cross <- unique(phase$id[which(phase$pop == "Cross")])
+# ghap.karyoplot(ancsmooth = anctracks, ids = pure1[1],
+#                chr.line = 11, plot.line = 50, las=1, chr=NULL)
+# ghap.karyoplot(ancsmooth = anctracks, ids = pure2[1],
+#                chr.line = 11, plot.line = 50, las=1, chr=NULL)
+# ghap.karyoplot(ancsmooth = anctracks, ids = cross[1],
+#                chr.line = 11, plot.line = 50, las=1, chr=NULL)
 
 }
 
