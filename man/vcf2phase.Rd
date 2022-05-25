@@ -30,7 +30,7 @@
     Character vector containing the list of VCF files.
   }
   \item{sample.files}{
-    Character vector containing the list of SAMPLES files.
+    Character vector containing the list of SAMPLE files.
   }
 
   To turn conversion progress-tracking on or off or set the number of cores please use:
