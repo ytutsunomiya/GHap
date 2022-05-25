@@ -58,6 +58,34 @@ H. Li. A statistical framework for SNP calling, mutation discovery, association 
 \author{
 Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 }
+
 \seealso{
   \code{\link{ghap.compress}}, \code{\link{ghap.loadphase}}, \code{\link{ghap.fast2phase}}, \code{\link{ghap.oxford2phase}}
+}
+
+\examples{
+
+# #### DO NOT RUN IF NOT NECESSARY ###
+# 
+# # Copy the example data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "vcf",
+#                          verbose = TRUE)
+# file.copy(from = exfiles, to = "./")
+# 
+# ### RUN ###
+# 
+# # Convert from a single genome-wide file
+# ghap.vcf2phase(input.files = "example",
+#                out.file = "example")
+# 
+# # Convert from a list of chromosome files
+# ghap.vcf2phase(input.files = paste0("example_chr",1:10),
+#                out.file = "example")
+# 
+# # Convert using separate lists for file extensions
+# ghap.vcf2phase(vcf.files = paste0("example_chr",1:10,".vcf"),
+#                sample.files = paste0("example_chr",1:10,".sample"),
+#                out.file = "example")
+
 }
