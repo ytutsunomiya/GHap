@@ -1,6 +1,6 @@
 #Function: ghap.anctrain
 #License: GPLv3 or later
-#Modification date: 05 Oct 2021
+#Modification date: 25 May 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Create prototype alleles for ancestry predictions
@@ -92,7 +92,7 @@ ghap.anctrain <- function(
         cat("\nQuantifying within-cluster dispersion from K = 1 to K = ", param$K, "... ", sep="")
       }
       if(ncores == 1){
-        clout <- unlist(lapply(X = 1:param$K, FUN = tune.FUN, mc.cores = ncores))
+        clout <- unlist(lapply(X = 1:param$K, FUN = tune.FUN))
         clout <- as.data.frame(matrix(data = clout, ncol = 2, byrow = T))
       }else{
         if(Sys.info()["sysname"] == "Windows"){
