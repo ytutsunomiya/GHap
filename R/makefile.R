@@ -1,12 +1,12 @@
 #Function: ghap.makefile
 #License: GPLv3 or later
-#Modification date: 13 May 2021
+#Modification date: 25 May 2022
 #Written by: Yuri Tani Utsunomiya & Marco Milanesi
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Create a copy of an example file in a temporary directory
 
 ghap.makefile <- function(
-  dataset = "human_hapmap3_chr2",
+  dataset = "example",
   format = "phase",
   verbose = TRUE
 ){
@@ -16,7 +16,11 @@ ghap.makefile <- function(
   extension$phase <- c(".markers",".samples",".phaseb")
   extension$plink <- c(".bed",".bim",".fam")
   extension$haplo <- c(".hapgenotypesb",".hapsamples",".hapalleles")
-  if(format %in% c("phase","plink","haplo") == FALSE){
+  extension$raw <- c(".markers",".samples",".phase")
+  extension$vcf <- c(".vcf",".sample")
+  extension$oxford <- c(".haps",".sample")
+  extension$meta <- c(".phenotypes",".pedigree")
+  if(format %in% names(extension) == FALSE){
     emsg <- paste("\nFormat", format, "is not supported")
     stop(emsg)
   }
@@ -24,7 +28,7 @@ ghap.makefile <- function(
   # Check if requested dataset exists ------------------------------------------
   # Code borrowed from stackoverflow
   urlfile <- paste0("https://github.com/ytutsunomiya/GHap/blob/main/datasets/",
-                  dataset, "_", format, ".zip?raw=true")
+                    dataset, "_", format, ".zip?raw=true")
   con <- url(urlfile)
   check <- suppressWarnings(try(open.connection(con,open="rt",timeout=2),silent=T)[1])
   suppressWarnings(try(close.connection(con),silent=T))
@@ -46,9 +50,11 @@ ghap.makefile <- function(
   rfile <- file.remove(tmpfile)
   
   # Check whether files have been copied and extracted ---------------------------
-  outfiles <- paste0(tmpdir, "/", dataset, unlist(extension[format]))
-  exfile <- sum(file.exists(outfiles))
-  if(cpfile == 0 & exfile == 3 & verbose == TRUE){
+  patterns <- paste(dataset,".+\\", unlist(extension[format]), sep="", collapse="|")
+  patterns <- c(patterns, paste(dataset, "\\", unlist(extension[format]), sep="", collapse="|"))
+  patterns <- paste(patterns, collapse = "|")
+  outfiles <- paste0(tmpdir, "/", list.files(path = tmpdir, pattern = patterns))
+  if(cpfile == 0 & verbose == TRUE){
     cat("\nFiles successfully created!\n")
     cat("\nImportant NOTE:")
     cat("\nIn compliance to CRAN policies, the files have been downloaded to:\n\n")
