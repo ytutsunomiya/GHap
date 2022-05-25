@@ -52,15 +52,15 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 
 # #### DO NOT RUN IF NOT NECESSARY ###
 # 
-# # Copy the example data in the current working directory
-# exfiles <- ghap.makefile()
+# # Copy phase data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "phase",
+#                          verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
 # 
-# # Compress phase data
-# #ghap.compress(input.file = "human", out.file = "human")
-#
 # # Load phase data
-# phase <- ghap.loadphase(input.file = "human_hapmap3_chr2")
+# 
+# phase <- ghap.loadphase("example")
 # 
 # # Calculate marker density
 # mrkdist <- diff(phase$bp)
@@ -74,34 +74,31 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # window <- (100e+6)/(2*g)
 # window <- ceiling(window/density)
 # step <- ceiling(window/4)
-# blocks <- ghap.blockgen(phase, windowsize = window, slide = step, unit = "marker")
+# blocks <- ghap.blockgen(phase, windowsize = window,
+#                         slide = step, unit = "marker")
 # 
-# # Supervised analysis with user-defined labels
-# pops <- phase$pop
-# labels <- pops
-# labels[which(labels \%in\% c("CEU","TSI"))] <- "Europe"
-# labels[which(labels \%in\% c("CHB","JPT","CHD"))] <- "Asia"
-# labels[which(labels \%in\% c("YRI","LWK"))] <- "Africa"
-# labels[which(labels \%in\% c("MKK","GIH","ASW","MEX"))] <- "Test"
-# phase$pop <- labels
-# train <- unique(phase$id[which(phase$pop != "Test")])
+# # Supervised analysis
+# train <- unique(phase$id[which(phase$pop != "Cross")])
 # prototypes <- ghap.anctrain(object = phase, train = train,
-#                             method = "supervised", ncores = 1)
-# hapadmix <- ghap.anctest(object = phase, blocks = blocks, prototypes = prototypes,
-#                          test = unique(phase$id), ncores = 1)
-# phase$pop <- pops
-# anctracks <- ghap.ancsmooth(object = phase, admix = hapadmix, ncores = 1)
+#                             method = "supervised")
+# hapadmix <- ghap.anctest(object = phase,
+#                          blocks = blocks,
+#                          prototypes = prototypes,
+#                          test = unique(phase$id))
+# anctracks <- ghap.ancsmooth(object = phase, admix = hapadmix)
+# ghap.ancplot(ancsmooth = anctracks)
 # 
 # ### RUN ###
 # 
-# # Get per marker ancestry proportions for MKK
-# ancmark <- ghap.ancmark(phase = phase, ancsmooth = anctracks,
-#                         ids = unique(phase$id[which(phase$pop == "MKK")]))
-# plot(ancmark$BP/1e+6, ancmark$Africa, ylim = c(0,100), las=1, type="l", col="blue",
-#      xlab = "Chromosome 2 (Mbp)", ylab = "Ancestry (\%)", main = "Unsupervised")
-# points(ancmark$BP/1e+6, ancmark$Asia, type="l", col="red")
-# points(ancmark$BP/1e+6, ancmark$Europe, type="l", col="green")
-# points(ancmark$BP/1e+6, ancmark$UNK, type="l", col="grey")
+# # Get per marker ancestry proportions for 'Pure1'
+# pure1 <- unique(phase$id[which(phase$pop == "Pure1")])
+# ancmark <- ghap.ancmark(phase = phase,
+#                         ancsmooth = anctracks,
+#                         ids = pure1)
+# 
+# # Plot 'Pure2' introgression into 'Pure1'
+# ghap.manhattan(data = ancmark, chr = "CHR",
+#                bp = "BP", y = "Pure2", type = "h")
 
 }
 
