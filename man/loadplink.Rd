@@ -110,18 +110,21 @@
 
 # #### DO NOT RUN IF NOT NECESSARY ###
 # 
-# # Copy an example dataset to the current working directory
-# exfiles <- ghap.makefile(format = "plink")
+# # Copy phase data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "plink",
+#                          verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
 # 
 # ### RUN ###
 # 
 # # Load data using prefix
-# plink <- ghap.loadplink(input.file = "human_hapmap3_chr2")
+# plink <- ghap.loadplink("example")
 # 
 # # Load data using file names
-# plink <- ghap.loadplink(bed.file = "human_hapmap3_chr2.bed",
-#                         bim.file = "human_hapmap3_chr2.bim",
-#                         fam.file = "human_hapmap3_chr2.fam")
+# plink <- ghap.loadplink(bed.file = "example.bed",
+#                         bim.file = "example.bim",
+#                         fam.file = "example.fam")
+
 
 }
