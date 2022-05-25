@@ -1,5 +1,3 @@
-
-   
 \name{ghap.simmating}
 \alias{ghap.simmating}
 
@@ -78,11 +76,10 @@ The function outputs the following files:
 # #### DO NOT RUN IF NOT NECESSARY ###
 # 
 # # Copy the example data in the current working directory
-# exfiles <- ghap.makefile()
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "phase",
+#                          verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
-# 
-# # Load phase data
-# phase <- ghap.loadphase(input.file = "human_hapmap3_chr2")
 # 
 # ### RUN ###
 # 
@@ -101,5 +98,6 @@ The function outputs the following files:
 # ghap.simmating(phase, n.individuals = 100,
 #                parent1 = parent1, parent2 = parent2,
 #                out.file = "sim2", ncores = 1)
+
 
 }
