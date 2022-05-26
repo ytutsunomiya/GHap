@@ -8,9 +8,12 @@ Haplotype genotypes
 Generate matrix of HapGenotypes for user-defined blocks.
 }
 \usage{
-ghap.haplotyping(phase, blocks, outfile, freq = c(0, 1), drop.minor = FALSE,
-                 only.active.samples = TRUE, only.active.markers = TRUE,
-                 batchsize = NULL, binary = TRUE, ncores = 1, verbose = TRUE)
+ghap.haplotyping(phase, blocks, outfile,
+                 freq = c(0, 1), drop.minor = FALSE,
+                 only.active.samples = TRUE,
+                 only.active.markers = TRUE,
+                 batchsize = NULL, binary = TRUE,
+                 ncores = 1, verbose = TRUE)
 
 }
 
@@ -71,24 +74,24 @@ Marco Milanesi <marco.milanesi.mm@gmail.com>
 
 # #### DO NOT RUN IF NOT NECESSARY ###
 # 
-# # Copy the example data in the current working directory
-# exfiles <- ghap.makefile()
+# # Copy phase data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "phase",
+#                          verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
 # 
-# # Compress phase data
-# ghap.compress(input.file = "human", out.file = "human")
-# 
-# # Load phase data
-# phase <- ghap.loadphase(input.file = "human")
-# 
-# # Generate blocks of 5 markers sliding 5 markers at a time
-# blocks <- ghap.blockgen(phase, windowsize = 5, slide = 5, unit = "marker")
-#
+# # Load data
+# phase <- ghap.loadphase("example")
 # 
 # ### RUN ###
 # 
+# # Generate blocks
+# blocks <- ghap.blockgen(phase, windowsize = 5,
+#                         slide = 5, unit = "marker")
+# 
 # # Haplotyping
-# ghap.haplotyping(phase = phase, blocks = blocks, outfile = "human",
+# ghap.haplotyping(phase = phase, blocks = blocks,
+#                  outfile = "example",
 #                  binary = T, ncores = 1)
 
 }
