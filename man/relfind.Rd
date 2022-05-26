@@ -8,7 +8,8 @@ Find relatives in IBD estimates
 This function infers relationships from IBD sharing.
 }
 \usage{
-ghap.relfind(ibdpairs, v = 50, breakclass = FALSE, ncores=1)
+ghap.relfind(ibdpairs, v = 50,
+             breakclass = FALSE, ncores=1)
 }
 
 \arguments{
@@ -67,4 +68,58 @@ C. C. Chang et al. Second-generation PLINK: rising to the challenge of larger an
 J. Staples et al. PRIMUS: Rapid Reconstruction of Pedigrees from Genome-wide Estimates of Identity by Descent. 2014. 95, 553-564.
 
 S. Purcell et al. PLINK: a tool set for whole-genome association and population-based linkage analyses. Am. J. Hum. Genet. 2007. 81, 559-575.
+}
+
+\examples{
+
+# #### DO NOT RUN IF NOT NECESSARY ###
+# 
+# # Copy plink data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "plink",
+#                          verbose = TRUE)
+# file.copy(from = exfiles, to = "./")
+# 
+# # Copy metadata in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "meta",
+#                          verbose = TRUE)
+# file.copy(from = exfiles, to = "./")
+# 
+# # Load plink data
+# plink <- ghap.loadplink("example")
+# 
+# # Load pedigree data
+# ped <- read.table(file = "example.pedigree", header=T)
+# 
+# ### RUN ###
+# 
+# # Subset individuals from the pure1 population
+# pure1 <- plink$id[which(plink$pop == "Pure1")]
+# plink <- ghap.subset(object = plink, ids = pure1, variants = plink$marker)
+# 
+# # Subset markers with MAF > 0.05
+# freq <- ghap.freq(plink)
+# mkr <- names(freq)[which(freq > 0.05)]
+# plink <- ghap.subset(object = plink, ids = pure1, variants = mkr)
+# 
+# # Compute A1 allele frequencies
+# p <- ghap.freq(plink, type = "A1")
+# 
+# # Compute IBD statistics for individual 1
+# pairlist <- data.frame(ID1 = pure1[1], ID2 = pure1[-1])
+# ibd <- ghap.ibd(object = plink, pairlist = pairlist, freq = p,
+#                 refsize = length(pure1))
+# 
+# # Predict relationships for individual 1
+# # 1 = parent-offspring
+# # 3 = other types of relationship
+# # 4 = unrelated
+# rel <- ghap.relfind(ibdpairs = ibd)
+# table(rel$REL)
+# 
+# # Confirm with pedigree
+# toprel <- rel$ID2[which(rel$REL == 1)]
+# ped[which(ped$id \%in\% toprel & ped$dam == pure1[1]),]
+
 }
