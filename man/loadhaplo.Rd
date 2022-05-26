@@ -95,8 +95,6 @@
 #                          verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
 # 
-# ### RUN ###
-# 
 # # Load data
 # phase <- ghap.loadphase("example")
 # 
@@ -108,6 +106,8 @@
 # ghap.haplotyping(phase = phase, blocks = blocks, outfile = "example",
 #                  binary = T, ncores = 1)
 # 
+# ### RUN ###
+# 
 # # Load haplotype genotypes using prefix
 # haplo <- ghap.loadhaplo("example")
 # 
@@ -115,6 +115,5 @@
 # haplo <- ghap.loadhaplo(hapsamples.file = "example.hapsamples",
 #                         hapalleles.file = "example.hapalleles",
 #                         hapgenotypesb.file = "example.hapgenotypesb")
-
 
 }
