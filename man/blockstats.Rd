@@ -58,38 +58,38 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 
 # #### DO NOT RUN IF NOT NECESSARY ###
 # 
-# # Copy the example data in the current working directory
-# exfiles <- ghap.makefile()
+# # Copy phase data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "phase",
+#                          verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
 # 
-# # Compress phase data
-# ghap.compress(input.file = "human", out.file = "human")
+# # Load data
+# phase <- ghap.loadphase("example")
 # 
-# # Load phase data
-# phase <- ghap.loadphase(input.file = "human")
-# 
-# # Generate blocks of 5 markers sliding 5 markers at a time
-# blocks <- ghap.blockgen(phase, windowsize = 5, slide = 5, unit = "marker")
+# # Generate blocks of 5 markers
+# blocks <- ghap.blockgen(phase, windowsize = 5,
+#                         slide = 5, unit = "marker")
 # 
 # # Haplotyping
-# ghap.haplotyping(phase = phase, blocks = blocks, outfile = "human",
+# ghap.haplotyping(phase = phase, blocks = blocks, outfile = "example",
 #                  binary = T, ncores = 1)
-#
-# # Load haplotype genotypes
-# haplo <- ghap.loadhaplo(input.file = "human")
-#
-# Subset
-# ids <- haplo$id[which(haplo$pop == "CEU")]
-# haplo <- ghap.subsethaplo(haplo = haplo, ids = ids, alleles = haplo$allele.in)
-#
-# #Compute haplotype statistics
-# hapstats <- ghap.hapstats(haplo, ncores = 1)
-#
-#
+# 
+# # Load haplotype genotypes using prefix
+# haplo <- ghap.loadhaplo("example")
+# 
+# # Subset
+# ids <- which(haplo$pop == "Pure1")
+# haplo <- ghap.subset(haplo, ids = ids,
+#                      variants = haplo$allele.in,
+#                      index = TRUE)
+# 
+# # Compute haplotype statistics
+# hapstats <- ghap.hapstats(haplo)
+# 
 # ### RUN ###
 #
-# #Compute block statistics
-# blockstats <- ghap.blockstats(hapstats, ncores = 1)
+# # Compute block statistics
+# blockstats <- ghap.blockstats(hapstats)
 
 }
-
