@@ -66,64 +66,54 @@ S. Purcell et al. PLINK: a tool set for whole-genome association and population-
 
 # #### DO NOT RUN IF NOT NECESSARY ###
 # 
-# # Copy the example data in the current working directory
-# exfiles <- ghap.makefile()
+# # Copy plink data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "plink",
+#                          verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
 # 
-# # Compress phase data
-# ghap.compress(input.file = "human", out.file = "human")
+# # Copy metadata in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "meta",
+#                          verbose = TRUE)
+# file.copy(from = exfiles, to = "./")
 # 
-# # Load phase data
-# phase <- ghap.loadphase(input.file = "human")
+# # Load plink data
+# plink <- ghap.loadplink("example")
 # 
-# # Generate blocks of 5 markers sliding 5 markers at a time
-# blocks <- ghap.blockgen(phase, windowsize = 5, slide = 5, unit = "marker")
-# 
-# # Haplotyping
-# ghap.haplotyping(phase = phase, blocks = blocks, outfile = "human",
-#                  binary = T, ncores = 1)
-#
-# # Load haplotype genotypes
-# haplo <- ghap.loadhaplo(input.file = "human")
-#
-# # Subset common haplotypes in Europeans
-# EUR.ids <- haplo$id[which(haplo$pop \%in\% c("TSI","CEU"))]
-# haplo <- ghap.subsethaplo(haplo,EUR.ids,haplo$allele.in)
-# hapstats <- ghap.hapstats(haplo, ncores = 1)
-# common <- hapstats$TYPE \%in\% c("REGULAR","MAJOR") &
-#  hapstats$FREQ > 0.05 &
-#  hapstats$FREQ < 0.95
-# haplo <- ghap.subsethaplo(haplo,EUR.ids,common)
-# 
-# # Compute relationship matrix
-# K <- ghap.kinship(haplo, ncores = 1)
-# 
-# # Quantitative trait with 50\% heritability
-# # Unbalanced repeated measurements (0 to 30)
-# # Two major haplotypes accounting for 50\% of the genetic variance
-# myseed <- 123456789
-# set.seed(myseed)
-# major <- sample(which(haplo$allele.in == TRUE), size = 2)
-# g2 <- runif(n = 2, min = 0, max = 1)
-# g2 <- (g2/sum(g2))*0.5
-# sim <- ghap.simpheno(haplo, kinship = K, h2 = 0.5, g2 = g2, nrep = 30,
-#                      balanced = FALSE, major = major, seed = myseed)
-# 
-# # Fit model using REML
-# model <- ghap.lmm(fixed = phenotype ~ 1, random = ~ individual,
-#                   covmat = list(individual = K), data = sim$data)
-#
-# # BLUP GWAS
-# gebvs <- model$random$individual
-# Kinv <- ghap.kinv(K)
-# gwas.blup <- ghap.blup(gebvs = gebvs, haplo = haplo,
-#                        ncores = 1, invcov = Kinv)
-# 
+# # Load phenotype and pedigree data
+# df <- read.table(file = "example.phenotypes", header=T)
 # 
 # ### RUN ###
 # 
-# # Scoring
-# score <- ghap.profile(score = gwas.blup, haplo = haplo, ncores = 1)
-# plot(score$SCORE, model$random$individual); abline(0,1)
+# # Subset individuals from the pure1 population
+# pure1 <- plink$id[which(plink$pop == "Pure1")]
+# plink <- ghap.subset(object = plink, ids = pure1, variants = plink$marker)
+# 
+# # Subset markers with MAF > 0.05
+# freq <- ghap.freq(plink)
+# mkr <- names(freq)[which(freq > 0.05)]
+# plink <- ghap.subset(object = plink, ids = pure1, variants = mkr)
+# 
+# # Compute genomic relationship matrix
+# # Induce sparsity to help with matrix inversion
+# K <- ghap.kinship(plink, sparsity = 0.01)
+# 
+# # Fit mixed model
+# df$rep <- df$id
+# model <- ghap.lmm(formula = pheno ~ 1 + (1|id) + (1|rep),
+#                   data = df,
+#                   covmat = list(id = K, rep = NULL))
+# refblup <- model$random$id$Estimate
+# names(refblup) <- rownames(model$random$id)
+# 
+# # Convert blup of individuals into blup of variants
+# mkrblup <- ghap.varblup(object = plink,
+#                         gebv = refblup,
+#                         covmat = K)
+# 
+# # Build GEBVs from variant effects and compare predictions
+# gebv <- ghap.profile(object = plink, score = mkrblup)
+# plot(gebv$SCORE, refblup); abline(0,1)
 
 }
