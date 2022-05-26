@@ -8,10 +8,12 @@ Relationship matrix based on genomic data
 This function computes marker-based and HapAllele-based relationship matrices.
 }
 \usage{
-ghap.kinship(object, weights = NULL, sparsity = NULL, type = 1,
-             batchsize = NULL, only.active.samples = TRUE,
-             only.active.variants = TRUE, ncores = 1,
-             verbose = TRUE)
+ghap.kinship(object, weights = NULL,
+             sparsity = NULL,
+             type = 1, batchsize = NULL,
+             only.active.samples = TRUE,
+             only.active.variants = TRUE,
+             ncores = 1, verbose = TRUE)
 }
 
 \arguments{
@@ -54,9 +56,7 @@ Let \eqn{\mathbf{M}} be the \emph{n} x \emph{m} matrix of genotypes, where \emph
 
 \deqn{\mathbf{K} = q^{-1}\mathbf{MDM}'}
 where \eqn{\mathbf{D} = diag(d_i)}, \eqn{d_i} is the weight of variant \emph{i} (default \eqn{d_i = 1}), and \eqn{q} is a scaling factor. The argument type controls the genotype transformation and the scaling factor, and includes the following option:
-
 \cr
-
 Type = 1 (General additive 1)\cr
 Genotype transformation: m - mean(m)\cr
 Scaling factor: \eqn{tr(\mathbf{MDM}')^{-1}n}
@@ -87,65 +87,49 @@ Genotype transformation:\cr
 2 = -2*(1-p[j])^2\cr
 Scaling factor:\cr
 \eqn{tr(\mathbf{MDM}')^{-1}n}.
-
 }
-
 \author{
 Yuri Tani Utsunomiya <ytutsunomiya@gmail.com> \cr
 Marco Milanesi <marco.milanesi.mm@gmail.com>
 }
-
-
 \references{
 P. M. VanRaden. Efficient methods to compute genomic predictions. J. Dairy. Sci. 2008. 91:4414-4423.
 }
-
 \examples{
 
 # #### DO NOT RUN IF NOT NECESSARY ###
 # 
-# # Copy phase data to the current working directory
-# exfiles <- ghap.makefile()
+# # Copy plink data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "plink",
+#                          verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
 # 
-# # Copy plink data to the current working directory
-# exfiles <- ghap.makefile(format = "plink")
+# # Copy metadata in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "meta",
+#                          verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
-# 
-# # Load phase data
-# phase <- ghap.loadphase(input.file = "human_hapmap3_chr2")
 # 
 # # Load plink data
-# plink <- ghap.loadplink(input.file = "human_hapmap3_chr2")
+# plink <- ghap.loadplink("example")
 # 
-# # Generate blocks of 5 markers sliding 5 markers at a time
-# blocks <- ghap.blockgen(phase, windowsize = 5, slide = 5, unit = "marker")
-# 
-# # Haplotyping
-# ghap.haplotyping(phase = phase, blocks = blocks, outfile = "human",
-#                  binary = T, ncores = 1)
-# 
-# # Load haplotype genotypes
-# haplo <- ghap.loadhaplo(input.file = "human")
-# 
-# # Exclude minor alleles and singletons
-# hapstats <- ghap.hapstats(haplo, ncores = 1)
-# haplo <- ghap.subsethaplo(haplo,ids=haplo$id,
-#                           alleles = hapstats$TYPE \%in\% c("REGULAR","MAJOR"))
-# 
+# # Load phenotype data
+# df <- read.table(file = "example.phenotypes", header=T)
 # 
 # ### RUN ###
 # 
-# # Examples of relationship matrix with different objects
-# K.phase <- ghap.kinship(phase, ncores = 1)
-# K.plink <- ghap.kinship(plink, ncores = 1)
-# K.haplo <- ghap.kinship(haplo, ncores = 1)
-#
-# # Different types of relationship matrices
-# K1 <- ghap.kinship(plink, type = 1, ncores = 1) # General additive 1
-# K2 <- ghap.kinship(plink, type = 2, ncores = 1) # General additive 2
-# K3 <- ghap.kinship(plink, type = 3, ncores = 1) # VanRaden 2008
-# K4 <- ghap.kinship(plink, type = 4, ncores = 1) # GCTA GRM
-# K5 <- ghap.kinship(plink, type = 5, ncores = 1) # Dominance 1
-# K6 <- ghap.kinship(plink, type = 6, ncores = 1) # Dominance 2
+# # Subset pure1 population
+# pure1 <- plink$id[which(plink$pop == "Pure1")]
+# plink <- ghap.subset(object = plink, ids = pure1, variants = plink$marker)
+# 
+# # Compute different types of relationship matrices
+# K1 <- ghap.kinship(plink, type = 1) # General additive 1
+# K2 <- ghap.kinship(plink, type = 2) # General additive 2
+# K3 <- ghap.kinship(plink, type = 3) # VanRaden 2008
+# K4 <- ghap.kinship(plink, type = 4) # GCTA GRM
+# K5 <- ghap.kinship(plink, type = 5) # Dominance 1
+# K6 <- ghap.kinship(plink, type = 6) # Dominance 2
+
+
 }
