@@ -8,9 +8,10 @@ Linear mixed model
 Linear mixed model fitting for fixed effects, random effects and variance components.
 }
 \usage{
-ghap.lmm(formula, data, covmat = NULL, weights = NULL,
-         vcp.initial = NULL, vcp.estimate = TRUE,
-         vcp.conv = 1e-12, errors = TRUE, invcov = FALSE,
+ghap.lmm(formula, data, covmat = NULL,
+         weights = NULL, vcp.initial = NULL,
+         vcp.estimate = TRUE, vcp.conv = 1e-12,
+         errors = TRUE, invcov = FALSE,
          em.reml = 10, tol = 1e-10, extras = NULL,
          verbose = TRUE)
 }
@@ -92,4 +93,57 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 
 \references{
 J. Jensen et al. Residual maximum likelihood estimation of (Co)variance components in multivariate mixed linear models using average information. J. Ind. Soc. Ag. Statistics 1997. 49, 215-236.
+}
+
+\examples{
+
+# #### DO NOT RUN IF NOT NECESSARY ###
+# 
+# # Copy plink data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "plink",
+#                          verbose = TRUE)
+# file.copy(from = exfiles, to = "./")
+# 
+# # Copy metadata in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "meta",
+#                          verbose = TRUE)
+# file.copy(from = exfiles, to = "./")
+# 
+# # Load plink data
+# plink <- ghap.loadplink("example")
+# 
+# # Load phenotype and pedigree data
+# df <- read.table(file = "example.phenotypes", header=T)
+# 
+# ### RUN ###
+# 
+# # Subset individuals from the pure1 population
+# pure1 <- plink$id[which(plink$pop == "Pure1")]
+# plink <- ghap.subset(object = plink, ids = pure1, variants = plink$marker)
+# 
+# # Subset markers with MAF > 0.05
+# freq <- ghap.freq(plink)
+# mkr <- names(freq)[which(freq > 0.05)]
+# plink <- ghap.subset(object = plink, ids = pure1, variants = mkr)
+# 
+# # Compute genomic relationship matrix
+# # Induce sparsity to help with matrix inversion
+# K <- ghap.kinship(plink, sparsity = 0.01)
+# 
+# # Fit mixed model with variance components estimation
+# df$rep <- df$id
+# model1 <- ghap.lmm(formula = pheno ~ 1 + (1|id) + (1|rep),
+#                    data = df,
+#                    covmat = list(id = K, rep = NULL))
+# 
+# # Fit mixed model with fixed variance components
+# df$rep <- df$id
+# model2 <- ghap.lmm(formula = pheno ~ 1 + (1|id) + (1|rep),
+#                    data = df,
+#                    covmat = list(id = K, rep = NULL),
+#                    vcp.initial = list(id = 0.4, rep = 0.2, Residual = 0.4),
+#                    vcp.estimate = F)
+
 }
