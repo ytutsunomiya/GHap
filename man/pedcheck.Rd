@@ -31,3 +31,30 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 \references{
 A. I. Vazquez. Technical note: An R package for fitting generalized linear mixed models in animal breeding. J. Anim. Sci. 2010. 88, 497-504.
 }
+
+\examples{
+
+# #### DO NOT RUN IF NOT NECESSARY ###
+# 
+# # Copy metadata in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "meta",
+#                          verbose = TRUE)
+# file.copy(from = exfiles, to = "./")
+# 
+# # Load pedigree data
+# ped <- read.table(file = "example.pedigree", header=T)
+# 
+# ### RUN ###
+# 
+# # Descriptive statistics for the pedigree
+# pedstat <- ghap.pedcheck(ped[,-1])
+# print(pedstat$stats)
+# 
+# # Retrieve inbreeding and pedigree depth
+# pedstat <- ghap.pedcheck(ped[,-1], depth.n.f = TRUE)
+# print(pedstat$ped)
+# hist(pedstat$ped$f)
+# hist(pedstat$ped$ecg)
+
+}
