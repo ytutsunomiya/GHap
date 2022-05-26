@@ -1,3 +1,5 @@
+
+   
 \name{ghap.fst}
 \alias{ghap.fst}
 
@@ -10,7 +12,9 @@ Multi-alleleic Fst computed using block summary statistics generated from \code{
 }
 
 \usage{
- ghap.fst(blockstats.pop1, blockstats.pop2, blockstats.tot)
+ ghap.fst(blockstats.pop1,
+          blockstats.pop2,
+          blockstats.tot)
 }
 
 \arguments{
@@ -72,63 +76,56 @@ Marco Milanesi <marco.milanesi.mm@gmail.com>
 
 # #### DO NOT RUN IF NOT NECESSARY ###
 # 
-# # Copy the example data in the current working directory
-# exfiles <- ghap.makefile()
+# # Copy phase data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "phase",
+#                          verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
 # 
-# # Compress phase data
-# ghap.compress(input.file = "human", out.file = "human")
+# # Load data
+# phase <- ghap.loadphase("example")
 # 
-# # Load phase data
-# phase <- ghap.loadphase(input.file = "human")
-# 
-# # Generate blocks of 5 markers sliding 5 markers at a time
-# blocks <- ghap.blockgen(phase, windowsize = 5, slide = 5, unit = "marker")
+# # Generate blocks of 5 markers
+# blocks <- ghap.blockgen(phase, windowsize = 5,
+#                         slide = 5, unit = "marker")
 # 
 # # Haplotyping
-# ghap.haplotyping(phase = phase, blocks = blocks, outfile = "human",
+# ghap.haplotyping(phase = phase, blocks = blocks, outfile = "example",
 #                  binary = T, ncores = 1)
-#
-# # Load haplotype genotypes
-# haplo <- ghap.loadhaplo("human.hapsamples", "human.hapalleles", "human.hapgenotypesb")
 # 
-#
+# # Load haplotype genotypes using prefix
+# haplo <- ghap.loadhaplo("example")
+# 
 # ### RUN ###
 # 
-# # Compute haplotype allele statistics for each group
-# CHB.ids <- haplo$id[which(haplo$pop=="CHB")]
-# CEU.ids <- haplo$id[which(haplo$pop=="CEU")]
-# haplo <- ghap.subsethaplo(haplo,CHB.ids,haplo$allele.in)
-# CHB.hapstats <- ghap.hapstats(haplo,ncores = 1)
-# haplo <- ghap.subsethaplo(haplo,CEU.ids,haplo$allele.in)
-# CEU.hapstats <- ghap.hapstats(haplo,ncores = 1)
-# haplo <- ghap.subsethaplo(haplo,c(CHB.ids,CEU.ids),haplo$allele.in)
-# TOT.hapstats <- ghap.hapstats(haplo,ncores = 1)
-# haplo <- ghap.subsethaplo(haplo,haplo$id,haplo$allele.in)
+# # Compute block statistics for population 1
+# ids <- which(haplo$pop == "Pure1")
+# haplo <- ghap.subset(haplo, ids = ids,
+#                      variants = haplo$allele.in,
+#                      index = TRUE)
+# hapstats1 <- ghap.hapstats(haplo)
+# blockstats1 <- ghap.blockstats(hapstats1)
 # 
-# # Compute haplotype block statistics for each group
-# CHB.blockstats <- ghap.blockstats(CHB.hapstats, ncores = 1)
-# CEU.blockstats <- ghap.blockstats(CEU.hapstats, ncores = 1)
-# TOT.blockstats <- ghap.blockstats(TOT.hapstats, ncores = 1)
+# # Compute block statistics for population 2
+# ids <- which(haplo$pop == "Pure2")
+# haplo <- ghap.subset(haplo, ids = ids,
+#                      variants = haplo$allele.in,
+#                      index = TRUE)
+# hapstats2 <- ghap.hapstats(haplo)
+# blockstats2 <- ghap.blockstats(hapstats2)
 # 
-# # Calculate Fst
-# fst <- ghap.fst(CHB.blockstats, CEU.blockstats, TOT.blockstats)
+# # Compute block statistics for combined populations
+# ids <- which(haplo$pop %in% c("Pure1","Pure2"))
+# haplo <- ghap.subset(haplo, ids = ids,
+#                      variants = haplo$allele.in,
+#                      index = TRUE)
+# hapstats12 <- ghap.hapstats(haplo)
+# blockstats12 <- ghap.blockstats(hapstats12)
 # 
-# # Plot results
-# top.fst <- fst[which(fst$FST == max(fst$FST, na.rm=TRUE)),]
-# plot(
-#   x = (fst$BP1+fst$BP2)/2e+6,
-#   y = fst$FST, pch = "",
-#   ylab = expression(paste("Haplotype ", F[ST])),
-#   xlab = "Chromosome 2 (in Mb)",
-#   ylim=c(0,1)
-# )
-# abline(v=108.7, col="gray")
-# points(x = (fst$BP1+fst$BP2)/2e+6, y = fst$FST, pch = 20, col="#471FAA99")
-# points(x = (top.fst$BP1+top.fst$BP2)/2e+6, y = top.fst$FST, pch = 20, col="red")
-# text(x = 125, y = max(fst$FST, na.rm=TRUE), "EDAR", col="red")
-# CEU.hapstats[which(CEU.hapstats$BLOCK == top.fst$BLOCK & CEU.hapstats$FREQ > 0),1:9]
-# CHB.hapstats[which(CHB.hapstats$BLOCK == top.fst$BLOCK & CHB.hapstats$FREQ > 0),1:9]
+# # Compute FST
+# fst <- ghap.fst(blockstats1, blockstats2, blockstats12)
+# ghap.manhattan(data = fst, chr = "CHR", bp = "BP1",
+#                y = "FST", type = "h")
 
 }
 
