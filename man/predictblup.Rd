@@ -55,3 +55,60 @@
 \references{
   J.F. Taylor. Implementation and accuracy of genomic selection. Aquaculture 2014. 420, S8-S14.
 }
+
+\examples{
+
+# #### DO NOT RUN IF NOT NECESSARY ###
+# 
+# # Copy plink data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "plink",
+#                          verbose = TRUE)
+# file.copy(from = exfiles, to = "./")
+# 
+# # Copy metadata in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "meta",
+#                          verbose = TRUE)
+# file.copy(from = exfiles, to = "./")
+# 
+# # Load plink data
+# plink <- ghap.loadplink("example")
+# 
+# # Load phenotype and pedigree data
+# df <- read.table(file = "example.phenotypes", header=T)
+# 
+# ### RUN ###
+# 
+# # Subset individuals from the pure1 population
+# pure1 <- plink$id[which(plink$pop == "Pure1")]
+# plink <- ghap.subset(object = plink, ids = pure1, variants = plink$marker)
+# 
+# # Subset markers with MAF > 0.05
+# freq <- ghap.freq(plink)
+# mkr <- names(freq)[which(freq > 0.05)]
+# plink <- ghap.subset(object = plink, ids = pure1, variants = mkr)
+# 
+# # Compute genomic relationship matrix
+# # Induce sparsity to help with matrix inversion
+# K <- ghap.kinship(plink, sparsity = 0.01)
+# 
+# # Fit mixed model
+# df$rep <- df$id
+# model <- ghap.lmm(formula = pheno ~ 1 + (1|id) + (1|rep),
+#                   data = df,
+#                   covmat = list(id = K, rep = NULL),
+#                   extras = "LHSi")
+# refblup <- model$random$id$Estimate
+# names(refblup) <- rownames(model$random$id)
+# 
+# # Predict blup of reference and test individuals
+# blup <- ghap.predictblup(refblup, vcp = model$vcp$Estimate[1],
+#                          covmat = as.matrix(K),
+#                          errormat = model$extras$LHSi,
+#                          errorname = "id")
+# 
+# # Compare predictions
+# plot(blup$Estimate, model$random$id$Estimate)
+# abline(0,1)
+}
