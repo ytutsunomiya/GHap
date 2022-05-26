@@ -152,3 +152,69 @@ I. Stranden and D.J. Garrick. Technical note: derivation of equivalent computing
 
 J.L.G. Duarte et al. Rapid screening for phenotype-genotype associations by linear transformations of genomic evaluations. BMC Bioinformatics. 2014, 15:246.
 }
+
+\examples{
+
+# #### DO NOT RUN IF NOT NECESSARY ###
+# 
+# # Copy plink data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "plink",
+#                          verbose = TRUE)
+# file.copy(from = exfiles, to = "./")
+# 
+# # Copy metadata in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "meta",
+#                          verbose = TRUE)
+# file.copy(from = exfiles, to = "./")
+# 
+# # Load plink data
+# plink <- ghap.loadplink("example")
+# 
+# # Load phenotype and pedigree data
+# df <- read.table(file = "example.phenotypes", header=T)
+# 
+# ### RUN ###
+# 
+# # Subset individuals from the pure1 population
+# pure1 <- plink$id[which(plink$pop == "Pure1")]
+# plink <- ghap.subset(object = plink, ids = pure1, variants = plink$marker)
+# 
+# # Subset markers with MAF > 0.05
+# freq <- ghap.freq(plink)
+# mkr <- names(freq)[which(freq > 0.05)]
+# plink <- ghap.subset(object = plink, ids = pure1, variants = mkr)
+# 
+# # Compute genomic relationship matrix
+# # Induce sparsity to help with matrix inversion
+# K <- ghap.kinship(plink, sparsity = 0.01)
+# 
+# # Fit mixed model
+# df$rep <- df$id
+# model <- ghap.lmm(formula = pheno ~ 1 + (1|id) + (1|rep),
+#                   data = df,
+#                   covmat = list(id = K, rep = NULL),
+#                   extras = "LHSi")
+# refblup <- model$random$id$Estimate
+# names(refblup) <- rownames(model$random$id)
+# 
+# # Convert blup of individuals into blup of variants
+# mkrblup <- ghap.varblup(object = plink, gebv = refblup,
+#                         covmat = K, vcp = model$vcp$Estimate[1],
+#                         errormat = model$extras$LHSi, errorname = "id")
+# 
+# # Build GEBVs from variant effects and compare predictions
+# gebv <- ghap.profile(object = plink, score = mkrblup)
+# plot(gebv$SCORE, refblup); abline(0,1)
+# 
+# # Compare variant solutions with regular GWAS
+# gwas <- ghap.assoc(object = plink,
+#                    formula = pheno ~ 1 + (1|id) + (1|rep),
+#                    data = df,
+#                    covmat = list(id = K, rep = NULL))
+# ghap.manhattan(data = gwas, chr = "CHR", bp = "BP", y = "LOGP")
+# ghap.manhattan(data = mkrblup, chr = "CHR", bp = "BP", y = "LOGP")
+# plot(mkrblup$LOGP, gwas$LOGP); abline(0,1)
+
+}
