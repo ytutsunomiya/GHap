@@ -79,27 +79,42 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 J. Yang et al. GCTA: A Tool for Genome-wide Complex Trait Analysis. Am. J. Hum. Genet. 2011. 88:76–82.
 }
 \examples{
+
 # #### DO NOT RUN IF NOT NECESSARY ###
 # 
-# # Copy plink data to the current working directory
-# exfiles <- ghap.makefile(format = "plink")
+# # Copy plink data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "plink",
+#                          verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
-#
-# ### RUN ###
+# 
+# # Copy metadata in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "meta",
+#                          verbose = TRUE)
+# file.copy(from = exfiles, to = "./")
 # 
 # # Load plink data
-# plink <- ghap.loadplink(input.file = "human_hapmap3_chr2")
+# plink <- ghap.loadplink("example")
 # 
-# # Subset population
-# pop <- "CEU"
-# ids <- plink$id[which(plink$pop == pop)]
-# mkrs <- plink$marker
-# plink <- ghap.subset(object = plink, ids = ids, variants = mkrs)
+# # Load phenotype and pedigree data
+# df <- read.table(file = "example.phenotypes", header=T)
 # 
-# # Calculate allele frequencies (has to be A1)
-# p <- ghap.freq(plink, type = 'A1', ncores = 1)
+# ### RUN ###
+# 
+# # Subset individuals from the pure1 population
+# pure1 <- plink$id[which(plink$pop == "Pure1")]
+# plink <- ghap.subset(object = plink, ids = pure1, variants = plink$marker)
+# 
+# # Subset markers with MAF > 0.05
+# freq <- ghap.freq(plink)
+# mkr <- names(freq)[which(freq > 0.05)]
+# plink <- ghap.subset(object = plink, ids = pure1, variants = mkr)
+# 
+# # Compute A1 allele frequencies
+# p <- ghap.freq(plink, type = "A1")
 # 
 # # Compute inbreeding coefficients
-# ibc <- ghap.inbcoef(object = plink, freq = p, ncores = 1)
+# ibc <- ghap.inbcoef(object = plink, freq = p)
 
 }
