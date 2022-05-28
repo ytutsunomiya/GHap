@@ -107,15 +107,15 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 
 # #### DO NOT RUN IF NOT NECESSARY ###
 # 
-# # Copy the example data in the current working directory
-# exfiles <- ghap.makefile()
+# # Copy phase data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "phase",
+#                          verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
 # 
-# # Compress phase data
-# #ghap.compress(input.file = "human", out.file = "human")
-# 
 # # Load phase data
-# phase <- ghap.loadphase(input.file = "human_hapmap3_chr2")
+# 
+# phase <- ghap.loadphase("example")
 # 
 # ### RUN ###
 # 
@@ -131,28 +131,21 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # window <- (100e+6)/(2*g)
 # window <- ceiling(window/density)
 # step <- ceiling(window/4)
-# blocks <- ghap.blockgen(phase, windowsize = window, slide = step, unit = "marker")
-# 
-# # User-defined labels
-# pops <- phase$pop
-# labels <- pops
-# labels[which(labels \%in\% c("CEU","TSI"))] <- "Europe"
-# labels[which(labels \%in\% c("CHB","JPT","CHD"))] <- "Asia"
-# labels[which(labels \%in\% c("YRI","LWK"))] <- "Africa"
-# labels[which(labels \%in\% c("MKK","GIH","ASW","MEX"))] <- "Test"
-# phase$pop <- labels
-# train <- unique(phase$id[which(phase$pop != "Test")])
-# test <- unique(phase$id)
+# blocks <- ghap.blockgen(phase, windowsize = window,
+#                         slide = step, unit = "marker")
 # 
 # # Tune supervised analysis
+# train <- unique(phase$id[which(phase$pop != "Cross")])
 # ranblocks <- sample(x = 1:nrow(blocks), size = 5, replace = FALSE)
-# tunesvm <- ghap.ancsvm(phase = phase, blocks = blocks[ranblocks,], train = train,
-#                        gamma = 1/window*c(0.1,1,10), tune = TRUE, ncores = 1)
+# tunesvm <- ghap.ancsvm(phase = phase, blocks = blocks[ranblocks,],
+#                        train = train, gamma = 1/window*c(0.1,1,10),
+#                        tune = TRUE)
 # 
 # # Supervised analysis with default parameters
-# hapadmix <- ghap.ancsvm(phase = phase, blocks = blocks, test = test,
-#                         train = train, ncores = 1)
-# phase$pop <- pops
+# hapadmix <- ghap.ancsvm(phase = phase, blocks = blocks,
+#                         train = train)
+# anctracks <- ghap.ancsmooth(object = phase, admix = hapadmix)
+# ghap.ancplot(ancsmooth = anctracks)
 
 }
 
