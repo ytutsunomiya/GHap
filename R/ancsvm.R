@@ -1,13 +1,13 @@
 #Function: ghap.ancsvm
 #License: GPLv3 or later
-#Modification date: 05 Oct 2021
+#Modification date: 29 May 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Predict ancestry of haplotypes using machine learning
 
 ghap.ancsvm <- function(
-  phase,
-  blocks,
+  object,
+  blocks = NULL,
   test = NULL,
   train = NULL,
   cost = 1,
@@ -19,36 +19,53 @@ ghap.ancsvm <- function(
   verbose = TRUE
 ){
   
-  # Check if phase is a GHap.phase object-------------------------------------------------------------
-  if(class(phase) != "GHap.phase"){
-    stop("Argument phase must be a GHap.phase object.")
+  # Check if object is a GHap.phase object-------------------------------------------------------------
+  if(class(object) != "GHap.phase"){
+    stop("Argument object must be a GHap.phase object.")
   }
   
   # Check if inactive markers and samples should be reactived-----------------------------------------
   if(only.active.markers == FALSE){
-    phase$marker.in <- rep(TRUE,times=phase$nmarkers)
-    phase$nmarkers.in <- length(which(phase$marker.in))
+    object$marker.in <- rep(TRUE,times=object$nmarkers)
+    object$nmarkers.in <- length(which(object$marker.in))
   }
   if(only.active.samples == FALSE){
-    phase$id.in <- rep(TRUE,times=2*phase$nsamples)
-    phase$nsamples.in <- length(which(phase$id.in))/2
+    object$id.in <- rep(TRUE,times=2*object$nsamples)
+    object$nsamples.in <- length(which(object$id.in))/2
   }
   
   # Map test samples----------------------------------------------------------------------------------
   if(is.null(test) == TRUE){
-    test.idx <- which(phase$id.in == TRUE)
+    test.idx <- which(object$id.in == TRUE)
   }else{
-    test.idx <- which(phase$id %in% test & phase$id.in == TRUE)
+    test.idx <- which(object$id %in% test & object$id.in == TRUE)
   }
   
   # Map training samples -----------------------------------------------------------------------------
   if(is.null(train) == TRUE){
-    train.idx <- which(phase$id.in == TRUE)
+    train.idx <- which(object$id.in == TRUE)
   }else{
-    train.idx <- which(phase$id %in% train & phase$id.in == TRUE)
+    train.idx <- which(object$id %in% train & object$id.in == TRUE)
   }
-  y <- phase$pop[train.idx]
+  y <- object$pop[train.idx]
   y <- as.factor(y)
+  
+  # Check if blocks exist ------------------------------------------------------
+  if(is.null(blocks) == TRUE){
+    
+    # Calculate marker density
+    mrkdist <- diff(object$bp)
+    mrkdist <- mrkdist[which(mrkdist > 0)]
+    density <- mean(mrkdist)
+    
+    # Generate blocks for admixture events
+    g <- 10
+    window <- (100e+6)/(2*g)
+    window <- ceiling(window/density)
+    step <- ceiling(window/4)
+    blocks <- ghap.blockgen(object, windowsize = window,
+                            slide = step, unit = "marker")
+  }
   
   # Map parameters to use-----------------------------------------------------------------------------
   param <- list(cost = cost, gamma = gamma, tune = tune)
@@ -70,16 +87,16 @@ ghap.ancsvm <- function(
     block.info <- blocks[b, c("BLOCK","CHR","BP1","BP2")]
     
     #SNPs in the block
-    snps <- which(phase$chr == block.info$CHR &
-                    phase$bp >= block.info$BP1 &
-                    phase$bp <= block.info$BP2 &
-                    phase$marker.in == TRUE)
+    snps <- which(object$chr == block.info$CHR &
+                    object$bp >= block.info$BP1 &
+                    object$bp <= block.info$BP2 &
+                    object$marker.in == TRUE)
     blocksize <- length(snps)
     
     #Build model matrices
-    Mtst <- ghap.slice(object = phase, ids = test.idx, variants = snps,
+    Mtst <- ghap.slice(object = object, ids = test.idx, variants = snps,
                        index = TRUE, transposed = TRUE, verbose = FALSE)
-    Mref <- ghap.slice(object = phase, ids = train.idx, variants = snps,
+    Mref <- ghap.slice(object = object, ids = train.idx, variants = snps,
                        index = TRUE, transposed = TRUE, verbose = FALSE)
     
     #Model training
@@ -92,8 +109,8 @@ ghap.ancsvm <- function(
                  gamma = gamma, cost = param$cost)
     pred <- predict(model, Mtst)
     pred <- as.character(pred)
-    ids <- phase$id[test.idx]
-    pops <- phase$pop[test.idx]
+    ids <- object$id[test.idx]
+    pops <- object$pop[test.idx]
     names(pred) <- ids
     
     #Make output
@@ -132,12 +149,12 @@ ghap.ancsvm <- function(
         param$gamma <- param.old$gamma[k]
         for(g in 1:length(groups)){
           train <- train.old[which(train.group != groups[g])]
-          train.idx <- which(phase$id %in% train)
-          train.pop <- phase$pop[train.idx]
-          y <- phase$pop[train.idx]
+          train.idx <- which(object$id %in% train)
+          train.pop <- object$pop[train.idx]
+          y <- object$pop[train.idx]
           y <- as.factor(y)
           test <- train.old[which(train.group == groups[g])]
-          test.idx <- which(phase$id %in% test)
+          test.idx <- which(object$id %in% test)
           if(Sys.info()["sysname"] == "Windows"){
             cl <- makeCluster(ncores)
             results <- unlist(parLapply(cl = cl, fun = blockfun, X = 1:nrow(blocks)))
