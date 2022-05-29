@@ -1,20 +1,25 @@
 #Function: ghap.ancmark
 #License: GPLv3 or later
-#Modification date: 11 Sep 2020
+#Modification date: 29 May 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Per marker ancestry
 
-ghap.ancmark <- function(phase, ancsmooth, ids){
+ghap.ancmark <- function(object, ancsmooth, ids){
   
-  #Get populations
+  # Check if object is of class GHap.phase -------------------------------------
+  if(class(object) != "GHap.phase"){
+    stop("Argument phase must be a GHap.phase object.")
+  }
+  
+  # Get populations ------------------------------------------------------------
   pops <- colnames(ancsmooth$proportions1)[-c(1:2)]
   npop <- length(pops)
   
-  #Get chromosomes
+  # Get chromosomes ------------------------------------------------------------
   chr <- unique(ancsmooth$haplotypes$CHR)
   
-  #Get segments
+  # Get segments ---------------------------------------------------------------
   results <- NULL
   for(i in chr){
     tmp <- which(ancsmooth$haplotypes$CHR == i & ancsmooth$haplotypes$ID %in% ids)
@@ -43,7 +48,7 @@ ghap.ancmark <- function(phase, ancsmooth, ids){
     }
   }
   
-  #Organize results
+  # Organize results -----------------------------------------------------------
   a <- matrix(data = unlist(results), ncol = 3+length(pops), byrow = TRUE)
   results <- matrix(data = NA, nrow = nrow(a), ncol = ncol(a))
   results <- as.data.frame(results)
@@ -51,13 +56,13 @@ ghap.ancmark <- function(phase, ancsmooth, ids){
   results[,1] <- a[,1]
   results[,-1] <- as.numeric(a[,-1])
   
-  #Organize map
-  map <- matrix(data = NA, ncol = 3+length(pops), nrow = phase$nmarkers, byrow = TRUE)
+  # Organize map ---------------------------------------------------------------
+  map <- matrix(data = NA, ncol = 3+length(pops), nrow = object$nmarkers, byrow = TRUE)
   map <- as.data.frame(map)
   colnames(map) <- c("CHR","MARKER","BP", pops)
-  map$CHR <- phase$chr
-  map$MARKER <- phase$marker
-  map$BP <- phase$bp
+  map$CHR <- object$chr
+  map$MARKER <- object$marker
+  map$BP <- object$bp
   for(i in 1:nrow(results)){
     mkrs <- which(map$CHR == results$CHR[i] & map$BP >= results$BP1[i] & map$BP <= results$BP2[i])
     map[mkrs,-c(1:3)] <- results[i,-c(1:3)]
@@ -95,7 +100,7 @@ ghap.ancmark <- function(phase, ancsmooth, ids){
   #   }
   #   
   # }
-
- return(map)
+  
+  return(map)
   
 }
