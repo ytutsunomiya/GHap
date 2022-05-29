@@ -98,7 +98,7 @@ J. Yang et al. GCTA: A tool for genome-wide complex trait analysis. Am. J. Hum. 
 # phase <- ghap.subset(object = phase,
 #                     ids = cross,
 #                     variants = phase$marker)
-# ghap.anc2plink(phase = phase, ancsmooth = anctracks1,
+# ghap.anc2plink(phase = phase, ancsmooth = anctracks,
 #                ancestry = "K1", outfile = "cross_K1")
 
 
