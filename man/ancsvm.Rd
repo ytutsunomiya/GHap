@@ -8,7 +8,7 @@
   This function uses Support Vector Machines (SVM) to predict ancestry of haplotype alleles in test samples.
 }
 \usage{
- ghap.ancsvm(phase, blocks, test = NULL, train = NULL,
+ ghap.ancsvm(object, blocks, test = NULL, train = NULL,
              cost = 1, gamma = NULL, tune = FALSE,
              only.active.samples = TRUE, only.active.markers = TRUE,
              ncores = 1, verbose = TRUE)
@@ -16,7 +16,7 @@
 
 \arguments{
 
-  \item{phase}{
+  \item{object}{
    A GHap.phase object.
   }
   \item{blocks}{
@@ -137,12 +137,12 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # # Tune supervised analysis
 # train <- unique(phase$id[which(phase$pop != "Cross")])
 # ranblocks <- sample(x = 1:nrow(blocks), size = 5, replace = FALSE)
-# tunesvm <- ghap.ancsvm(phase = phase, blocks = blocks[ranblocks,],
+# tunesvm <- ghap.ancsvm(object = phase, blocks = blocks[ranblocks,],
 #                        train = train, gamma = 1/window*c(0.1,1,10),
 #                        tune = TRUE)
 # 
 # # Supervised analysis with default parameters
-# hapadmix <- ghap.ancsvm(phase = phase, blocks = blocks,
+# hapadmix <- ghap.ancsvm(object = phase, blocks = blocks,
 #                         train = train)
 # anctracks <- ghap.ancsmooth(object = phase, admix = hapadmix)
 # ghap.ancplot(ancsmooth = anctracks)
