@@ -8,11 +8,11 @@
    Given smoothed ancestry predictions obtained with the \code{\link{ghap.ancsmooth}} function, per marker ancestry proportions are calculated across selected individuals.
 }
 \usage{
- ghap.ancmark(phase, ancsmooth, ids)
+ ghap.ancmark(object, ancsmooth, ids)
 }
 
 \arguments{
-  \item{phase}{
+  \item{object}{
    A GHap.phase object.
   }
   \item{ancsmooth}{
@@ -92,7 +92,7 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 # 
 # # Get per marker ancestry proportions for 'Pure1'
 # pure1 <- unique(phase$id[which(phase$pop == "Pure1")])
-# ancmark <- ghap.ancmark(phase = phase,
+# ancmark <- ghap.ancmark(object = phase,
 #                         ancsmooth = anctracks,
 #                         ids = pure1)
 # 
