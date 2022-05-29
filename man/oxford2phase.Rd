@@ -83,10 +83,10 @@ Mario Barbato <mario.barbato@unicatt.it>, Yuri Tani Utsunomiya <ytutsunomiya@gma
 # 
 # # A more efficient alternative for *nix system users
 # # Note: replace "cat" by "zcat" if files are gzipped
-# haps.files = paste("example_chr",1:2,".haps",sep="")
+# haps.files = paste("example_chr",1:10,".haps",sep="")
 # command <- "tail -n+3 example_chr1.sample | cut -d' ' -f1,2 > example.samples"
 # system(command)
-# for(i in 1:2){
+# for(i in 1:10){
 #   command <- paste("cat",haps.files[i],"| cut -d' ' -f1-5 >> example.markers")
 #   system(command)
 #   command <- paste("cat",haps.files[i],"| cut -d' ' -f1-5 --complement >> example.phase")
