@@ -81,7 +81,7 @@ ghap.slice(object, ids, variants, index=FALSE,
 # # Generate slice of the data
 # ghap.slice(object = phase, ids = ind, variants = mkr)
 # 
-# # Unphase data the slice
+# # Import as unphased data
 # ghap.slice(object = phase, ids = ind, variants = mkr,
 #            unphase = TRUE)
 # 
