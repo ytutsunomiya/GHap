@@ -44,7 +44,7 @@ The function returns a dataframe containing population name, id and inbreeding m
 
 \details{
 
-The inbreeding measures are computed as k + s*sum(f)/d, where k is a constant, s is a sign shifting scalar, f is a per-variant function and d is a scaling denominator. Three different measures of inbreeding are currently available:
+The inbreeding measures are computed as k + s*sum(f)/d, where k is a constant, s is a sign shifting scalar, f is a per-variant function and d is a scaling denominator. Four different measures of inbreeding are currently available:
 
 Type = 1 (based on genomic relationship)\cr
 k = -1\cr
