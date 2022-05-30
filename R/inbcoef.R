@@ -1,6 +1,6 @@
 #Function: ghap.inbcoef
 #License: GPLv3 or later
-#Modification date: 20 Mar 2022
+#Modification date: 30 May 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute inbreeding coeficients
@@ -34,16 +34,23 @@ ghap.inbcoef <- function(
   }
   
   # Map number of variants -----------------------------------------------------
-  id.n <- object$nsamples.in
-  id.in <- which(object$id.in)
   var.n <- object$nmarkers.in
-  var.in <- which(object$marker.in)
+  var.in <- object$marker[which(object$marker.in)]
+  if(class(object) == "GHap.phase"){
+    id.n <- object$nsamples.in
+    id.in <- which(object$id.in)
+    id.in <- id.in[id.in %% 2 == 1]
+    id.in <- object$id[id.in]
+  }else{
+    id.n <- object$nsamples.in
+    id.in <- object$id[which(object$id.in)]
+  }
   
   # Check if vector of allele frequencies is acceptable ------------------------
-  if(sum(names(freq) %in% object$marker[var.in]) != length(freq)){
+  if(sum(names(freq) %in% var.in) != length(freq)){
     stop("The vector of allele frequencies contains unknown markers")
   }
-  freq <- freq[object$marker[var.in]]
+  freq <- freq[var.in]
   
   # Generate batch index -------------------------------------------------------
   if(is.null(batchsize) == TRUE){
@@ -100,12 +107,12 @@ ghap.inbcoef <- function(
     Ztmp <- ghap.slice(object = object,
                        ids = id.in,
                        variants = var.in[idx],
-                       index = TRUE,
+                       index = FALSE,
                        unphase = TRUE,
                        impute = FALSE,
                        ncores = ncores)
     tmp <- apply(X = Ztmp, MARGIN = 2, FUN = inbcoef,
-                 p = freq[object$marker[var.in[idx]]])
+                 p = freq[var.in[idx]])
     tmp <- matrix(data = unlist(tmp), ncol = 6, byrow = TRUE)
     fhat1 <- fhat1 + tmp[,1]
     fhat2 <- fhat2 + tmp[,2]
