@@ -88,17 +88,8 @@ J. Yang et al. GCTA: A Tool for Genome-wide Complex Trait Analysis. Am. J. Hum. 
 #                          verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
 # 
-# # Copy metadata in the current working directory
-# exfiles <- ghap.makefile(dataset = "example",
-#                          format = "meta",
-#                          verbose = TRUE)
-# file.copy(from = exfiles, to = "./")
-# 
 # # Load plink data
 # plink <- ghap.loadplink("example")
-# 
-# # Load phenotype and pedigree data
-# df <- read.table(file = "example.phenotypes", header=T)
 # 
 # ### RUN ###
 # 
