@@ -56,28 +56,39 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
 
 # #### DO NOT RUN IF NOT NECESSARY ###
 # 
-# # Copy the example data in the current working directory
-# exfiles <- ghap.makefile()
+# # Copy plink data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "plink",
+#                          verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
 # 
-# # Compress phase data
-# ghap.compress(input.file = "human", out.file = "human")
-# 
-# # Load phase data
-# phase <- ghap.loadphase(input.file = "human")
+# # Load plink data
+# plink <- ghap.loadplink("example")
 # 
 # ### RUN ###
 # 
+# # Subset pure1 population
+# pure1 <- plink$id[which(plink$pop == "Pure1")]
+# plink <- ghap.subset(object = plink, ids = pure1, variants = plink$marker)
+# 
 # # ROH via the 'naive' method
-# roh <- ghap.roh(phase, method = "naive", ncores = 1)
-# froh <- ghap.froh(phase, roh, ncores = 1)
+# roh1 <- ghap.roh(plink, method = "naive")
+# froh1 <- ghap.froh(plink, roh1)
 # 
 # # ROH via the 'hmm' method
-# freq <- ghap.freq(phase, ncores = 1)
-# inbcoef <- froh$FROH1; names(inbcoef) <- froh$ID
-# roh <- ghap.roh(phase, method = "hmm", freq = freq,
-#                 inbcoef = inbcoef, ncores = 1)
-# froh <- ghap.froh(phase, roh, ncores = 1)
+# freq <- ghap.freq(plink, type = 'A1')
+# inbcoef <- froh1$FROH1; names(inbcoef) <- froh1$ID
+# roh2 <- ghap.roh(plink, method = "hmm", freq = freq,
+#                 inbcoef = inbcoef)
+# froh2 <- ghap.froh(plink, roh2)
+#
+# # Method 'hmm' using Fhat3 as starting values
+# inbcoef <- ibc$Fhat3; names(inbcoef) <- ibc$ID
+# inbcoef[which(inbcoef < 0)] <- 0.01
+# roh3 <- ghap.roh(plink, method = "hmm", freq = freq,
+#                  inbcoef = inbcoef)
+# froh3 <- ghap.froh(plink, roh3)
+
 }
 
 \seealso{
