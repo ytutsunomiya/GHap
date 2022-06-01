@@ -136,6 +136,13 @@ T. Druet & M. Gautier. A model-based approach to characterize individual inbreed
 # roh2 <- ghap.roh(plink, method = "hmm", freq = freq,
 #                 inbcoef = inbcoef)
 # froh2 <- ghap.froh(plink, roh2)
+#
+# # Method 'hmm' using Fhat3 as starting values
+# inbcoef <- ibc$Fhat3; names(inbcoef) <- ibc$ID
+# inbcoef[which(inbcoef < 0)] <- 0.01
+# roh3 <- ghap.roh(plink, method = "hmm", freq = freq,
+#                  inbcoef = inbcoef)
+# froh3 <- ghap.froh(plink, roh3)
 
 }
 
