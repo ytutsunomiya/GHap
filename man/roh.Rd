@@ -111,31 +111,32 @@ T. Druet & M. Gautier. A model-based approach to characterize individual inbreed
 
 # #### DO NOT RUN IF NOT NECESSARY ###
 # 
-# # Copy plink data to the current working directory
-# exfiles <- ghap.makefile(format = "plink")
+# # Copy plink data in the current working directory
+# exfiles <- ghap.makefile(dataset = "example",
+#                          format = "plink",
+#                          verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
+# 
+# # Load plink data
+# plink <- ghap.loadplink("example")
 # 
 # ### RUN ###
 # 
-# # Load plink data
-# plink <- ghap.loadplink(input.file = "human_hapmap3_chr2")
-#
-# # Subset population
-# pop <- "CEU"
-# ids <- plink$id[which(plink$pop == pop)]
-# mkrs <- plink$marker
-# plink <- ghap.subset(object = plink, ids = ids, variants = mkrs)
-#
+# # Subset pure1 population
+# pure1 <- plink$id[which(plink$pop == "Pure1")]
+# plink <- ghap.subset(object = plink, ids = pure1, variants = plink$marker)
+# 
 # # ROH via the 'naive' method
-# roh <- ghap.roh(plink, method = "naive", ncores = 1)
-# froh <- ghap.froh(plink, roh, ncores = 1)
+# roh1 <- ghap.roh(plink, method = "naive")
+# froh1 <- ghap.froh(plink, roh1)
 # 
 # # ROH via the 'hmm' method
-# freq <- ghap.freq(plink, type = 'A1', ncores = 1)
-# inbcoef <- froh$FROH1; names(inbcoef) <- froh$ID
-# roh <- ghap.roh(plink, method = "hmm", freq = freq,
-#                 inbcoef = inbcoef, ncores = 1)
-# froh <- ghap.froh(plink, roh, ncores = 1)
+# freq <- ghap.freq(plink, type = 'A1')
+# inbcoef <- froh1$FROH1; names(inbcoef) <- froh1$ID
+# roh2 <- ghap.roh(plink, method = "hmm", freq = freq,
+#                 inbcoef = inbcoef)
+# froh2 <- ghap.froh(plink, roh2)
+
 }
 
 \seealso{
