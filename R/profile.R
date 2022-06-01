@@ -62,8 +62,8 @@ ghap.profile <- function(
                     length(idx), "had alien alleles.")
       stop(emsg)
     }
-    markers <- 1:phase$nmarkers
-    names(markers) <- phase$marker
+    markers <- 1:object$nmarkers
+    names(markers) <- object$marker
     score$IDX <- markers[score$MARKER]
     score <- score[order(score$IDX),]
     
