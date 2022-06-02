@@ -8,11 +8,11 @@
  This function takes a phase object and converts it to the PLINK binary (bed/bim/fam) format.
 }
 \usage{
-ghap.hap2plink(object, out.file,
-               only.active.samples=TRUE,
-               only.active.markers=TRUE,
-               batchsize=NULL, ncores=1,
-               verbose=TRUE)
+ghap.phase2plink(object, out.file,
+                 only.active.samples=TRUE,
+                 only.active.markers=TRUE,
+                 batchsize=NULL, ncores=1,
+                 verbose=TRUE)
 }
 
 \arguments{
