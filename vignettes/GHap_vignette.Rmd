@@ -1,7 +1,7 @@
 ---
 title: "The **GHap** Package (Version 3.0.0)"
 author: "Yuri Tani Utsunomiya, Andre Vieira do Nascimento, Marco Milanesi and Mario Barbato"
-date: "1 Jun 2022"
+date: "2 Jun 2022"
 output:
   pdf_document:
     highlight: rstudio
@@ -1242,6 +1242,125 @@ $2-2p_k, \text{ for 0 copies of allele } k$\newline
 
 
 Since the $2p_k$ term represents the mean allele count when HWE is assumed, an alternative coding not requiring HWE is obtained from replacing $2p_k$ by the sample mean. If the locus is bi-allelic, the allele coding collapses to the genotype coding used for SNP markers. In fact, SNP-based regression is revealed here as a special case of haplotype-based regression, where HapBlocks are bi-allelic and of size 1 bp. This coding also reveals that regression on HapAlleles is in fact equivalent to fitting haplotypes as pseudo bi-allelic markers, provided that an arbitrary HapAllele (in this case the minor HapAllele) has been discarded (i.e., set as the basis for contrasts). Without loss of generality, rare and nearly fixed HapAlleles can also be discarded in order to reduce the number of predictors, procedure that is analogous to exclusion of SNPs by minor allele frequency in SNP-based regression.
+
+\pagebreak
+
+## Tutorial 15 - Simulations
+
+**GHap** provides three simulation functions. The first one, namely `ghap.simmating()`, was designed for Monte Carlo sampling of progeny from candidate parents to approximate the probability distribution of measures of interest (e.g., progeny distribution of breeding values, inbreeding coefficients and ancestry). The function can be used to support both mating optimization based on genomic information and complex simulation scenarios to evaluate the consequences of different breeding strategies.
+
+Given a list of candidate parents, the `ghap.simmating()` function samples sire $i$ with probability $p_i$ and dam $j$ with probability $p_j$ (these probabilities should be provided by the user, otherwise matings will occur at random). Once sire and dam are sampled, gametes are simulated by creating recombinant parental haplotypes. The progeny is then obtained by uniting the simulated gametes. If only a specific mating is targeted, the user can also provide a single sire id and a single dam id.
+  
+The default model in the function ("proportional") assumes that the number of recombinations per meiosis across all chromosomes follows a Poisson distribution with mean equal to nchr (the number of chromosome pairs), such that the number of recombinations for a given chromosome is sampled from a Poisson distribution with mean prop\*nchr, where prop is the proportion of the genome size covered by that chromosome. Therefore, this option takes chromosome size in consideration while sampling the number of recombination events. In option "uniform", the number of recombinations is sampled from a Poisson distribution with mean 1 for each chromosome instead. Alternatively, the model argument can also take a named vector of chromosome-specific recombination rates in cM/Mbp. In this option, the number of recombinations for a given chromosome is sampled from a Poisson distribution with mean chrsize\*chrrate/100, where chrsize is the size of the chromosome in Mbp and chrrate is the recombination rate in cM/Mbp. A last option is offered where the model argument is a named vector of marker-specific recombination rates in cM/Mbp. The number of recombinations for a given chromosome is also sampled from a Poisson distribution with mean chrsize\*chrrate/100, but with chrrate calculated as the average across markers within the same chromosome. In this model, instead of placing the recombination breakpoint randomly within a chromosome for each gamete, marker-specific recombination rates are taken into account, making regions in the chromosome with higher recombination rates more susceptible to breaks.
+
+```r
+# Load phase data
+phase <- ghap.loadphase("example")
+
+# Simulation using only two specific parents
+parent1 <- phase$id[1]
+parent2 <- phase$id[3]
+ghap.simmating(phase, n.individuals = 100,
+               parent1 = parent1, parent2 = parent2,
+               out.file = "sim1", ncores = 1)
+
+# Simulation using candidates with unequal probabilities
+parent1 <- c(0.5,0.25,0.25)
+names(parent1) <- phase$id[c(1,3,5)]
+parent2 <- c(0.7,0.2,0.1)
+names(parent2) <- phase$id[c(7,9,11)]
+ghap.simmating(phase, n.individuals = 100,
+               parent1 = parent1, parent2 = parent2,
+               out.file = "sim2", ncores = 1)
+```
+
+\pagebreak
+
+The second simulation function is `ghap.ancadmix()`, which generates haplotypes of individuals descending from admixture between user-defined ancestral populations after a specified number of generations. Consider $m$ variants in a chromosome and $K$ ancestral popoulations. The simulation algorithm works as follows:\newline
+
+| For each of the two haplotypes of a new individual:
+|     Initialize $j = 0$;
+|     While $j < m$:
+|         Set $i = j + 1$;
+|         Sample lineage $k \in \{1,2 ... K\}$ with probabilities $q_1$, $q_2$, ..., $q_K$;
+|         Sample ancestral haplotype $h$ from lineage $k$;
+|         Sample window size $x$ from $X \sim \text{Exp}(\beta)$;
+|         Evaluate $j = \text{min}(i + x, m)$;
+|         Copy the segment [$i$; $j$] from haplotype $h$;\newline
+
+The ancestry proportions $q$ can be either informed by the user or sampled from a Direchelet distribution with a vector of parameters $\alpha$. For example, if three ancestral populations are considered and the parameters are set as alpha = list(pop1 = 1, pop2 = 1, pop3 = 1), the resulting simulated individuals will have a highly diverse configuration of ancestry proportions. On the other hand, by setting alpha = list(pop1 = 0, pop2 = 1, pop3 = 0) for example, all individuals will descend entirely from population 2 without admixture. The user can play with these values to fine tune the desired sampling distribution. The mean parameter of the exponential distribution used for sampling ancestry tracks is defined as $\beta = L^{-1}$, where $L$ is the average ancestry track length expressed in number of markers. Since the expectation of the ancestry track length in Morgans after $g$ generations of the admixture event is $1/(2g)$, we have $L = d[100/(2g)]$, where $d$ is the marker density in the genome expressed in number of markers per cM.
+
+```r
+# Load phase data
+phase <- ghap.loadphase("example")
+
+# Make vectors of ancestors
+pure1 <- unique(phase$id[which(phase$pop == "Pure1")])
+pure2 <- unique(phase$id[which(phase$pop == "Pure2")])
+
+# Simulate proportions
+ngroup <- 30
+pop1 <- c(rep(1, times = ngroup), # purebred from population 1
+          runif(n = ngroup, min = 0.1, max = 0.9), # admixed individuals
+          rep(0, times = ngroup)) # purebred from population 2
+pop2 <- 1-pop1
+prop <- data.frame(pop1,pop2)
+
+# Simulate individuals
+set.seed(1988)
+ghap.simadmix(object = phase, n.individuals = nrow(prop),
+              n.generations = 10,
+              ancestors = list(pop1 = pure1, pop2 = pure2),
+              proportions = prop, out.file = "sim")
+```
+
+\pagebreak
+
+The last simulation function in the package is `ghap.simpheno`, which was developed for the simulation of phenotypes. The function uses the model:
+
+$$\mathbf{y} = \mathbf{Zu} + \mathbf{Zp} + \mathbf{e}$$
+
+where $\mathbf{u}$ is a vector of breeding values, $\mathbf{p}$ is a vector of permanent environmental effects, $\mathbf{Z}$ is an incidence matrix mapping $\mathbf{y}$ to $\mathbf{u}$ and $\mathbf{p}$, and $\mathbf{e}$ is the vector of residuals. True breeding values are computed from the sum of causal variant effects specified in the 'h2' argument. Both the residual and permanent environmental effects are sampled from normal distributions.
+
+```r
+# Load phase data
+phase <- ghap.loadphase("example")
+
+# Subset Pure1 population
+pure1 <- unique(phase$id[which(phase$pop == "Pure1")])
+phase <- ghap.subset(object = phase, ids = pure1,
+                     variants = phase$marker)
+freq <- ghap.freq(object = phase, type = "maf")
+
+# Heritability   = 0.3
+# Number of QTLs = 1000
+# Major QTLs     = 0
+# Records per id = 1
+nqtl <- 1000
+h2 <- 0.3
+mkr <- sample(names(freq[which(freq > 0.05)]), size = nqtl)
+eff <- runif(n = nqtl, min = 0, max = 1)
+eff <- h2*eff/sum(eff)
+names(eff) <- mkr
+df1 <- ghap.simpheno(object = phase, h2 = eff)
+
+# Heritability   = 0.5
+# Number of QTLs = 100
+# Major QTLs     = 1
+# Records per id = 5
+# Repeatability = 0.2
+nqtl <- 100
+h2 <- 0.4
+r2 <- 0.2
+reps <- 5
+mkr <- sample(names(freq[which(freq > 0.05)]), size = nqtl)
+eff <- runif(n = nqtl, min = 0, max = 1)
+eff <- h2*eff/sum(eff)
+eff[which(eff == min(eff))] <- 0.1
+names(eff) <- mkr
+df2 <- ghap.simpheno(object = phase, h2 = eff,
+                     r2 = r2, nrep = reps)
+```
 
 \pagebreak
 
