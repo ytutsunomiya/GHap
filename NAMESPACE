@@ -10,10 +10,10 @@ importFrom("utils", "download.file", "unzip", "write.table")
 importFrom("graphics", "axis", "barplot", "par", "plot", "rect",
            "segments", "text", "abline", "layout", "legend", "points")
 importFrom("sparseinv","cholPermute","Takahashi_Davis")
-importFrom("pedigreemm","getA","getAInv","editPed","pedigree")
+importFrom("pedigreemm","getA","getAInv","editPed","pedigree","inbreeding")
 importFrom("stats", "as.formula", "lm", "lm.fit", "model.frame",
            "model.matrix", "model.response", "na.omit", "dbeta", "pbinom",
            "pchisq", "pf", "pnorm", "ppois", "rpois", "qchisq", "qnorm",
-           "rchisq", "rnorm", "runif", "sd", "var","terms",
-           "na.exclude","residuals","family","predict",
-           "aggregate", "kmeans", "median")
+           "rchisq", "rnorm", "runif", "pt", "rgamma", "rexp"
+           "sd", "var", "terms", "na.exclude", "residuals", "family", 
+           "predict", "quantile", "aggregate", "kmeans", "median", "cor")
