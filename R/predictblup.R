@@ -1,6 +1,6 @@
 #Function: ghap.predictblup
 #License: GPLv3 or later
-#Modification date: 19 May 2022
+#Modification date: 2 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Predict blup solutions based on reference values
@@ -55,7 +55,7 @@ ghap.predictblup <- function(
   Krr.i <- try(solve(covmat[ref,ref]), silent = TRUE)
   if(inherits(Krr.i, "try-error")){
     Krr.i <- try(solve(covmat[ref,ref] + Diagonal(length(ref))*tol), silent = TRUE)
-    if(inherits(LHSi, "try-error")){
+    if(inherits(Krr.i, "try-error")){
       emsg <- paste0("\nUnable to invert the reference matrix",
                      " even after adding a tolerance of ",
                      tol)
