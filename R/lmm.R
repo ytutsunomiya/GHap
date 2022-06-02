@@ -1,6 +1,6 @@
 #Function: ghap.lmm
 #License: GPLv3 or later
-#Modification date: 18 May 2022
+#Modification date: 2 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: mixed model fitting
@@ -16,7 +16,7 @@ ghap.lmm <- function(
   errors = TRUE,
   invcov = FALSE,
   em.reml = 10,
-  tol = 1e-10,
+  tol = 1e-12,
   extras = NULL,
   verbose = TRUE
 ){
