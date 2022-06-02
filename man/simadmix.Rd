@@ -25,7 +25,7 @@
   \item{n.individuals}{
    Number of individuals to simulate.
   }
-  \item{n.individuals}{
+  \item{n.generations}{
    Number of generations past the admixture event.
   }
   \item{ancestors}{
