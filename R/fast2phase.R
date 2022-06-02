@@ -1,6 +1,6 @@
 #Function: ghap.fast2phase
 #License: GPLv3 or later
-#Modification date: 13 May 2021
+#Modification date: 2 Jun 2022
 #Written by: Mario Barbato, Yuri Tani Utsunomiya
 #Contact: mario.barbato@unicatt.it, ytutsunomiya@gmail.com
 #Description: Converts fastPHASE to GHap phase format
@@ -149,7 +149,7 @@ ghap.fast2phase <- function(
     hapidx <- which(1:(nrow(fp)-1) %in% c(1:j,idx) == FALSE)
     
     # Get ID info from files
-    samples <- stringi::stri_match(str = fp$V1[idx], regex = "(?<=\\bID\\s)\\S+\\b")
+    samples <- stri_match(str = fp$V1[idx], regex = "(?<=\\bID\\s)\\S+\\b")
     
     # Check if samples are the same across files
     if(is.null(samples.fam) == FALSE){
