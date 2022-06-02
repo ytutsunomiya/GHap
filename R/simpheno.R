@@ -1,6 +1,6 @@
 #Function: ghap.simpheno
 #License: GPLv3 or later
-#Modification date: 23 May 2022
+#Modification date: 2 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Simulate phenotypes
@@ -37,11 +37,11 @@ ghap.simpheno<-function(
     object$id.in <- rep(TRUE,times=fac[class(object)]*object$nsamples)
     object$nsamples.in <- length(which(object$id.in))/fac[class(object)]
   }
-  ids <- unique(phase$id[phase$id.in])
+  ids <- unique(object$id[object$id.in])
   object <- ghap.subset(object = object, ids = ids,
                         variants = names(h2), index = FALSE, verbose = FALSE)
-  vidx <- which(phase$marker.in)
-  h2 <- h2[phase$marker[vidx]]
+  vidx <- which(object$marker.in)
+  h2 <- h2[object$marker[vidx]]
   
   # Compute allele frequencies -------------------------------------------------
   p <- ghap.freq(object = object, type = "A1", only.active.samples = TRUE,
