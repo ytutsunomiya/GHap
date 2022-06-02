@@ -12,7 +12,7 @@ ghap.lmm(formula, data, covmat = NULL,
          weights = NULL, vcp.initial = NULL,
          vcp.estimate = TRUE, vcp.conv = 1e-12,
          errors = TRUE, invcov = FALSE,
-         em.reml = 10, tol = 1e-10, extras = NULL,
+         em.reml = 10, tol = 1e-12, extras = NULL,
          verbose = TRUE)
 }
 
