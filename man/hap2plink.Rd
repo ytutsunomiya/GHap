@@ -8,11 +8,11 @@
  This function takes a HapGenotypes matrix (as generated with the \code{\link{ghap.haplotyping}} function) and converts it to PLINK binary (bed/bim/fam) format.
 }
 \usage{
-ghap.hap2plink(haplo, outfile)
+ghap.hap2plink(object, outfile)
 }
 
 \arguments{
-  \item{haplo}{
+  \item{object}{
     A GHap.haplo object.
   }
   \item{outfile}{
