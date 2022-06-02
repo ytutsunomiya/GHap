@@ -33,6 +33,9 @@ ghap.simpheno(object, h2, r2 = 0, nrep = 1,
   \item{seed}{
     A numeric value used to set the random number generation state (default = NULL). This is useful for reproducibility of the results.
   }
+  \item{only.active.samples}{
+    A logical value specifying whether only active samples should be used for calculations (default = TRUE).
+  }
   \item{ncores}{
    A numeric value specifying the number of cores to be used in parallel computations (default = 1).
   }
