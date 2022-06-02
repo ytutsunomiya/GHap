@@ -39,7 +39,7 @@ The function returns a dataframe the following columns:
   Individual name.
  }
  \item{FROH...}{
-  A number of columns giving FROH calculated over runs of length greater than each of the sizes informed by the rohsize argument. Default values will retunr FROH1, FROH2, FROH4, FROH8 and FROH16.
+  A number of columns giving FROH calculated over runs of length greater than each of the sizes informed by the rohsize argument. Default values will return FROH1, FROH2, FROH4, FROH8 and FROH16.
  }
 
 }
