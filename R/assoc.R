@@ -1,6 +1,6 @@
 #Function: ghap.assoc
 #License: GPLv3 or later
-#Modification date: 18 May 2022
+#Modification date: 2 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: phenotype-genotype association analysis
@@ -45,7 +45,7 @@ ghap.assoc <- function(
   model <- ghap.lmm(formula = formula, data = data, covmat = covmat,
                     verbose = verbose, extras = "V", errors = FALSE, ...)
   y <- model$residuals$Fixed
-  names(y) <- df[,names(model$random[1])]
+  names(y) <- data[,names(model$random[1])]
   Vi <- try(solve(model$extras$V), silent = TRUE)
   if(inherits(Vi, "try-error")){
     Vi <- try(solve(model$extras$V + Diagonal(n = length(y))*tol), silent = TRUE)
