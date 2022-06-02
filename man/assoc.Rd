@@ -12,7 +12,8 @@ ghap.assoc(object, formula, data, covmat,
            ngamma = 100, nlambda = 1000,
            recalibrate = 0.01,
            only.active.variants=TRUE,
-           ncores=1, verbose=TRUE, ...)
+           tol = 1e-12, ncores=1,
+           verbose=TRUE, ...)
 }
 
 \arguments{
@@ -39,10 +40,13 @@ ghap.assoc(object, formula, data, covmat,
  }
  \item{only.active.variants}{
   A logical value specifying whether only active variants should be included in the output (default = TRUE).
-  }
+ }
+ \item{tol}{
+  A numeric value specifying the scalar to add to the diagonal of the phenotypic (co)variance matrix if it is not inversible (default = 1e-12).
+ }
  \item{ncores}{
    A numeric value specifying the number of cores to be used in parallel computations (default = 1).
-  }
+ }
  \item{verbose}{
    A logical value specifying whether log messages should be printed (default = TRUE).
  }
