@@ -6,6 +6,7 @@ import("data.table")
 importFrom("methods","as")
 importFrom("e1071","svm")
 importFrom("grDevices", "hsv")
+importFrom("stringi","stri_match")
 importFrom("utils", "download.file", "unzip", "write.table")
 importFrom("graphics", "axis", "barplot", "par", "plot", "rect",
            "segments", "text", "abline", "layout", "legend", "points")
