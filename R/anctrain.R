@@ -1,6 +1,6 @@
 #Function: ghap.anctrain
 #License: GPLv3 or later
-#Modification date: 25 May 2021
+#Modification date: 2 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Create prototype alleles for ancestry predictions
