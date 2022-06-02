@@ -81,6 +81,9 @@ The function outputs the following files:
 #                          verbose = TRUE)
 # file.copy(from = exfiles, to = "./")
 # 
+# # Load phase data
+# phase <- ghap.loadphase("example")
+# 
 # ### RUN ###
 # 
 # # Simulation using only two specific parents
@@ -98,6 +101,5 @@ The function outputs the following files:
 # ghap.simmating(phase, n.individuals = 100,
 #                parent1 = parent1, parent2 = parent2,
 #                out.file = "sim2", ncores = 1)
-
 
 }
