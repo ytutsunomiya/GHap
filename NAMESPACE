@@ -14,6 +14,6 @@ importFrom("pedigreemm","getA","getAInv","editPed","pedigree","inbreeding")
 importFrom("stats", "as.formula", "lm", "lm.fit", "model.frame",
            "model.matrix", "model.response", "na.omit", "dbeta", "pbinom",
            "pchisq", "pf", "pnorm", "ppois", "rpois", "qchisq", "qnorm",
-           "rchisq", "rnorm", "runif", "pt", "rgamma", "rexp"
+           "rchisq", "rnorm", "runif", "pt", "rgamma", "rexp",
            "sd", "var", "terms", "na.exclude", "residuals", "family", 
            "predict", "quantile", "aggregate", "kmeans", "median", "cor")
