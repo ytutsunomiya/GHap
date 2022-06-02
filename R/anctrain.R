@@ -78,7 +78,7 @@ ghap.anctrain <- function(
   # Seed and tuning for kmeans------------------------------------------------------------------------
   if(method == "unsupervised"){
     mkr <- sample(x = which(object$marker.in), size = param$nmarkers, replace = FALSE)
-    Mkm <- ghap.slice(object = object, ids = train.idx, variants = mkr, transpose = TRUE,
+    Mkm <- ghap.slice(object = object, ids = train.idx, variants = mkr, transposed = TRUE,
                       index = TRUE, ncores = ncores, verbose = FALSE)
     if(tune == TRUE){
       tune.FUN <- function(i){
