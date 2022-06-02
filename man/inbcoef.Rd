@@ -27,7 +27,7 @@ ghap.inbcoef(object, freq, batchsize=NULL,
   \item{only.active.samples}{
     A logical value specifying whether only active samples should be included in the output (default = TRUE).
   }
-  \item{only.active.alleles}{
+  \item{only.active.variants}{
     A logical value specifying whether only active variants should be included in the output (default = TRUE).
   }
   \item{ncores}{
