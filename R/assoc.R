@@ -14,6 +14,7 @@ ghap.assoc <- function(
   nlambda = 1000,
   recalibrate = 0.01,
   only.active.variants=TRUE,
+  tol = 1e-12,
   ncores=1,
   verbose=TRUE,
   ...
