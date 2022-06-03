@@ -1,6 +1,6 @@
 #Function: ghap.haplotyping
 #License: GPLv3 or later
-#Modification date: 14 Oct 2021
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya & Marco Milanesi
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Output haplotype genotype matrix for user-defined haplotype blocks
@@ -20,7 +20,7 @@ ghap.haplotyping <- function(
 ){
   
   #Check if phase is a GHap.phase object
-  if(class(phase) != "GHap.phase"){
+  if(inherits(object, "GHap.phase") == FALSE){
     stop("Argument phase must be a GHap.phase object.")
   }
   
