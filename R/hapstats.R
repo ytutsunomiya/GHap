@@ -1,6 +1,6 @@
 #Function: ghap.hapstats
 #License: GPLv3 or later
-#Modification date: 21 May 2022
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Summary statistics for haplotype alleles
@@ -17,7 +17,7 @@ ghap.hapstats <- function(
   
   
   #Check if object is a GHap.haplo object
-  if(class(object) != "GHap.haplo"){
+  if(inherits(object, "GHap.haplo") == FALSE){
     stop("Argument object must be a GHap.haplo object.")
   }
   
