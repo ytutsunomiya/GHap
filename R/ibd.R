@@ -1,6 +1,6 @@
 #Function: ghap.ibd
 #License: GPLv3 or later
-#Modification date: 14 Mar 2022
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: IBD estimates
@@ -18,7 +18,7 @@ ghap.ibd <- function(
   
   # Check if input is a valid GHap object --------------------------------------
   obtype <- c("GHap.phase","GHap.plink")
-  if(class(object) %in% obtype == FALSE){
+  if(inherits(object, obtype) == FALSE){
     stop("\nInput must be a valid GHap object.")
   }
   
@@ -125,14 +125,14 @@ ghap.ibd <- function(
     id2 <- id2[obs]
     ibs0 <- length(which(id1 == 2 & id2 == 0)) + length(which(id1 == 0 & id2 == 2))
     ibs1 <- length(which(id1 == 2 & id2 == 1)) + length(which(id1 == 0 & id2 == 1)) + 
-            length(which(id1 == 1 & id2 == 2)) + length(which(id1 == 1 & id2 == 0))
+      length(which(id1 == 1 & id2 == 2)) + length(which(id1 == 1 & id2 == 0))
     ibs2 <- length(which(id1 == 2 & id2 == 2)) + length(which(id1 == 1 & id2 == 1)) +
-            length(which(id1 == 0 & id2 == 0))
+      length(which(id1 == 0 & id2 == 0))
     E <- c(sum(P00[obs]), sum(P10[obs]), sum(P20[obs]), sum(P11[obs]),
            sum(P21[obs]), sum(P22[obs]))
     return(c(ibs0,ibs1,ibs2,E))
   }
-
+  
   # IBD iterate function -------------------------------------------------------
   ncores <- min(c(detectCores(), ncores))
   sumvariants <- 0
@@ -208,7 +208,7 @@ ghap.ibd <- function(
   pairlist$Z2 <- pairlist$Z2/Zsum
   
   # Organize output -----------------------------------------------------------
-  if(class(object) == "GHap.phase"){
+  if(inherits(object, "GHap.phase")){
     myids <- 1:(2*object$nsamples)
     myids <- myids[myids %% 2 == 1]
     names(myids) <- object$id[myids]
