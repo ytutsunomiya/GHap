@@ -22,7 +22,7 @@ ghap.anctrain <- function(
 ){
   
   # Check if phase is a GHap.phase object-------------------------------------------------------------
-  if(inherist(object, "GHap.phase") == FALSE){
+  if(inherits(object, "GHap.phase") == FALSE){
     stop("Argument phase must be a GHap.phase object.")
   }
   
