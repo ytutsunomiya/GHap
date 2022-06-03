@@ -1,6 +1,6 @@
 #Function: ghap.getHinv
 #License: GPLv3 or later
-#Modification date: 28 Oct 2021
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute the inverse of H
@@ -15,7 +15,7 @@ ghap.getHinv <- function(
 ){
   
   # Sanity check for pedigree ------------------------------------------------------
-  if("data.frame" %in% class(ped) == FALSE){
+  if(inherits(ped, "data.frame") == FALSE){
     stop("A data frame must be passed to argument 'ped'")
   }
   if(identical(c("dam","id","sire"),sort(colnames(ped))) == FALSE){
