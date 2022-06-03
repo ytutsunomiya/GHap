@@ -1,6 +1,6 @@
 #Function: ghap.anctest
 #License: GPLv3 or later
-#Modification date: 15 May 2021
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Predict ancestry of haplotypes
@@ -17,7 +17,7 @@ ghap.anctest <- function(
 ){
   
   # Check if object is of class GHap.phase -------------------------------------
-  if(class(object) != "GHap.phase"){
+  if(inherist(object, "GHap.phase") == FALSE){
     stop("Argument phase must be a GHap.phase object.")
   }
   
