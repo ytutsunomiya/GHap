@@ -1,6 +1,6 @@
 #Function: ghap.inbcoef
 #License: GPLv3 or later
-#Modification date: 30 May 2022
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute inbreeding coeficients
@@ -17,7 +17,7 @@ ghap.inbcoef <- function(
   
   # Check if input is a valid GHap object --------------------------------------
   obtype <- c("GHap.phase","GHap.plink")
-  if(class(object) %in% obtype == FALSE){
+  if(inherits(object, obtype) == FALSE){
     stop("\nInput must be a valid GHap object.")
   }
   fac <- c(2,1)
@@ -36,7 +36,7 @@ ghap.inbcoef <- function(
   # Map number of variants -----------------------------------------------------
   var.n <- object$nmarkers.in
   var.in <- object$marker[which(object$marker.in)]
-  if(class(object) == "GHap.phase"){
+  if(inherits(object, "GHap.phase")){
     id.n <- object$nsamples.in
     id.in <- which(object$id.in)
     id.in <- id.in[id.in %% 2 == 1]
