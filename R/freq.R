@@ -1,6 +1,6 @@
 #Function: ghap.freq
 #License: GPLv3 or later
-#Modification date: 05 Oct 2021
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute marker allele frequencies
@@ -16,7 +16,7 @@ ghap.freq <- function(
   
   # Check if input is a valid GHap object --------------------------------------
   obtype <- c("GHap.phase","GHap.plink")
-  if(class(object) %in% obtype == FALSE){
+  if(inherits(object, obtype) == FALSE){
     stop("\nInput must be a valid GHap object.")
   }
   fac <- c(2,1)
@@ -51,7 +51,7 @@ ghap.freq <- function(
   }
   
   # Frequency function ---------------------------------------------------------
-  if(class(object) == "GHap.plink"){
+  if(inherits(object, "GHap.plink")){
     freqFun <- function(i){
       object.con <- file(object$plink, "rb")
       a <- seek(con = object.con, where = 3 + offset*(vidx[i]-1),
