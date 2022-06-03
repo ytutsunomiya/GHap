@@ -1,6 +1,6 @@
 #Function: ghap.assoc
 #License: GPLv3 or later
-#Modification date: 2 Jun 2022
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: phenotype-genotype association analysis
@@ -22,13 +22,13 @@ ghap.assoc <- function(
   
   # Check if input is a valid GHap object --------------------------------------
   obtype <- c("GHap.phase","GHap.plink","GHap.haplo")
-  if(class(object) %in% obtype == FALSE){
+  if(inherits(object, obtype)){
     stop("\nInput must be a valid GHap object.")
   }
   
   # Check if inactive variants should be reactivated ---------------------------
   if(only.active.variants == FALSE){
-    if(class(object) == "GHap.haplo"){
+    if(inherits(object, "GHap.haplo")){
       object$allele.in <- rep(TRUE,times=object$nalleles)
       object$nalleles.in <- length(which(object$allele.in))
     }else{
@@ -36,7 +36,7 @@ ghap.assoc <- function(
       object$nmarkers.in <- length(which(object$marker.in))
     }
   }
-  if(class(object) == "GHap.haplo"){
+  if(inherits(object, "GHap.haplo")){
     vidx <- which(object$allele.in)
   }else{
     vidx <- which(object$marker.in)
@@ -75,7 +75,7 @@ ghap.assoc <- function(
   k <- as.numeric(Vi%*%y)
   
   # Auxiliary functions --------------------------------------------------------
-  if(class(object) %in% c("GHap.plink","GHap.haplo")){
+  if(inherits(object, c("GHap.plink","GHap.haplo"))){
     assocFun <- function(i){
       object.con <- file(unlist(object[length(object)]), "rb")
       a <- seek(con = object.con, where = 3 + offset*(vidx[i]-1),
@@ -276,7 +276,7 @@ ghap.assoc <- function(
     cat("Done.\n")
   }
   assoc <- matrix(data = assoc, ncol = 4, byrow = T)
-  if(class(object) == "GHap.haplo"){
+  if(inherits(object, "GHap.haplo")){
     results <- matrix(data = NA, nrow = length(vidx), ncol = 14)
     results <- as.data.frame(results)
     colnames(results) <- c("CHR","BLOCK","BP1","BP2","ALLELE","FREQ",
