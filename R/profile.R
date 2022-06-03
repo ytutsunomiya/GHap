@@ -1,6 +1,6 @@
 #Function: ghap.profile
 #License: GPLv3 or later
-#Modification date: 26 May 2022
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute individual profiles based on HapAllele or marker scores
@@ -16,7 +16,7 @@ ghap.profile <- function(
   
   # Check if object is a GHap.phase object -------------------------------------
   obtypes <- c("GHap.phase","GHap.haplo","GHap.plink")
-  if(class(object) %in% obtypes == FALSE){
+  if(inherits(object, obtype) == FALSE){
     stop("\nInput data must be a valid GHap object (phase, haplo or plink).")
   }
   fac <- c(2,1,1)
@@ -24,7 +24,7 @@ ghap.profile <- function(
   ncores <- min(c(detectCores(), ncores))
   
   # Scoring for phase ----------------------------------------------------------
-  if(class(object) %in% c("GHap.phase","GHap.plink")){
+  if(inherits(object, c("GHap.phase","GHap.plink"))){
     
     #Check if inactive samples should be reactived
     if(only.active.samples == FALSE){
