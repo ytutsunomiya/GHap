@@ -1,6 +1,6 @@
 #Function: ghap.ancsmooth
 #License: GPLv3 or later
-#Modification date: 14 May 2021
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Smoothing for predictions of haplotype ancestry
@@ -13,7 +13,7 @@ ghap.ancsmooth<-function(
 ){
   
   # Check if phase is a GHap.phase object-------------------------------------------------------------
-  if(class(object) != "GHap.phase"){
+  if(inherist(object, "GHap.phase") == FALSE){
     stop("Argument phase must be a GHap.phase object.")
   }
   
