@@ -1,6 +1,6 @@
 #Function: ghap.froh
 #License: GPLv3 or later
-#Modification date: 12 May 2021
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Computation of genomic inbreeding from runs of homozygosity
@@ -15,7 +15,7 @@ ghap.froh<-function(
   
   # Check if input is a valid GHap object-------------------------------------------------------------
   obtype <- c("GHap.phase","GHap.plink")
-  if(class(object) %in% obtype == FALSE){
+  if(inherits(object, obtype) == FALSE){
     stop("\nInput must be a valid GHap object.")
   }
   
