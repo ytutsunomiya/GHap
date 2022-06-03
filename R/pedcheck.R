@@ -1,6 +1,6 @@
 #Function: ghap.pedcheck
 #License: GPLv3 or later
-#Modification date: 20 Apr 2022
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Pedigree check
@@ -8,7 +8,7 @@
 ghap.pedcheck <- function(ped, depth.n.f = FALSE){
   
   # Sanity check for pedigree --------------------------------------------------
-  if("data.frame" %in% class(ped) == FALSE){
+  if(inherits(ped, "data.frame") == FALSE){
     stop("A data frame must be passed to argument 'ped'")
   }
   if(identical(c("dam","id","sire"),sort(colnames(ped))) == FALSE){
@@ -86,6 +86,6 @@ ghap.pedcheck <- function(ped, depth.n.f = FALSE){
   out$stats <- stats
   out$ped <- ped
   return(out)
-
+  
   
 }
