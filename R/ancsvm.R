@@ -20,7 +20,7 @@ ghap.ancsvm <- function(
 ){
   
   # Check if object is a GHap.phase object-------------------------------------------------------------
-  if(inherist(object, "GHap.phase") == FALSE){
+  if(inherits(object, "GHap.phase") == FALSE){
     stop("Argument object must be a GHap.phase object.")
   }
   
