@@ -1,6 +1,6 @@
 #Function: ghap.phase2plink
 #License: GPLv3 or later
-#Modification date: 07 Feb 2022
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Convert phase object into plink file
@@ -16,7 +16,7 @@ ghap.phase2plink <- function(
 ){
   
   # Check if phase is a GHap.phase object --------------------------------------
-  if(class(object) != "GHap.phase"){
+  if(inherits(object, "GHap.phase") == FALSE){
     stop("Argument phase must be a GHap.phase object.")
   }
   
@@ -128,7 +128,7 @@ ghap.phase2plink <- function(
     line <- strtoi(lookup[line], base=2)
     return(line)
   }
-
+  
   # Print magic number [01101100 00011011] and mode [00000001] -----------------
   bed.file.con  <- file(bed.file, open = "ab")
   writeBin(object = as.integer(c(108,27,1)), con = bed.file.con, size = 1)
