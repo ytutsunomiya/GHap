@@ -1,6 +1,6 @@
 #Function: ghap.varblup
 #License: GPLv3 or later
-#Modification date: 21 May 2022
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: convert blup of individuals into blup of variants
@@ -23,7 +23,7 @@ ghap.varblup <- function(
   
   # Sanity check for input objects ---------------------------------------------
   obtype <- c("GHap.phase","GHap.plink","GHap.haplo")
-  if(class(object) %in% obtype == FALSE){
+  if(inherits(object, obtype) == FALSE){
     stop("\nInput must be a valid GHap object.")
   }
   if(is.null(names(gebv))){
@@ -55,7 +55,7 @@ ghap.varblup <- function(
   
   # Check if inactive variants should be reactivated ---------------------------
   if(only.active.variants == FALSE){
-    if(class(object) == "GHap.haplo"){
+    if(inherits(object, "GHap.haplo")){
       object$allele.in <- rep(TRUE,times=object$nalleles)
       object$nalleles.in <- length(which(object$allele.in))
     }else{
@@ -63,7 +63,7 @@ ghap.varblup <- function(
       object$nmarkers.in <- length(which(object$marker.in))
     }
   }
-  if(class(object) == "GHap.haplo"){
+  if(inherits(object, "GHap.haplo")){
     vidx <- which(object$allele.in)
   }else{
     vidx <- which(object$marker.in)
@@ -173,7 +173,7 @@ ghap.varblup <- function(
   scaleval[[4]] <- scaleval[[2]]
   
   # Auxiliary functions --------------------------------------------------------
-  if(class(object) %in% c("GHap.plink","GHap.haplo")){
+  if(inherits(object, c("GHap.plink","GHap.haplo"))){
     varFun <- function(i){
       object.con <- file(unlist(object[length(object)]), "rb")
       a <- seek(con = object.con, where = 3 + offset*(vidx[i]-1),
@@ -262,7 +262,7 @@ ghap.varblup <- function(
     cat("Done.\n")
   }
   vareff <- matrix(data = vareff, ncol = 7, byrow = T)
-  if(class(object) == "GHap.haplo"){
+  if(inherits(object, "GHap.haplo")){
     results <- matrix(data = NA, nrow = length(vidx), ncol = 17)
     results <- as.data.frame(results)
     colnames(results) <- c("CHR","BLOCK","BP1","BP2","ALLELE","FREQ",
