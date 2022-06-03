@@ -1,6 +1,6 @@
 #Function: ghap.subset
 #License: GPLv3 or later
-#Modification date: 25 Sep 2022
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Subset a GHap object
@@ -15,7 +15,7 @@ ghap.subset <- function(
   
   # Check if object is a valid GHap object -------------------------------------
   obtypes <- c("GHap.phase","GHap.haplo","GHap.plink")
-  if(class(object) %in% obtypes == FALSE){
+  if(inherits(object, obtype) == FALSE){
     stop("\nInput data must be a valid GHap object (phase, haplo or plink).")
   }
   
@@ -41,9 +41,9 @@ ghap.subset <- function(
   }
   
   # Subset ids -----------------------------------------------------------------
-  if(max(iidx) > 2*object$nsamples & class(object) == "GHap.phase"){
+  if(max(iidx) > 2*object$nsamples & inherits(object, "GHap.phase")){
     stop("Some of the provided ids are out of range")
-  }else if(max(iidx) > object$nsamples & class(object) != "GHap.phase"){
+  }else if(max(iidx) > object$nsamples & inherits(object, "GHap.phase") == FALSE){
     stop("Some of the provided ids are out of range")
   }else{
     ids <- rep(FALSE, times = length(object$id.in))
@@ -53,7 +53,7 @@ ghap.subset <- function(
   }
   
   # Subset variants ------------------------------------------------------------
-  if(class(object) == "GHap.haplo"){
+  if(inherits(object, "GHap.haplo")){
     if(max(vidx) > object$nalleles){
       stop("Some of the provided alleles are out of range")
     }else{
