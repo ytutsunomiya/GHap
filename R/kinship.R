@@ -1,6 +1,6 @@
 #Function: ghap.kinship
 #License: GPLv3 or later
-#Modification date: 29 Apr 2022
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute relationship matrix
@@ -19,7 +19,7 @@ ghap.kinship <- function(
   
   # Check if input is a valid GHap object --------------------------------------
   obtype <- c("GHap.phase","GHap.plink","GHap.haplo")
-  if(class(object) %in% obtype == FALSE){
+  if(inherits(object, obtype) == FALSE){
     stop("\nInput must be a valid GHap object.")
   }
   fac <- c(2,1,1)
@@ -27,7 +27,7 @@ ghap.kinship <- function(
   
   # Check if inactive variants and samples should be reactived -----------------
   if(only.active.variants == FALSE){
-    if(class(object) == "GHap.haplo"){
+    if(inherits(object, "GHap.haplo")){
       object$allele.in <- rep(TRUE,times=object$nalleles)
       object$nalleles.in <- length(which(object$allele.in))
     }else{
@@ -43,7 +43,7 @@ ghap.kinship <- function(
   # Map number of variants -----------------------------------------------------
   id.n <- object$nsamples.in
   id.in <- which(object$id.in)
-  if(class(object) == "GHap.haplo"){
+  if(inherits(object, "GHap.haplo")){
     var.n <- object$nalleles.in
     var.in <- which(object$allele.in)
   }else{
