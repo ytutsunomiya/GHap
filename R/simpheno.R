@@ -1,6 +1,6 @@
 #Function: ghap.simpheno
 #License: GPLv3 or later
-#Modification date: 2 Jun 2022
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Simulate phenotypes
@@ -21,7 +21,7 @@ ghap.simpheno<-function(
   obtype <- c("GHap.phase","GHap.plink")
   fac <- c(2,1)
   names(fac) <- obtype
-  if(class(object) %in% obtype == FALSE){
+  if(inherits(object, obtype) == FALSE){
     stop("\nInput must be a valid GHap.phase or GHap.plink object.")
   }
   if(nrep > 1 & r2 <= 0){
