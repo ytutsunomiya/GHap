@@ -1,6 +1,6 @@
 #Function: ghap.blockgen
 #License: GPLv3 or later
-#Modification date: 15 May 2021
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Generate blocks based on sliding windows
@@ -14,7 +14,7 @@ ghap.blockgen<-function(
 ){
   
   #Check if object is of class GHap.phase
-  if(class(object) != "GHap.phase"){
+  if(inherits(object, "GHap.phase") == FALSE){
     stop("Argument phase must be a GHap.phase object.")
   }
   if(unit %in% c("marker","kbp","ibd") == FALSE){
