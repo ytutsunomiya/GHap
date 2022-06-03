@@ -1,6 +1,6 @@
 #Function: ghap.roh
 #License: GPLv3 or later
-#Modification date: 09 Apr 2022
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Map streches of homozygous genotypes
@@ -21,7 +21,7 @@ ghap.roh <- function(
   
   # Check if input is a valid GHap object-------------------------------------------------------------
   obtype <- c("GHap.phase","GHap.plink")
-  if(class(object) %in% obtype == FALSE){
+  if(inherits(object, obtype) == FALSE){
     stop("\nInput must be a valid GHap object.")
   }
   fac <- c(2,1)
