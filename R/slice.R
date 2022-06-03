@@ -1,6 +1,6 @@
 #Function: ghap.slice
 #License: GPLv3 or later
-#Modification date: 14 Oct 2021
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Get a slice of a GHap object
@@ -20,10 +20,10 @@ ghap.slice <- function(
   
   # Check if object is a GHap.phase object -------------------------------------
   obtypes <- c("GHap.phase","GHap.haplo","GHap.plink")
-  if(class(object) %in% obtypes == FALSE){
+  if(inherits(object, obtype) == FALSE){
     stop("\nInput data must be a valid GHap object (phase, haplo or plink).")
   }
-
+  
   # Calculate offset and bitloss -----------------------------------------------
   offset <- ceiling((2*object$nsamples)/8)
   bitloss <- 8 - ((2*object$nsamples) %% 8)
@@ -36,7 +36,7 @@ ghap.slice <- function(
     idx2 <- idx1-7
     lookup[idx1:idx2] <- idx2:idx1
   }  
-
+  
   # Get indices ----------------------------------------------------------------
   if(index == TRUE){
     
@@ -45,15 +45,15 @@ ghap.slice <- function(
     vidx <- variants
     
     # Organize indices for ids
-    if(max(iidx) > 2*object$nsamples & class(object) == "GHap.phase"){
+    if(max(iidx) > 2*object$nsamples & inherits(object, "GHap.phase")){
       stop("Some of the provided ids are out of range")
-    }else if(max(iidx) > object$nsamples & class(object) != "GHap.phase"){
+    }else if(max(iidx) > object$nsamples & inherits(object, "GHap.phase") == FALSE){
       stop("Some of the provided ids are out of range")
     }
     names(iidx) <- object$id[iidx]
     
     # Organize indices for variants
-    if(class(object) == "GHap.haplo"){
+    if(inherits(object, "GHap.haplo")){
       if(max(vidx) > object$nalleles){
         stop("Some of the provided alleles are out of range")
       }else{
@@ -73,7 +73,7 @@ ghap.slice <- function(
     
     # Organize indices for ids
     iidx <- which(object$id %in% ids)
-    if(class(object) == "GHap.phase"){
+    if(inherits(object, "GHap.phase")){
       if(length(iidx) != 2*length(ids)){
         stop("Some of the provided ids were not found")
       }else{
@@ -99,7 +99,7 @@ ghap.slice <- function(
     }
     
     # Organize indices for variants
-    if(class(object) == "GHap.haplo"){
+    if(inherits(object, "GHap.haplo")){
       vidx <- which(1:object$nalleles %in% variants)
       if(length(vidx) != length(variants)){
         stop("Some of the provided marker names were not found")
@@ -120,7 +120,7 @@ ghap.slice <- function(
   }
   
   # Define bit function --------------------------------------------------------
-  if(class(object) == "GHap.phase"){
+  if(inherits(object, "GHap.phase")){
     getBitFun <- function(i){
       object.con <- file(object$phase, "rb")
       a <- seek(con = object.con, where = offset*(vidx[i]-1),
@@ -133,7 +133,7 @@ ghap.slice <- function(
       close.connection(object.con)
       return(geno[iidx])
     }
-  }else if(class(object) == "GHap.haplo"){
+  }else if(inherits(object, "GHap.haplo")){
     getBitFun <- function(i){
       object.con <- file(object$genotypes, "rb")
       a <- seek(con = object.con, where = 3 + offset*(vidx[i]-1),
@@ -152,7 +152,7 @@ ghap.slice <- function(
       close.connection(object.con)
       return(geno[iidx])
     }
-  }else if(class(object) == "GHap.plink"){
+  }else if(inherits(object, "GHap.plink")){
     getBitFun <- function(i){
       object.con <- file(object$plink, "rb")
       a <- seek(con = object.con, where = 3 + offset*(vidx[i]-1),
@@ -197,7 +197,7 @@ ghap.slice <- function(
                 byrow = TRUE, sparse = TRUE)
     colnames(X) <- names(iidx)
     rownames(X) <- names(vidx)
-    if(class(object) == "GHap.phase" & unphase == TRUE){
+    if(inherits(object, "GHap.phase") & unphase == TRUE){
       cols <- 1:ncol(X) %% 2
       X <- X[,which(cols == 1)] + X[,which(cols == 0)]
     }
@@ -206,7 +206,7 @@ ghap.slice <- function(
                 byrow = FALSE, sparse = TRUE)
     rownames(X) <- names(iidx)
     colnames(X) <- names(vidx)
-    if(class(object) == "GHap.phase" & unphase == TRUE){
+    if(inherits(object, "GHap.phase") & unphase == TRUE){
       rows <- 1:nrow(X) %% 2
       X <- X[which(rows == 1),] + X[which(rows == 0),]
     }
