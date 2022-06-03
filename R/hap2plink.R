@@ -1,6 +1,6 @@
 #Function: ghap.hap2plink
 #License: GPLv3 or later
-#Modification date: 2 Jun 2022
+#Modification date: 3 Jun 2022
 #Written by: Yuri Tani Utsunomiya & Marco Milanesi
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Convert haplotype allele counts to plink bed/bim/fam
@@ -11,7 +11,7 @@ ghap.hap2plink <- function(
 ){
   
   #Check if haplo is a GHap.haplo object
-  if(class(object) != "GHap.haplo"){
+  if(inherits(object, "GHap.haplo") == FALSE){
     stop("Argument haplo must be a GHap.haplo object.")
   }
   
