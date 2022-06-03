@@ -8,7 +8,7 @@
 ghap.ancmark <- function(object, ancsmooth, ids){
   
   # Check if object is of class GHap.phase -------------------------------------
-  if(inherist(object, "GHap.phase") == FALSE){
+  if(inherits(object, "GHap.phase") == FALSE){
     stop("Argument phase must be a GHap.phase object.")
   }
   
