@@ -1,6 +1,6 @@
 #Function: ghap.anc2plink
 #License: GPLv3 or later
-#Modification date: 29 May 2021
+#Modification date: 3 Jun 2021
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Output ancestry genotype matrix
@@ -21,7 +21,7 @@ ghap.anc2plink <- function(
 ){
   
   # Check if object is a GHap.phase object
-  if(class(object) != "GHap.phase"){
+  if(inherist(object, "GHap.phase") == FALSE){
     stop("Argument object must be a GHap.phase object.")
   }
   
