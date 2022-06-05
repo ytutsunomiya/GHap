@@ -16,7 +16,7 @@ ghap.profile <- function(
   
   # Check if object is a GHap.phase object -------------------------------------
   obtypes <- c("GHap.phase","GHap.haplo","GHap.plink")
-  if(inherits(object, obtype) == FALSE){
+  if(inherits(object, obtypes) == FALSE){
     stop("\nInput data must be a valid GHap object (phase, haplo or plink).")
   }
   fac <- c(2,1,1)
