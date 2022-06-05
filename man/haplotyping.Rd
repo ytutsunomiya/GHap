@@ -8,7 +8,7 @@ Haplotype genotypes
 Generate matrix of HapGenotypes for user-defined blocks.
 }
 \usage{
-ghap.haplotyping(phase, blocks, outfile,
+ghap.haplotyping(object, blocks, outfile,
                  freq = c(0, 1), drop.minor = FALSE,
                  only.active.samples = TRUE,
                  only.active.markers = TRUE,
@@ -18,7 +18,7 @@ ghap.haplotyping(phase, blocks, outfile,
 }
 
 \arguments{
-  \item{phase}{
+  \item{object}{
    A GHap.phase object.
   }
   \item{blocks}{
@@ -90,7 +90,7 @@ Marco Milanesi <marco.milanesi.mm@gmail.com>
 #                         slide = 5, unit = "marker")
 # 
 # # Haplotyping
-# ghap.haplotyping(phase = phase, blocks = blocks,
+# ghap.haplotyping(phase, blocks = blocks,
 #                  outfile = "example",
 #                  binary = T, ncores = 1)
 
