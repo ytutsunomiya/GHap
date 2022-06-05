@@ -1,12 +1,12 @@
 #Function: ghap.haplotyping
 #License: GPLv3 or later
-#Modification date: 3 Jun 2022
+#Modification date: 5 Jun 2022
 #Written by: Yuri Tani Utsunomiya & Marco Milanesi
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Output haplotype genotype matrix for user-defined haplotype blocks
 
 ghap.haplotyping <- function(
-  phase,
+  object,
   blocks,
   outfile,
   freq=c(0,1),
@@ -45,19 +45,19 @@ ghap.haplotyping <- function(
   
   #Check if inactive markers and samples should be reactived
   if(only.active.markers == FALSE){
-    phase$marker.in <- rep(TRUE,times=phase$nmarkers)
-    phase$nmarkers.in <- length(which(phase$marker.in))
+    object$marker.in <- rep(TRUE,times=object$nmarkers)
+    object$nmarkers.in <- length(which(object$marker.in))
   }
   if(only.active.samples == FALSE){
-    phase$id.in <- rep(TRUE,times=2*phase$nsamples)
-    phase$nsamples.in <- length(which(phase$id.in))/2
+    object$id.in <- rep(TRUE,times=2*object$nsamples)
+    object$nsamples.in <- length(which(object$id.in))/2
   }
   
   #Identify activated samples
-  ids.in <- which(phase$id.in)
-  id <- phase$id[ids.in]
+  ids.in <- which(object$id.in)
+  id <- object$id[ids.in]
   id <- id[1:length(id) %% 2 == 0]
-  pop <- phase$pop[ids.in]
+  pop <- object$pop[ids.in]
   pop <- pop[1:length(pop) %% 2 == 0]
   ids.n <- length(id)
   
@@ -122,25 +122,25 @@ ghap.haplotyping <- function(
     block.info <- blocks[i,c("BLOCK","CHR","BP1","BP2")]
     
     #SNPs in the block
-    snps <- which(phase$chr == block.info$CHR &
-                    phase$bp >= block.info$BP1 &
-                    phase$bp <= block.info$BP2 &
-                    phase$marker.in == TRUE)
-    phase.A0 <- phase$A0[snps]
-    phase.A1 <- phase$A1[snps]
+    snps <- which(object$chr == block.info$CHR &
+                    object$bp >= block.info$BP1 &
+                    object$bp <= block.info$BP2 &
+                    object$marker.in == TRUE)
+    object.A0 <- object$A0[snps]
+    object.A1 <- object$A1[snps]
     
     if(length(snps) >= 1){
       
       #Subset block
       if(length(snps) == 1){
-        block.subset <- ghap.slice(object = phase,
-                                   ids = unique(phase$id[ids.in]),
-                                   variants = phase$marker[snps])
+        block.subset <- ghap.slice(object = object,
+                                   ids = unique(object$id[ids.in]),
+                                   variants = object$marker[snps])
         haplotypes <- as.character(block.subset)
       }else{
-        block.subset <- ghap.slice(object = phase,
-                                   ids = unique(phase$id[ids.in]),
-                                   variants = phase$marker[snps])
+        block.subset <- ghap.slice(object = object,
+                                   ids = unique(object$id[ids.in]),
+                                   variants = object$marker[snps])
         haplotypes <- apply(block.subset,MARGIN = 2, paste, collapse="")
       }
       
