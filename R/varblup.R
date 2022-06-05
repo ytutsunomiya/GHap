@@ -1,6 +1,6 @@
 #Function: ghap.varblup
 #License: GPLv3 or later
-#Modification date: 3 Jun 2022
+#Modification date: 5 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: convert blup of individuals into blup of variants
@@ -302,11 +302,17 @@ ghap.varblup <- function(
     results$CHISQ.OBS <- (results$SCORE/results$SE)^2
     results$LOGP <- -1*pchisq(q = results$CHISQ.OBS, df = 1,
                               lower.tail = FALSE, log.p = TRUE)/log(10)
-    results$CHISQ.EXP <- qchisq(p = rank(results$CHISQ.OBS)/(nrow(results)+1),
-                                df = 1)
-    chisq.mean <- mean(results$CHISQ.OBS)
-    chisq.dev <- sd(results$CHISQ.OBS)
-    chisq.sub <- which(results$CHISQ.OBS < chisq.mean + 3*chisq.dev)
+    poly <- which(results$FREQ > 0 & results$FREQ < 1)
+    if(verbose == TRUE & length(poly) < nrow(results)){
+      cat(nrow(results) - length(poly)," monomorphic variants in results.\n",
+          "[NOTE] Subsetting polymorphic variants prior to the analysis is advised.\n", sep="")
+    }
+    results$CHISQ.EXP <- NA
+    results$CHISQ.EXP[poly] <- qchisq(p = rank(results$CHISQ.OBS[poly])/(length(poly)+1), df = 1)
+    chisq.mean <- mean(results$CHISQ.OBS, na.rm = TRUE)
+    chisq.dev <- sd(results$CHISQ.OBS, na.rm = TRUE)
+    chisq.sub <- which(is.na(results$CHISQ.EXP) == FALSE & 
+                         results$CHISQ.OBS < chisq.mean + 3*chisq.dev)
     ranvars <- sample(x = chisq.sub, size = nlambda)
     lambda <- lm(formula = CHISQ.OBS ~ CHISQ.EXP, data = results[ranvars,])
     lambda <- as.numeric(lambda$coefficients[2])
