@@ -1,7 +1,7 @@
 ---
 title: "The **GHap** Package (Version 3.0.0)"
 author: "Yuri Tani Utsunomiya, Andre Vieira do Nascimento, Marco Milanesi and Mario Barbato"
-date: "2 Jun 2022"
+date: "5 Jun 2022"
 output:
   pdf_document:
     highlight: rstudio
