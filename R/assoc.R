@@ -1,6 +1,6 @@
 #Function: ghap.assoc
 #License: GPLv3 or later
-#Modification date: 3 Jun 2022
+#Modification date: 5 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: phenotype-genotype association analysis
@@ -22,7 +22,7 @@ ghap.assoc <- function(
   
   # Check if input is a valid GHap object --------------------------------------
   obtype <- c("GHap.phase","GHap.plink","GHap.haplo")
-  if(inherits(object, obtype)){
+  if(inherits(object, obtype) == FALSE){
     stop("\nInput must be a valid GHap object.")
   }
   
@@ -235,10 +235,14 @@ ghap.assoc <- function(
     }else{
       gamma <- unlist(mclapply(X = ranvars, FUN = gammaFun, mc.cores = ncores))
     }
+    gamma <- gamma[which(is.na(gamma) == FALSE & is.nan(gamma) == FALSE)]
     if(verbose == TRUE){
       cat("Gamma factor estimated using ", ngamma,
           " variants:\n   mean = ", mean(gamma),
           "\n     sd = ", sd(gamma), ".\n", sep = "")
+      if(length(gamma) < ngamma){
+        cat(ngamma - length(gamma)," monomorphic variants ignored.\n", sep="")
+      }
     }
     gamma <- mean(gamma)
   }else{
@@ -331,11 +335,17 @@ ghap.assoc <- function(
       cat("Done.\n")
     }
   }
-  results$CHISQ.EXP <- qchisq(p = rank(results$CHISQ.OBS)/(nrow(results)+1),
-                              df = 1)
-  chisq.mean <- mean(results$CHISQ.OBS)
-  chisq.dev <- sd(results$CHISQ.OBS)
-  chisq.sub <- which(results$CHISQ.OBS < chisq.mean + 3*chisq.dev)
+  poly <- which(results$FREQ > 0)
+  if(verbose == TRUE & length(poly) < nrow(results)){
+    cat(nrow(results) - length(poly)," monomorphic variants in results.\n",
+        "[NOTE] Subsetting polymorphic variants prior to the analysis is advised.\n", sep="")
+  }
+  results$CHISQ.EXP <- NA
+  results$CHISQ.EXP[poly] <- qchisq(p = rank(results$CHISQ.OBS[poly])/(length(poly)+1), df = 1)
+  chisq.mean <- mean(results$CHISQ.OBS, na.rm = TRUE)
+  chisq.dev <- sd(results$CHISQ.OBS, na.rm = TRUE)
+  chisq.sub <- which(is.na(results$CHISQ.EXP) == FALSE & 
+                     results$CHISQ.OBS < chisq.mean + 3*chisq.dev)
   ranvars <- sample(x = chisq.sub, size = nlambda)
   lambda <- lm(formula = CHISQ.OBS ~ CHISQ.EXP, data = results[ranvars,])
   lambda <- as.numeric(lambda$coefficients[2])
