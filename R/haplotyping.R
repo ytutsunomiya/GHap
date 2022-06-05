@@ -126,8 +126,8 @@ ghap.haplotyping <- function(
                     object$bp >= block.info$BP1 &
                     object$bp <= block.info$BP2 &
                     object$marker.in == TRUE)
-    object.A0 <- object$A0[snps]
-    object.A1 <- object$A1[snps]
+    phase.A0 <- object$A0[snps]
+    phase.A1 <- object$A1[snps]
     
     if(length(snps) >= 1){
       
