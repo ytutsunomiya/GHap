@@ -335,7 +335,7 @@ ghap.assoc <- function(
       cat("Done.\n")
     }
   }
-  poly <- which(results$FREQ > 0)
+  poly <- which(results$FREQ > 0 & results$FREQ < 1)
   if(verbose == TRUE & length(poly) < nrow(results)){
     cat(nrow(results) - length(poly)," monomorphic variants in results.\n",
         "[NOTE] Subsetting polymorphic variants prior to the analysis is advised.\n", sep="")
