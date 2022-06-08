@@ -1,6 +1,6 @@
 #Function: ghap.varblup
 #License: GPLv3 or later
-#Modification date: 5 Jun 2022
+#Modification date: 8 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: convert blup of individuals into blup of variants
@@ -92,7 +92,7 @@ ghap.varblup <- function(
   }
   
   # Invert reference matrix ----------------------------------------------------
-  covmat[names(gebv),names(gebv)]
+  covmat <- covmat[names(gebv),names(gebv)]
   icovmat <- try(solve(covmat), silent = TRUE)
   if(inherits(icovmat, "try-error")){
     icovmat <- try(solve(covmat + Diagonal(length(gebv))*tol), silent = TRUE)
