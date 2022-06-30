@@ -1,6 +1,6 @@
 #Function: ghap.simmating
 #License: GPLv3 or later
-#Modification date: 3 Jun 2022
+#Modification date: 30 Jun 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Simulate individuals from specified matings
@@ -49,13 +49,13 @@ ghap.simmating <- function(
   if(is.null(parent1) | is.null(parent2)){
     stop("Missing parents for mating simulations\n")
   }
-  if(class(parent1) == "character"){
+  if(inherits(parent1, "character")){
     tmpprobs <- rep(1/length(parent1), times = length(parent1))
     tmpnames <- parent1
     parent1 <- tmpprobs
     names(parent1) <- tmpnames
   }
-  if(class(parent2) == "character"){
+  if(inherits(parent2, "character")){
     tmpprobs <- rep(1/length(parent2),times = length(parent2))
     tmpnames <- parent2
     parent2 <- tmpprobs
