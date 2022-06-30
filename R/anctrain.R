@@ -1,22 +1,18 @@
-#Function: ghap.anctrain
+#Function: ghap.simmating
 #License: GPLv3 or later
-#Modification date: 3 Jun 2022
+#Modification date: 30 Jun 2022
 #Written by: Yuri Tani Utsunomiya
-#Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
-#Description: Create prototype alleles for ancestry predictions
+#Contact: ytutsunomiya@gmail.com
+#Description: Simulate individuals from specified matings
 
-ghap.anctrain <- function(
+ghap.simmating <- function(
   object,
-  train = NULL,
-  method = "unsupervised",
-  K = 2,
-  iter.max = 10,
-  nstart = 10,
-  nmarkers = 5000,
-  tune = FALSE,
-  only.active.samples = TRUE,
+  n.individuals = 1,
+  parent1 = NULL,
+  parent2 = NULL,
+  model = "proportional",
+  out.file,
   only.active.markers = TRUE,
-  batchsize=NULL,
   ncores = 1,
   verbose = TRUE
 ){
@@ -26,195 +22,204 @@ ghap.anctrain <- function(
     stop("Argument phase must be a GHap.phase object.")
   }
   
-  # Check if method is valid--------------------------------------------------------------------------
-  if(method %in% c("supervised","unsupervised") == FALSE){
-    stop("Method should be either 'supervised' or 'unsupervised.")
-  }
-  
-  # Check if inactive markers and samples should be reactived-----------------------------------------
+  # Check if inactive markers should be reactivated---------------------------------------------------
   if(only.active.markers == FALSE){
     object$marker.in <- rep(TRUE,times=object$nmarkers)
     object$nmarkers.in <- length(which(object$marker.in))
   }
-  if(only.active.samples == FALSE){
-    object$id.in <- rep(TRUE,times=2*object$nsamples)
-    object$nsamples.in <- length(which(object$id.in))/2
-  }
   
-  # Map training samples -----------------------------------------------------------------------------
-  if(is.null(train) == TRUE){
-    train.idx <- which(object$id.in == TRUE)
+  # Check if out file exist---------------------------------------------------------------------------
+  samples.file <- paste(out.file,"samples",sep=".")
+  phase.file <- paste(out.file,"phase",sep=".")
+  markers.file <- paste(out.file,"markers",sep=".")
+  pedigree.file <- paste(out.file,"pedigree",sep=".")
+  if(file.exists(samples.file) == TRUE | file.exists(markers.file) == TRUE | file.exists(markers.file) == TRUE){
+    stop("Output file already exists!")
   }else{
-    train.idx <- which(object$id %in% train & object$id.in == TRUE)
+    rnumb <- runif(n = 1, min = 1, max = 1e+6)
+    rnumb <- ceiling(rnumb)
+    tmp.file <- paste(tempdir(),"/tmp",rnumb,sep="")
+    tmp.samples.file <- paste(tmp.file,"samples",sep=".")
+    tmp.pedigree.file <- paste(tmp.file,"pedigree",sep=".")
+    tmp.phase.file <- paste(tmp.file,"phase",sep=".")
+    tmp.markers.file <- paste(tmp.file,"markers",sep=".")
   }
   
-  # Map population for supervised analysis -----------------------------------------------------------
-  if(method == "supervised"){
-    train.pop <- object$pop[train.idx]
-    y <- object$pop[train.idx]
-    y <- as.factor(y)
+  # Check parent vectors------------------------------------------------------------------------------
+  if(is.null(parent1) | is.null(parent2)){
+    stop("Missing parents for mating simulations\n")
   }
-  
-  # Map parameters to use ----------------------------------------------------------------------------
-  if(method == "unsupervised"){
-    param <- list(K = K, iter.max = iter.max, nstart = nstart, nmarkers = nmarkers, tune = tune)
-  }else{
-    param <- table(y)
+  if(inherits(parent1, "character")){
+    tmpprobs <- rep(1/length(parent1), times = length(parent1))
+    tmpnames <- parent1
+    parent1 <- tmpprobs
+    names(parent1) <- tmpnames
   }
-  ncores <- min(c(detectCores(), ncores))
-  
-  # Log message of parameters-------------------------------------------------------------------------
+  if(inherits(parent2, "character")){
+    tmpprobs <- rep(1/length(parent2),times = length(parent2))
+    tmpnames <- parent2
+    parent2 <- tmpprobs
+    names(parent2) <- tmpnames
+  }
+  parent1ok <- which(names(parent1) %in% object$id)
+  parent2ok <- which(names(parent2) %in% object$id)
+  if(length(parent1ok) != length(parent1) | length(parent1ok) != length(parent1)){
+    stop("Some of the provided parent names were not found in the phase object\n")
+  }
   if(verbose == TRUE){
-    if(method == "unsupervised"){
-      printparams <- paste(names(param), "=", param, collapse=", ")
-      cat("\nUsing method 'unsupervised' with parameters:\n[", printparams, "]\n", sep="")
+    cat("\n\nMating simulation started...\n")
+    cat("Number of parents in set 1: ", length(parent1), "\n", sep="")
+    cat("Number of parents in set 2: ", length(parent2), "\n", sep="")
+    cat("Number of progeny: ", n.individuals, "\n\n", sep="")
+  }
+  
+  # Function for individual simulation----------------------------------------------------------------
+  indbuild <- function(i){
+    crossovers1 <- rpois(n = 1, lambda = chrmean[chr])
+    crossovers2 <- rpois(n = 1, lambda = chrmean[chr])
+    if(crossovers1 > 0){
+      breakpoints1 <- sample(x = 1:m, size = crossovers1,
+                             replace = F, prob = probchr)
+      breakpoints1 <- sort(breakpoints1)
+      parent1idx <- which(colnames(parenthap) == indtbl$parent1[i])
+      parent1idx <- sample(parent1idx, size=2, replace=F)
+      hap1idx1 <- c(1,breakpoints1+1)
+      hap1idx2 <- c(breakpoints1,m)
+      hap1idx1 <- hap1idx1[which(1:length(hap1idx1) %% 2 == 0)]
+      hap1idx2 <- hap1idx2[which(1:length(hap1idx2) %% 2 == 0)]
+      hap1 <- parenthap[,parent1idx[1]]
+      for(j in 1:length(hap1idx1)){
+        cropseg <- hap1idx1[j]:hap1idx2[j]
+        cropseg <- cropseg[which(cropseg < m)]
+        hap1[cropseg] <- parenthap[cropseg,parent1idx[2]]
+      }
     }else{
-      printparams <- paste(names(param), " [n = ", param, "]", sep="", collapse="\n")
-      cat("\nUsing method 'supervised' with reference haplotypes:\n", printparams, "\n", sep="")
+      parent1idx <- which(colnames(parenthap) == indtbl$parent1[i])
+      parent1idx <- sample(parent1idx, size=2, replace=F)
+      hap1 <- parenthap[,parent1idx[1]]
     }
-  }
-  
-  
-  # Seed and tuning for kmeans------------------------------------------------------------------------
-  if(method == "unsupervised"){
-    mkr <- sample(x = which(object$marker.in), size = param$nmarkers, replace = FALSE)
-    Mkm <- ghap.slice(object = object, ids = train.idx, variants = mkr, transposed = TRUE,
-                      index = TRUE, ncores = ncores, verbose = FALSE)
-    if(tune == TRUE){
-      tune.FUN <- function(i){
-        clk <- kmeans(x = Mkm, centers = i,
-                      iter.max = param$iter.max, nstart = param$nstart)
-        clout <- (clk$betweenss/clk$tot.withinss)*(sum(clk$size) - i)/(i-1)
-        clout <- c(clout,clk$tot.withinss)
-        return(clout)
+    if(crossovers2 > 0){
+      breakpoints2 <- sample(x = 1:m, size = crossovers2,
+                             replace = F, prob = probchr)
+      breakpoints2 <- sort(breakpoints2)
+      parent2idx <- which(colnames(parenthap) == indtbl$parent2[i])
+      parent2idx <- sample(parent2idx, size=2, replace=F)
+      hap2idx1 <- c(1,breakpoints2+1)
+      hap2idx2 <- c(breakpoints2,m)
+      hap2idx1 <- hap2idx1[which(1:length(hap2idx1) %% 2 == 0)]
+      hap2idx2 <- hap2idx2[which(1:length(hap2idx2) %% 2 == 0)]
+      hap2 <- parenthap[,parent2idx[1]]
+      for(j in 1:length(hap2idx1)){
+        cropseg <- hap2idx1[j]:hap2idx2[j]
+        cropseg <- cropseg[which(cropseg < m)]
+        hap2[cropseg] <- parenthap[cropseg,parent2idx[2]]
       }
-      if(verbose == TRUE){
-        cat("\nQuantifying within-cluster dispersion from K = 1 to K = ", param$K, "... ", sep="")
-      }
-      if(ncores == 1){
-        clout <- unlist(lapply(X = 1:param$K, FUN = tune.FUN))
-        clout <- as.data.frame(matrix(data = clout, ncol = 2, byrow = T))
-      }else{
-        if(Sys.info()["sysname"] == "Windows"){
-          cl <- makeCluster(ncores)
-          clusterEvalQ(cl, library(Matrix))
-          varlist <- list("Mkm","param")
-          clusterExport(cl = cl, varlist = varlist, envir=environment())
-          clout <- unlist(parLapply(cl = cl, fun = tune.FUN, X = 1:param$K))
-          stopCluster(cl)
-          clout <- as.data.frame(matrix(data = clout, ncol = 2, byrow = T))
-        }else{
-          clout <- unlist(mclapply(X = 1:param$K, FUN = tune.FUN, mc.cores = ncores))
-          clout <- as.data.frame(matrix(data = clout, ncol = 2, byrow = T))
-        }
-      }
-      colnames(clout) <- c("chi","sst")
-      clout$chi[1] <- 0
-      if(verbose == TRUE){
-        cat("Done.\n")
-      }
-      sst <- clout$sst
-      change <- 100*diff(sst)/sst[-param$K]
-      names(change) <- paste("K", 2:param$K, " - K", 1:(param$K-1), sep="")
-      # ymin <- min(sst)
-      # ymax <- max(sst)
-      # par(mfrow=c(1,2))
-      # plot(x = 1:K, y = sst, ylim = c(ymin,ymax), type = "b", yaxt = "n", xaxt = "n",
-      #      xlab="K value", ylab = "Total within-cluster sum of squares", col = "darkgrey", lwd=2,
-      #      main = "Elbow method")
-      # ssst <- seq(from = ymin, to = ymax, length.out = 5)
-      # axis(side = 2, at = ssst, labels = sprintf("%.2g", ssst), las=3)
-      # axis(side = 1, at = 1:param$K, labels = 1:K, las=1)
-      # text(x = (2:param$K)-0.5, y = (sst[-length(sst)] + sst[-1])/2, 
-      #      labels = paste(sprintf("%.1f", change),"%"), pos = 3)
-      # plot(x = 1:K, y = clout$chi,type = "b", xlab="K value", ylab = "Calinski-Harabasz (CH) Index",
-      #      col = "darkgrey", lwd=2, xaxt = "n",
-      #      main = "Variance Ratio Criterion", las=1)
-      # axis(side = 1, at = 1:param$K, labels = 1:K, las=1)
     }else{
-      if(verbose == TRUE){
-        cat("\nGrouping haplotypes into K = ", K," pseudo-lineages using K-means clustering... ", sep="")
-      }
-      clk <- kmeans(x = Mkm, centers = param$K,
-                    iter.max = param$iter.max, nstart = param$nstart)
-      y <- paste0("K",clk$cluster)
-      if(verbose == TRUE){
-        cat("Done.\n")
-      }
+      parent2idx <- which(colnames(parenthap) == indtbl$parent2[i])
+      parent2idx <- sample(parent2idx, size=2, replace=F)
+      hap2 <- parenthap[,parent2idx[1]]
     }
+    return(c(hap1,hap2))
   }
   
-  # Generate batch index -----------------------------------------------------------------------------
-  if(is.null(batchsize) == TRUE){
-    batchsize <- ceiling(object$nmarkers.in/10)
+  # Simulate individuals------------------------------------------------------------------------------
+  ncores <- min(c(detectCores(), ncores))
+  uniqchr <- unique(object$chr)
+  chrsize <- rep(x = NA, times = length(uniqchr))
+  names(chrsize) <- uniqchr
+  nmkrchr <- chrsize
+  for(i in 1:length(chrsize)){
+    idx <- which(object$chr == uniqchr[i])
+    bp <- object$bp[idx]
+    chrsize[i] <- as.numeric(sum(diff(bp)))
+    nmkrchr[i] <- length(idx)
   }
-  if(batchsize > object$nmarkers.in){
-    batchsize <- object$nmarkers.in
-  }
-  id1 <- seq(1,object$nmarkers.in,by=batchsize)
-  id2 <- (id1+batchsize)-1
-  id1 <- id1[id2<=object$nmarkers.in]
-  id2 <- id2[id2<=object$nmarkers.in]
-  id1 <- c(id1,id2[length(id2)]+1)
-  id2 <- c(id2,object$nmarkers.in)
-  if(id1[length(id1)] > object$nmarkers.in){
-    id1 <- id1[-length(id1)]; id2 <- id2[-length(id2)]
-  }
-  
-  # Prototype allele function ------------------------------------------------------------------------
-  proto.fun <- function(k){
-    x <- X[k,]
-    dfp <- data.frame(geno = x, pop = y)
-    res <- aggregate(formula = geno ~ pop, data = dfp, FUN = mean)
-    return(res$geno)
-  }
-  
-  # Prototype alleles calculation --------------------------------------------------------------------
-  if(method == "unsupervised" & tune == TRUE){
-    results <- NULL
-    results$ssq <- clout$sst
-    results$chindex <- clout$chi
-    results$pchange <- change
+  idgen <- gsub(pattern = "( )|-|:", replacement = "", Sys.time())
+  idgen <- paste0("ID",idgen,
+                  sample(x = LETTERS, size = n.individuals, replace = TRUE),
+                  sprintf(fmt = paste0("%0",as.integer(log10(n.individuals))+1,".f"), 1:n.individuals))
+  indtbl <- data.frame(id = idgen,
+                       parent1 = sample(x = names(parent1), size = n.individuals, prob = parent1, replace = TRUE),
+                       parent2 = sample(x = names(parent2), size = n.individuals, prob = parent2, replace = TRUE),
+                       stringsAsFactors = FALSE)
+  write.table(x = indtbl, file = tmp.pedigree.file, col.names = FALSE, row.names = FALSE, sep = " ", quote = FALSE)
+  write.table(x = cbind("SIM",idgen), file = tmp.samples.file, col.names = FALSE, row.names = FALSE, sep = " ", quote = FALSE)
+  if("proportional" %in% model & length(model) == 1){
+    chrprop <- chrsize/sum(chrsize)
+    chrmean <- chrprop*length(chrsize)
+    probs <- NULL
+  }else if("uniform" %in% model & length(model) == 1){
+    chrmean <- nmkrchr
+    chrmean[1:length(chrmean)] <- 1
+    probs <- NULL
+  }else if(identical(names(model), names(chrsize)) & is.numeric(model) == TRUE){
+    chrmean <- model*(chrsize/1e+6)/100
+    model <- "chromosome"
+    probs <- NULL
+  }else if(sum(names(model) %in% object$marker) == length(model) & is.numeric(model) == TRUE){
+    chrmean <- rep(x = NA, times = length(uniqchr))
+    names(chrmean) <- uniqchr
+    probs <- NULL
+    for(k in 1:length(chrmean)){
+      mkrtmp <- object$marker[which(object$chr == names(chrmean)[k])]
+      mkrtmp <- mkrtmp[which(mkrtmp %in% names(model))]
+      chrmean[k] <- mean(model[mkrtmp])*(chrsize[k]/1e+6)/100
+      probs <- c(probs,model[mkrtmp]/sum(model[mkrtmp]))
+    }
+    model <- "marker"
   }else{
-    snps.in <- which(object$marker.in)
-    poplabs <- sort(unique(as.character(y)))
-    results <- matrix(data = NA, nrow = length(snps.in), ncol = length(poplabs)+1)
-    results <- as.data.frame(results)
-    colnames(results) <- c("MARKER",poplabs)
-    results$MARKER <- object$marker[snps.in]
+    emsg <- paste0("\nArgument model has to be one of the following:\n",
+                   "a) 'uniform'\n",
+                   "b) 'proportional'\n",
+                   "c) named vector with chromosome-specific recombination rates\n",
+                   "d) named vector with marker-specific recombination rates\n")
+    stop(emsg)
+  }
+  for(chr in uniqchr){
     if(verbose == TRUE){
-      cat("\nBuilding prototype alleles... ")
+      cat("Simulating crossing over events on chromosome", names(nmkrchr[chr]), "\r")
     }
-    for(i in 1:length(id1)){
-      X <- ghap.slice(object = object,
-                      ids = train.idx,
-                      variants = snps.in[id1[i]:id2[i]],
-                      index = TRUE,
-                      ncores = ncores)
-      #Compute blocks
-      if(ncores == 1){
-        p <- unlist(lapply(FUN = proto.fun, X = 1:nrow(X)))
-      }else{
-        if(Sys.info()["sysname"] == "Windows"){
-          cl <- makeCluster(ncores)
-          clusterEvalQ(cl, library(Matrix))
-          varlist <- list("X","y")
-          clusterExport(cl = cl, varlist = varlist, envir=environment())
-          p <- unlist(parLapply(cl = cl, fun = proto.fun, X = 1:nrow(X)))
-          stopCluster(cl)
-        }else{
-          p <- unlist(mclapply(FUN = proto.fun, X = 1:nrow(X), mc.cores = ncores))
-        }
-      }
-      p <- data.frame(matrix(p, ncol=length(poplabs), byrow=TRUE), stringsAsFactors = F)
-      results[id1[i]:id2[i],-1] <- p
+    m <- nmkrchr[chr]
+    mkrsidx <- which(object$marker.in & object$chr == chr)
+    mkrs <- object$marker[mkrsidx]
+    if(model == "marker"){
+      probchr <- probs[mkrs]
+    }else{
+      probchr <- NULL
     }
-    if(verbose == TRUE){
-      cat("Done.\n")
+    parenthap <- ghap.slice(object = object, ids = unique(c(indtbl$parent1,indtbl$parent2)),
+                            variants = mkrs, ncores = ncores)
+    if(Sys.info()["sysname"] == "Windows"){
+      cl <- makeCluster(ncores)
+      inds <- parLapply(cl = cl, fun = indbuild, X = 1:n.individuals)
+      stopCluster(cl)
+    }else{
+      inds <- mclapply(FUN = indbuild, X = 1:n.individuals, mc.cores = ncores)
     }
+    inds <- matrix(data = unlist(inds), nrow = m, ncol = 2*n.individuals, byrow = F)
+    mkrmap <- data.frame(CHR = object$chr[mkrsidx], MARKER = object$marker[mkrsidx], POS = object$bp[mkrsidx],
+                         A0 = object$A0[mkrsidx], A1 = object$A1[mkrsidx], stringsAsFactors = FALSE)
+    fwrite(x = as.data.table(mkrmap),
+           file = tmp.markers.file, col.names = FALSE, row.names = FALSE,
+           sep = " ", append = TRUE, nThread = ncores)
+    fwrite(x = as.data.table(inds), file = tmp.phase.file, quote = FALSE, col.names = FALSE, row.names = FALSE, sep = " ",
+           append = TRUE, nThread = ncores)
   }
   
-  # Return results------------------------------------------------------------------------------------
-  return(results)
+  # Get files----------------------------------------------------------------------------------------
+  if(verbose == TRUE){
+    cat("Copying output files to the working directory... ")
+  }
+  ok <- file.copy(from = tmp.phase.file, to = phase.file)
+  ok <- file.remove(tmp.phase.file)
+  ok <- file.copy(from = tmp.markers.file, to = markers.file)
+  ok <- file.remove(tmp.markers.file)
+  ok <- file.copy(from = tmp.samples.file, to = samples.file)
+  ok <- file.remove(tmp.samples.file)
+  ok <- file.copy(from = tmp.pedigree.file, to = pedigree.file)
+  ok <- file.remove(tmp.pedigree.file)
+  if(verbose == TRUE){
+    cat("Done.\n\n")
+  }
   
 }
