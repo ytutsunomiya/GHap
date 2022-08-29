@@ -1,6 +1,6 @@
 #Function: ghap.loadphase
 #License: GPLv3 or later
-#Modification date: 03 May 2021
+#Modification date: 29 Aug 2022
 #Written by: Yuri Tani Utsunomiya & Marco Milanesi
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Load phased genotypes
@@ -180,17 +180,51 @@ ghap.loadphase <- function(
   nbytes <- file.info(phaseb.file)$size
   ebytes <- phase$nmarkers*(2*phase$nsamples + bitloss)/8
   if(nbytes != ebytes){
-    osize <- 2*phase$nsamples*(nbytes/ceiling((2*phase$nsamples)/8))
-    osize <- floor(osize)
-    esize <- 2*phase$nsamples*phase$nmarkers
-    emsg <- "\n\n\nYour binary phased genotypes file contains wrong dimensions:\n"
-    emsg <- paste(emsg, "Expected 2*",phase$nsamples,"*",
-                  phase$nmarkers," = ", esize, " alleles",sep="")
-    emsg <- paste(emsg, "but found", osize)
-    stop(emsg)
+    if(nbytes == ebytes + 1){
+      object.con <- file(object$phase, "rb")
+      a <- seek(con = object.con, where = 0,
+                origin = 'start',rw = 'r')
+      fmt <- readBin(object.con, what=raw(), size = 1,
+                     n = 1, signed = FALSE)
+      fmt <- paste(as.integer(rawToBits(fmt)), collapse="")
+      close.connection(object.con)
+      if(fmt == "00000001"){
+        phase$mode <- 1
+        if(verbose == TRUE){
+          cat("Done.\n")
+          cat("Phase object format is variants x individuals.\n")
+        }
+      }else if(fmt == "0000010"){
+        phase$mode <- 2
+        if(verbose == TRUE){
+          cat("Done.\n")
+          cat("Phase object format is individuals x variants.\n")
+        }
+      }else{
+        osize <- 2*phase$nsamples*((nbytes-1)/ceiling((2*phase$nsamples)/8))
+        osize <- floor(osize)
+        esize <- 2*phase$nsamples*phase$nmarkers
+        emsg <- "\n\n\nYour binary phased genotypes file contains wrong dimensions:\n"
+        emsg <- paste(emsg, "Expected 2*",phase$nsamples,"*",
+                      phase$nmarkers," = ", esize, " alleles",sep="")
+        emsg <- paste(emsg, "but found", osize)
+        stop(emsg)
+      }
+    }else{
+      osize <- 2*phase$nsamples*(nbytes/ceiling((2*phase$nsamples)/8))
+      osize <- floor(osize)
+      esize <- 2*phase$nsamples*phase$nmarkers
+      emsg <- "\n\n\nYour binary phased genotypes file contains wrong dimensions:\n"
+      emsg <- paste(emsg, "Expected 2*",phase$nsamples,"*",
+                    phase$nmarkers," = ", esize, " alleles",sep="")
+      emsg <- paste(emsg, "but found", osize)
+      stop(emsg)
+    }
   }else{
+    phase$mode <- 0
     if(verbose == TRUE){
-      cat("Done.\n") 
+      cat("Done.\n")
+      cat("Phase object format is variants x individuals.\n")
     }
   }
   
