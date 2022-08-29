@@ -168,65 +168,64 @@ ghap.loadphase <- function(
   phase$A0 <- marker$V5
   phase$A1 <- marker$V6
   phase$phase <- normalizePath(path = phaseb.file)
+  phase$mode <- NA
   
   # Check phaseb file ----------------------------------------------------------
   if(verbose == TRUE){
     cat("Checking integrity of phased genotypes... ")
   }
-  bitloss <- 8 - ((2*phase$nsamples) %% 8)
-  if(bitloss == 8){
-    bitloss <- 0
+  bitloss <- rep(NA, times = 2)
+  ebytes <- rep(NA, times = 2)
+  bitloss[1] <- 8 - ((2*phase$nsamples) %% 8)
+  if(bitloss[1] == 8){
+    bitloss[1] <- 0
   }
-  nbytes <- file.info(phaseb.file)$size
-  ebytes <- phase$nmarkers*(2*phase$nsamples + bitloss)/8
-  if(nbytes != ebytes){
-    if(nbytes == ebytes + 1){
-      object.con <- file(object$phase, "rb")
-      a <- seek(con = object.con, where = 0,
-                origin = 'start',rw = 'r')
-      fmt <- readBin(object.con, what=raw(), size = 1,
-                     n = 1, signed = FALSE)
-      fmt <- paste(as.integer(rawToBits(fmt)), collapse="")
-      close.connection(object.con)
-      if(fmt == "00000001"){
-        phase$mode <- 1
-        if(verbose == TRUE){
-          cat("Done.\n")
-          cat("Phase object format is variants x individuals.\n")
-        }
-      }else if(fmt == "0000010"){
-        phase$mode <- 2
-        if(verbose == TRUE){
-          cat("Done.\n")
-          cat("Phase object format is individuals x variants.\n")
-        }
-      }else{
-        osize <- 2*phase$nsamples*((nbytes-1)/ceiling((2*phase$nsamples)/8))
-        osize <- floor(osize)
-        esize <- 2*phase$nsamples*phase$nmarkers
-        emsg <- "\n\n\nYour binary phased genotypes file contains wrong dimensions:\n"
-        emsg <- paste(emsg, "Expected 2*",phase$nsamples,"*",
-                      phase$nmarkers," = ", esize, " alleles",sep="")
-        emsg <- paste(emsg, "but found", osize)
-        stop(emsg)
-      }
-    }else{
-      osize <- 2*phase$nsamples*(nbytes/ceiling((2*phase$nsamples)/8))
-      osize <- floor(osize)
-      esize <- 2*phase$nsamples*phase$nmarkers
-      emsg <- "\n\n\nYour binary phased genotypes file contains wrong dimensions:\n"
-      emsg <- paste(emsg, "Expected 2*",phase$nsamples,"*",
-                    phase$nmarkers," = ", esize, " alleles",sep="")
-      emsg <- paste(emsg, "but found", osize)
-      stop(emsg)
-    }
-  }else{
+  bitloss[2] <- 8 - (phase$nmarkers %% 8)
+  if(bitloss[2] == 8){
+    bitloss[2] <- 0
+  }
+  nbytes <- file.info(phase$phase)$size
+  ebytes[1] <- phase$nmarkers*(2*phase$nsamples + bitloss[1])/8
+  ebytes[2] <- 2*phase$nsamples*(phase$nmarkers + bitloss[2])/8
+  if(nbytes == ebytes[1]){
     phase$mode <- 0
     if(verbose == TRUE){
       cat("Done.\n")
-      cat("Phase object format is variants x individuals.\n")
+      cat("Phase object format is mode 0 (variants x individuals).\n")
     }
+  }else if(nbytes == ebytes[1] + 1 | nbytes == ebytes[2] + 1){
+    phase.con <- file(phase$phase, "rb")
+    a <- seek(con = phase.con, where = 0,
+              origin = 'start',rw = 'r')
+    fmt <- readBin(phase.con, what=raw(), size = 1,
+                   n = 1, signed = FALSE)
+    fmt <- paste(as.integer(rawToBits(fmt)), collapse="")
+    close.connection(phase.con)
+    if(fmt == "00000001"){
+      phase$mode <- 1
+      if(verbose == TRUE){
+        cat("Done.\n")
+        cat("Phase object format is mode 1 (variants x individuals).\n")
+      }
+    }else if(fmt == "0000010"){
+      phase$mode <- 2
+      if(verbose == TRUE){
+        cat("Done.\n")
+        cat("Phase object format is mode 2 (individuals x variants).\n")
+      }
+    }else{
+      emsg <- "\n\nYour binary phased genotypes file has an unknown format!\n"
+      stop(emsg)
+    }
+  }else{
+    emsg <- "\n\nYour binary phased genotypes file contains wrong dimensions:\n"
+    emsg <- paste(emsg,
+                  "\nExpected", ebytes[1]+1, "bytes for variants x individuals",
+                  "\nExpected", ebytes[2]+1, "bytes for individuals x variants",
+                  "\nObserved", nbytes, "bytes instead\n\n")
+    stop(emsg)
   }
+  
   
   # Return GHap object ---------------------------------------------------------
   class(phase) <- "GHap.phase"
