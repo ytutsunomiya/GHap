@@ -1,6 +1,6 @@
 #Function: ghap.slice
 #License: GPLv3 or later
-#Modification date: 3 Jun 2022
+#Modification date: 29 Aug 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Get a slice of a GHap object
@@ -25,17 +25,31 @@ ghap.slice <- function(
   }
   
   # Calculate offset and bitloss -----------------------------------------------
-  offset <- ceiling((2*object$nsamples)/8)
-  bitloss <- 8 - ((2*object$nsamples) %% 8)
-  if(bitloss == 8){
-    bitloss <- 0
+  offset <- rep(NA, times = 2)
+  offset[1] <- ceiling((2*object$nsamples)/8)
+  offset[2] <- ceiling((2*object$nmarkers)/8)
+  bitloss <- rep(NA, times = 2)
+  bitloss[1] <- 8 - ((2*object$nsamples) %% 8)
+  if(bitloss[1] == 8){
+    bitloss[1] <- 0
   }
-  lookup <- rep(NA, times=offset*8)
-  for(i in 1:offset){
+  bitloss[2] <- 8 - ((2*object$nmarkers) %% 8)
+  if(bitloss[2] == 8){
+    bitloss[2] <- 0
+  }
+  lookup <- vector(mode = "list", length = 2)
+  lookup[[1]] <- rep(NA, times=offset[1]*8)
+  lookup[[2]] <- rep(NA, times=offset[2]*8)
+  for(i in 1:offset[1]){
     idx1 <- i*8
     idx2 <- idx1-7
-    lookup[idx1:idx2] <- idx2:idx1
-  }  
+    lookup[[1]][idx1:idx2] <- idx2:idx1
+  }
+  for(i in 1:offset[2]){
+    idx1 <- i*8
+    idx2 <- idx1-7
+    lookup[[2]][idx1:idx2] <- idx2:idx1
+  }
   
   # Get indices ----------------------------------------------------------------
   if(index == TRUE){
@@ -122,24 +136,42 @@ ghap.slice <- function(
   # Define bit function --------------------------------------------------------
   if(inherits(object, "GHap.phase")){
     getBitFun <- function(i){
-      object.con <- file(object$phase, "rb")
-      a <- seek(con = object.con, where = offset*(vidx[i]-1),
-                origin = 'start',rw = 'r')
-      geno <- readBin(object.con, what=raw(), size = 1,
-                      n = offset, signed = FALSE)
-      geno <- as.integer(rawToBits(geno))
-      geno <- geno[lookup]
-      geno <- geno[1:(2*object$nsamples)]
-      close.connection(object.con)
-      return(geno[iidx])
+      if(object$mode %in% c(0,1)){
+        object.con <- file(object$phase, "rb")
+        a <- seek(con = object.con, where = object$mode + offset[1]*(vidx[i]-1),
+                  origin = 'start',rw = 'r')
+        geno <- readBin(object.con, what=raw(), size = 1,
+                        n = offset[1], signed = FALSE)
+        geno <- as.integer(rawToBits(geno))
+        geno <- geno[lookup[[1]]]
+        geno <- geno[1:(2*object$nsamples)]
+        geno <- geno[iidx]
+        close.connection(object.con)
+      }else if(object$mode == 2){
+        object.con <- file(object$phase, "rb")
+        a <- seek(con = object.con, where = 1 + offset[2]*((iidx2[i]/2)-1),
+                  origin = 'start',rw = 'r')
+        geno <- readBin(object.con, what=raw(), size = 1,
+                        n = offset[2], signed = FALSE)
+        geno <- as.integer(rawToBits(geno))
+        geno <- geno[lookup[[2]]]
+        geno <- geno[1:(2*object$nmarkers)]
+        geno1 <- geno[1:length(geno) %% 2 == 1]
+        geno2 <- geno[1:length(geno) %% 2 == 0]
+        geno1 <- geno1[vidx]
+        geno2 <- geno2[vidx]
+        geno <- c(geno1,geno2)
+        close.connection(object.con)
+      }
+      return(geno)
     }
   }else if(inherits(object, "GHap.haplo")){
     getBitFun <- function(i){
       object.con <- file(object$genotypes, "rb")
-      a <- seek(con = object.con, where = 3 + offset*(vidx[i]-1),
+      a <- seek(con = object.con, where = 3 + offset[1]*(vidx[i]-1),
                 origin = 'start',rw = 'r')
       geno <- readBin(object.con, what=raw(), size = 1,
-                      n = offset, signed = FALSE)
+                      n = offset[1], signed = FALSE)
       geno <- as.integer(rawToBits(geno))
       geno1 <- geno[1:length(geno) %% 2 == 1]
       geno2 <- geno[1:length(geno) %% 2 == 0]
@@ -155,10 +187,10 @@ ghap.slice <- function(
   }else if(inherits(object, "GHap.plink")){
     getBitFun <- function(i){
       object.con <- file(object$plink, "rb")
-      a <- seek(con = object.con, where = 3 + offset*(vidx[i]-1),
+      a <- seek(con = object.con, where = 3 + offset[1]*(vidx[i]-1),
                 origin = 'start',rw = 'r')
       geno <- readBin(object.con, what=raw(), size = 1,
-                      n = offset, signed = FALSE)
+                      n = offset[1], signed = FALSE)
       geno <- as.integer(rawToBits(geno))
       geno1 <- geno[1:length(geno) %% 2 == 1]
       geno2 <- geno[1:length(geno) %% 2 == 0]
@@ -192,25 +224,63 @@ ghap.slice <- function(
     }
   }
   
-  if(transposed == FALSE){
-    X <- Matrix(data = X, nrow = length(vidx), ncol = length(iidx),
-                byrow = TRUE, sparse = TRUE)
-    colnames(X) <- names(iidx)
-    rownames(X) <- names(vidx)
-    if(inherits(object, "GHap.phase") & unphase == TRUE){
-      cols <- 1:ncol(X) %% 2
-      X <- X[,which(cols == 1)] + X[,which(cols == 0)]
+  if(inherits(object, "GHap.phase")){
+    if(object$mode %in% c(0,1)){
+      if(transposed == FALSE){
+        X <- Matrix(data = X, nrow = length(vidx), ncol = length(iidx),
+                    byrow = TRUE, sparse = TRUE)
+        colnames(X) <- names(iidx)
+        rownames(X) <- names(vidx)
+        if(unphase == TRUE){
+          cols <- 1:ncol(X) %% 2
+          X <- X[,which(cols == 1)] + X[,which(cols == 0)]
+        }
+      }else{
+        X <- Matrix(data = X, ncol = length(vidx), nrow = length(iidx),
+                    byrow = FALSE, sparse = TRUE)
+        rownames(X) <- names(iidx)
+        colnames(X) <- names(vidx)
+        if(unphase == TRUE){
+          rows <- 1:nrow(X) %% 2
+          X <- X[which(rows == 1),] + X[which(rows == 0),]
+        }
+      }
+    }else if(object$mode == 2){
+      if(transposed == FALSE){
+        X <- Matrix(data = X, nrow = length(vidx), ncol = length(iidx),
+                    byrow = FALSE, sparse = TRUE)
+        colnames(X) <- names(iidx)
+        rownames(X) <- names(vidx)
+        if(unphase == TRUE){
+          cols <- 1:ncol(X) %% 2
+          X <- X[,which(cols == 1)] + X[,which(cols == 0)]
+        }
+      }else{
+        X <- Matrix(data = X, ncol = length(vidx), nrow = length(iidx),
+                    byrow = TRUE, sparse = TRUE)
+        rownames(X) <- names(iidx)
+        colnames(X) <- names(vidx)
+        if(unphase == TRUE){
+          rows <- 1:nrow(X) %% 2
+          X <- X[which(rows == 1),] + X[which(rows == 0),]
+        }
+      }
     }
   }else{
-    X <- Matrix(data = X, ncol = length(vidx), nrow = length(iidx),
-                byrow = FALSE, sparse = TRUE)
-    rownames(X) <- names(iidx)
-    colnames(X) <- names(vidx)
-    if(inherits(object, "GHap.phase") & unphase == TRUE){
-      rows <- 1:nrow(X) %% 2
-      X <- X[which(rows == 1),] + X[which(rows == 0),]
+    if(transposed == FALSE){
+      X <- Matrix(data = X, nrow = length(vidx), ncol = length(iidx),
+                  byrow = TRUE, sparse = TRUE)
+      colnames(X) <- names(iidx)
+      rownames(X) <- names(vidx)
+    }else{
+      X <- Matrix(data = X, ncol = length(vidx), nrow = length(iidx),
+                  byrow = FALSE, sparse = TRUE)
+      rownames(X) <- names(iidx)
+      colnames(X) <- names(vidx)
     }
   }
+  
+  
   if(sparse == FALSE){
     X <- as.matrix(X)
   }
