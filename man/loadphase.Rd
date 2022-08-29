@@ -101,7 +101,7 @@
     A character value giving the pathway to the binary phased genotype matrix.
   }
   \item{mode}{
-    A numeric value indicating the binary file format. Mode 1 starts with byte 00000001 and informs that the matrix is organized as variants x individuals. Mode 2 starts with byte 00000010 and indicates individuals x variants. For backwards compatibility, mode 0 has no leading byte and is also organized as variants x individuals.
+    A numeric value indicating the binary file format. Mode 1 starts with byte 00000001 and informs that the matrix is organized as variants x individuals. Mode 2 starts with byte 00000010 and indicates individuals x variants. For backward compatibility, mode 0 has no leading byte and is also organized as variants x individuals.
   }
 }
 
