@@ -10,7 +10,7 @@
 \usage{
   ghap.compress(input.file = NULL, out.file,
                 samples.file = NULL, markers.file = NULL,
-                phase.file = NULL, batchsize = NULL,
+                phase.file = NULL, mode = 1,
                 ncores = 1, verbose = TRUE)
 }
 
@@ -37,10 +37,10 @@
     Phased genotype matrix.
   }
   
-  To turn compression progress-tracking on or off, or to control parallelization of the task please use:
+  To turn compression progress-tracking on or off, choose file format or control parallelization of the task please use:
   
-  \item{batchsize}{
-   A numeric value controlling the number of markers to be compressed and written to output at a time (default = nmarkers/10).
+  \item{mode}{
+  A numeric value indicating the input file format and consequently the output binary file format. Mode 1 starts with byte 00000001 and informs that the matrix is organized as variants x individuals. Mode 2 starts with byte 00000010 and indicates individuals x variants. For backward compatibility, mode 0 has no leading byte and is also organized as variants x individuals.
   }
   \item{ncores}{
    A numeric value specifying the number of cores to be used in parallel computing (default = 1).
