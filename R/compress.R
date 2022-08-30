@@ -1,8 +1,8 @@
 #Function: ghap.compress
 #License: GPLv3 or later
-#Modification date: 13 May 2021
-#Written by: Yuri Tani Utsunomiya & Marco Milanesi
-#Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
+#Modification date: 30 Aug 2022
+#Written by: Yuri Tani Utsunomiya, Adam Taiti Harth Utsunomiya
+#Contact: ytutsunomiya@gmail.com, adamtaiti@gmail.com
 #Description: Compress phased data into GHap binary
 
 ghap.compress <- function(
@@ -11,7 +11,7 @@ ghap.compress <- function(
   samples.file=NULL,
   markers.file=NULL,
   phase.file=NULL,
-  batchsize=NULL,
+  mode=1,
   ncores=1,
   verbose=TRUE
 ){
@@ -51,6 +51,19 @@ ghap.compress <- function(
     rnumb <- runif(n = 1, min = 1, max = 1e+6)
     rnumb <- ceiling(rnumb)
     tmp.file <- paste(tempdir(),"/tmp",rnumb,sep="")
+  }
+  
+  # Check file mode
+  if(mode %in% 0:2 == FALSE){
+    emsg <- paste0("\n\nUnrecognized file mode. Please use one of:\n",
+                   "\nmode = 0 (variants x individuals, backward compatibility)",
+                   "\nmode = 1 (variants x individuals, default)",
+                   "\nmode = 2 (individuals x variants)\n\n")
+    stop(emsg)
+  }else{
+    pmode <- c("mode = 0 (variants x individuals, backward compatibility)",
+               "mode = 1 (variants x individuals, default)",
+               "mode = 2 (individuals x variants)")
   }
   
   # Load marker map file -------------------------------------------------------
@@ -161,6 +174,7 @@ ghap.compress <- function(
     cat("Done.\n")
     cat(paste("A total of ", nsamples, " individuals were found in ",
               length(unique(pop)), " populations.\n",sep=""))
+    cat(paste0("Using file ", pmode[mode+1], ".\n"))
   }
   
   # Compute bit loss -----------------------------------------------------------
@@ -170,104 +184,15 @@ ghap.compress <- function(
   }
   linelen <- 2*nsamples
   
-  # Generate batch index -------------------------------------------------------
-  if(is.null(batchsize) == TRUE){
-    batchsize <- ceiling(nmarkers/10)
-  }
-  if(batchsize > nmarkers){
-    batchsize <- nmarkers
-  }
-  id1<-seq(1,nmarkers,by=batchsize)
-  id2<-(id1+batchsize)-1
-  id1<-id1[id2<=nmarkers]
-  id2<-id2[id2<=nmarkers]
-  id1 <- c(id1,id2[length(id2)]+1)
-  id2 <- c(id2,nmarkers)
-  if(id1[length(id1)] > nmarkers){
-    id1 <- id1[-length(id1)]; id2 <- id2[-length(id2)]
-  }
-  if(verbose == TRUE){
-    cat("Processing ", nmarkers, " markers in:\n", sep="")
-    batch <- table((id2-id1)+1)
-    for(i in 1:length(batch)){
-      cat(batch[i]," batches of ",names(batch[i]),"\n",sep="")
-    }
-  }
-  
   # Process line function ------------------------------------------------------
-  lineprocess <- function(i){
-    line <- scan(text=batchline[i], what = "character", sep=" ", quiet = TRUE)
-    if(length(line) != linelen){
-      emsg <- paste("\n\nExpected", linelen, "columns in line",i+nlines.skip[b],"of",
-                    phase.file,"but found",length(line),"\n\n")
-      stop(emsg)
-    }
-    line <- c(line,rep("0",times=bitloss))
-    strings <- unique(line)
-    if(length(which(strings %in% c("0","1") == FALSE)) > 0){
-      stop("Phased genotypes should be coded as 0 and 1")
-    }else{
-      line <- paste(line, collapse = "")
-      nc <- nchar(line)
-      n <- seq(1, nc, by = 8)
-      line <- substring(line, n, c(n[-1]-1, nc))
-      line <- strtoi(line, base=2)
-    }
-    return(line)
-  }
-  
-  # Iterate batches ------------------------------------------------------------
-  phase.con <- file(phase.file,"r")
-  nmarkers.done <- 0
-  nlines.read <- id2-id1+1
-  nlines.skip <- c(0,cumsum(nlines.read)[-length(nlines.read)])
-  for(b in 1:length(id1)){
-    
-    # Load batch
-    batchline <- readLines(con = phase.con, n = nlines.read[b])
-    
-    # Check if batch is ok
-    if(length(batchline) != nlines.read[b]){
-      emsg <- paste("\n\nExpected", nmarkers, "lines in",
-                    phase.file,"but found", length(batchline)+nlines.skip[b],"\n\n")
-      stop(emsg)
-    }
-    
-    # Transform lines
-    ncores <- min(c(detectCores(), ncores))
-    if(Sys.info()["sysname"] == "Windows"){
-      cl <- makeCluster(ncores)
-      results <- unlist(parLapply(cl = cl, fun = lineprocess, X = 1:length(batchline)))
-      stopCluster(cl)
-    }else{
-      results <- unlist(mclapply(FUN = lineprocess, X = 1:length(batchline), mc.cores = ncores))
-    }
-    
-    # Write to output file
-    out.con <- file(tmp.file, "ab")
-    writeBin(object = results, con = out.con, size = 1)
-    close.connection(out.con)
-    
-    # Log message
-    if(verbose == TRUE){
-      nmarkers.done <- nmarkers.done + (id2[i]-id1[i]) + 1
-      cat(nmarkers.done, "markers written to file\r")
-    }
-    
-  }
-  
-  # Last integrity check -------------------------------------------------------
-  batchline <- readLines(con = phase.con, n = 1)
-  if(length(batchline) != 0){
-    emsg <- paste("\n\nExpected", nmarkers, "lines in",
-                  phase.file,"but found more\n\n")
-    stop(emsg)
-  }
-  
-  # Close connection with phase file -------------------------------------------
-  close.connection(phase.con)
+  compress(infile = phase.file, outfile = tmp.file,
+           nbits = linelen, tbits = bitloss, mode = mode)
   if(verbose == TRUE){
-    cat(nmarkers, "markers written to file\n\n")
+    if(mode %in% c(0,1)){
+      cat(nmarkers, "markers written to file\n\n")
+    }else if(mode == 2){
+      cat(nsamples, "individuals written to file\n\n")
+    }
   }
   
   # Output results -------------------------------------------------------------
