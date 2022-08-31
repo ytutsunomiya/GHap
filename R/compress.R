@@ -1,6 +1,6 @@
 #Function: ghap.compress
 #License: GPLv3 or later
-#Modification date: 30 Aug 2022
+#Modification date: 31 Aug 2022
 #Written by: Yuri Tani Utsunomiya, Adam Taiti Harth Utsunomiya
 #Contact: ytutsunomiya@gmail.com, adamtaiti@gmail.com
 #Description: Compress phased data into GHap binary
@@ -178,15 +178,29 @@ ghap.compress <- function(
   }
   
   # Compute bit loss -----------------------------------------------------------
-  bitloss <- 8 - ((2*nsamples) %% 8)
-  if(bitloss == 8){
-    bitloss <- 0
+  if(mode %in% c(0,1)){
+    bitloss <- 8 - ((2*nsamples) %% 8)
+    if(bitloss == 8){
+      bitloss <- 0
+    }
+    linelen <- 2*nsamples
+    nlines <- nmarkers
+  }else if(mode == 2){
+    bitloss <- 8 - ((2*nmarkers) %% 8)
+    if(bitloss == 8){
+      bitloss <- 0
+    }
+    linelen <- 2*nmarkers
+    nlines <- nsamples
   }
-  linelen <- 2*nsamples
   
   # Process line function ------------------------------------------------------
-  compress(infile = phase.file, outfile = tmp.file,
-           nbits = linelen, tbits = bitloss, mode = mode)
+  status <- compress(infile = phase.file, outfile = tmp.file, nunits = nlines,
+                     nbits = linelen, tbits = bitloss, fmode = mode)
+  if(status == 1){
+    emsg <- "Please check the format of your phase file.\n\n"
+    stop(emsg)
+  }
   if(verbose == TRUE){
     if(mode %in% c(0,1)){
       cat(nmarkers, "markers written to file\n\n")
