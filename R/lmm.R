@@ -1,24 +1,24 @@
 #Function: ghap.lmm
 #License: GPLv3 or later
-#Modification date: 2 Jun 2022
+#Modification date: 20 Oct 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: mixed model fitting
 
 ghap.lmm <- function(
-  formula,
-  data,
-  covmat = NULL,
-  weights = NULL,
-  vcp.initial = NULL,
-  vcp.estimate = TRUE,
-  vcp.conv = 1e-12,
-  errors = TRUE,
-  invcov = FALSE,
-  em.reml = 10,
-  tol = 1e-12,
-  extras = NULL,
-  verbose = TRUE
+    formula,
+    data,
+    covmat = NULL,
+    weights = NULL,
+    vcp.initial = NULL,
+    vcp.estimate = TRUE,
+    vcp.conv = 1e-12,
+    errors = TRUE,
+    invcov = FALSE,
+    em.reml = 10,
+    tol = 1e-12,
+    extras = NULL,
+    verbose = TRUE
 ){
   
   # Get formula information -------------------------------------------------
@@ -139,9 +139,9 @@ ghap.lmm <- function(
     vcp.new <- unlist(vcp.initial)
   }
   names(vcp.new) <- c(ranterms, "Residual")
-  RHS <- crossprod(X, y)
-  LHS <- crossprod(X)
   W <- X
+  XtX <- crossprod(X)
+  RHS <- crossprod(X, y)
   ZtX <- vector(mode = "list", length = vcp.n-1)
   ZtZ <- vector(mode = "list", length = vcp.n-1)
   names(ZtX) <- ranterms
@@ -149,20 +149,12 @@ ghap.lmm <- function(
   for(i in ranterms){
     RHS <- rbind(RHS, crossprod(Z[[i]], y))
     ZtX[[i]] <- crossprod(Z[[i]], X)
-    LHS <- cbind(LHS, t(ZtX[[i]]))
     ZtZ[[i]] <- vector(mode = "list", length = length(ranterms))
     names(ZtZ[[i]]) <- ranterms
     for(j in ranterms){
       ZtZ[[i]][[j]] <- crossprod(Z[[i]],Z[[j]])
     }
     W <- cbind(W, Z[[i]])
-  }
-  for(i in ranterms){
-    tmp <- ZtX[[i]]
-    for(j in ranterms){
-      tmp <- cbind(tmp,ZtZ[[i]][[j]])
-    }
-    LHS <- rbind(LHS, tmp)
   }
   
   # Initialize auxiliary functions ------------------------------------------
@@ -215,9 +207,9 @@ ghap.lmm <- function(
     }
     oricovmat <- covmat
     for(i in names(covmat)){
-      icov <- try(solve(covmat[[i]]), silent = TRUE)
+      icov <- try(solve(as.matrix(covmat[[i]])), silent = TRUE)
       if(inherits(icov, "try-error")){
-        icov <- try(solve(covmat[[i]] + Diagonal(nrow(covmat[[i]]))*tol), silent = TRUE)
+        icov <- try(solve(as.matrix(covmat[[i]]) + Diagonal(nrow(covmat[[i]]))*tol), silent = TRUE)
         if(inherits(icov, "try-error")){
           emsg <- paste0("\nUnable to invert covariance matrix for effect ",
                          ranterms[[i]], " even after adding a tolerance of ", tol)
@@ -247,14 +239,21 @@ ghap.lmm <- function(
       k.reml <- k.reml + 1
       
       # Include variance components in mixed model equations
-      for(i in 1:length(ranterms)){
-        if(i == 1){
-          idx <- (s+1):(s+q[i])
-        }else{
-          idx <- which(1:length(q) < i)
-          idx <- (s+sum(q[idx])+1):(s+sum(q[1:i]))
+      LHS <- XtX
+      for(i in ranterms){
+        LHS <- cbind(LHS, t(ZtX[[i]]))
+      }
+      for(i in ranterms){
+        tmp <- ZtX[[i]]
+        for(j in ranterms){
+          if(j == i){
+            tmp <- cbind(tmp, ZtZ[[i]][[i]] + as(covmat[[i]]*(vcp.new["Residual"]/vcp.new[i]),"dgCMatrix"))
+          }else{
+            tmp <- cbind(tmp,ZtZ[[i]][[j]])
+          }
         }
-        LHS[idx,idx] <- ZtZ[[i]][[i]] + covmat[[ranterms[i]]]*(vcp.new["Residual"]/vcp.new[i])
+        LHS <- rbind(LHS, tmp)
+        rm(tmp)
       }
       LHS <- LHS/vcp.new["Residual"]
       RHS <- RHS/vcp.new["Residual"]
@@ -271,7 +270,7 @@ ghap.lmm <- function(
       if(inherits(LHSi, "try-error")){
         LHSi <- try(sparsesolve(LHS + Diagonal(nrow(LHS))*tol), silent = TRUE)
         if(inherits(LHSi, "try-error")){
-          emsg <- paste0("\nUnable to solve LHS even after adding a tolerance of ",
+          emsg <- paste0("\nUnable to solve LHS after adding a tolerance of ",
                          tol)
           stop(emsg)
         }
@@ -380,14 +379,21 @@ ghap.lmm <- function(
   }
   
   # Get solutions -----------------------------------------------------------
-  for(i in 1:length(ranterms)){
-    if(i == 1){
-      idx <- (s+1):(s+q[i])
-    }else{
-      idx <- which(1:length(q) < i)
-      idx <- (s+sum(q[idx])+1):(s+sum(q[1:i]))
+  LHS <- XtX
+  for(i in ranterms){
+    LHS <- cbind(LHS, t(ZtX[[i]]))
+  }
+  for(i in ranterms){
+    tmp <- ZtX[[i]]
+    for(j in ranterms){
+      if(j == i){
+        tmp <- cbind(tmp, ZtZ[[i]][[i]] + as(covmat[[i]]*(vcp.new["Residual"]/vcp.new[i]),"dgCMatrix"))
+      }else{
+        tmp <- cbind(tmp,ZtZ[[i]][[j]])
+      }
     }
-    LHS[idx,idx] <- ZtZ[[i]][[i]] + covmat[[ranterms[i]]]*(vcp.new["Residual"]/vcp.new[i])
+    LHS <- rbind(LHS, tmp)
+    rm(tmp)
   }
   LHS <- LHS/vcp.new["Residual"]
   RHS <- RHS/vcp.new["Residual"]
