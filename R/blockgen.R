@@ -1,6 +1,6 @@
 #Function: ghap.blockgen
 #License: GPLv3 or later
-#Modification date: 3 Jun 2022
+#Modification date: 24 Oct 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Generate blocks based on sliding windows
