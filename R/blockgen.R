@@ -44,6 +44,10 @@ ghap.blockgen<-function(
       id2<-id1+(windowsize-1)
       id1<-id1[id2 <= maxbp]
       id2<-id2[id2 <= maxbp]
+      if(max(id2) < maxbp){
+        id1 <- c(id1, pmin(id1[length(id1)] + slide, maxbp))
+        id2 <- c(id2, maxbp)
+      }
       for(i in 1:length(id1)){
         slice <- cmkr[which(bp >= id1[i] & bp <= id2[i])]
         CHR[i+offset] <- object$chr[slice[1]]
@@ -65,6 +69,10 @@ ghap.blockgen<-function(
       id2<-id1+(windowsize-1)
       id1<-id1[id2 <= nmkr]
       id2<-id2[id2 <= nmkr]
+      if(max(id2) < nmkr){
+        id1 <- c(id1, pmin(id1[length(id1)] + slide, nmkr))
+        id2 <- c(id2, nmkr)
+      }
       for(i in 1:length(id1)){
         slice <- cmkr[id1[i]:id2[i]]
         CHR[i+offset] <- object$chr[slice[1]]
@@ -75,7 +83,6 @@ ghap.blockgen<-function(
       }
       offset <- offset + length(id1)
     }
-    
     
   }
   
