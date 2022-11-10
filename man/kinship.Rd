@@ -11,6 +11,7 @@ This function computes marker-based and HapAllele-based relationship matrices.
 ghap.kinship(object, weights = NULL,
              sparsity = NULL,
              type = 1, batchsize = NULL,
+             freq = NULL,
              only.active.samples = TRUE,
              only.active.variants = TRUE,
              ncores = 1, verbose = TRUE)
@@ -31,6 +32,9 @@ ghap.kinship(object, weights = NULL,
   }
   \item{batchsize}{
    A numeric value controlling the number of variants to be processed at a time (default = nalleles/10).
+  }
+  \item{freq}{
+    A named numeric vector with (A1) allele frequencies computed in a reference sample. If not provided, frequencies will be computed using the active individuals.
   }
   \item{only.active.samples}{
     A logical value specifying whether only active samples should be included in the output (default = TRUE).
