@@ -1,20 +1,21 @@
 #Function: ghap.kinship
 #License: GPLv3 or later
-#Modification date: 3 Jun 2022
+#Modification date: 10 Nov 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute relationship matrix
 
 ghap.kinship <- function(
-  object,
-  weights=NULL,
-  sparsity=NULL,
-  type=1,
-  batchsize=NULL,
-  only.active.samples=TRUE,
-  only.active.variants=TRUE,
-  ncores=1,
-  verbose=TRUE
+    object,
+    weights=NULL,
+    sparsity=NULL,
+    type=1,
+    batchsize=NULL,
+    freq=NULL,
+    only.active.samples=TRUE,
+    only.active.variants=TRUE,
+    ncores=1,
+    verbose=TRUE
 ){
   
   # Check if input is a valid GHap object --------------------------------------
@@ -49,6 +50,16 @@ ghap.kinship <- function(
   }else{
     var.n <- object$nmarkers.in
     var.in <- which(object$marker.in)
+  }
+  
+  # Check frequency vector -----------------------------------------------------
+  if(is.null(freq) == FALSE){
+    freq <- freq[which(names(freq) %in% object$marker[var.in])]
+    if(length(freq) != length(var.in)){
+      stop("\nFrequency vector must include all active markers.")
+    }else{
+      freq <- freq[object$marker[var.in]]
+    }
   }
   
   #Check weights
@@ -177,7 +188,11 @@ ghap.kinship <- function(
                        impute = TRUE,
                        ncores = ncores)
     zids <- colnames(Ztmp)
-    p <- apply(X = Ztmp, MARGIN = 1, FUN = freqfun)
+    if(is.null(freq)){
+      p <- apply(X = Ztmp, MARGIN = 1, FUN = freqfun)
+    }else{
+      p <- freq[object$marker[var.in[idx]]]
+    }
     exc <- which(pmin(p,1-p) == 0)
     if(length(exc) > 0){
       p <- p[-exc]
