@@ -1,19 +1,19 @@
 #Function: ghap.ibd
 #License: GPLv3 or later
-#Modification date: 3 Jun 2022
+#Modification date: 10 Nov 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: IBD estimates
 
 ghap.ibd <- function(
-  object,
-  pairlist,
-  freq,
-  mafcut=0.05,
-  refsize=10000,
-  batchsize=NULL,
-  ncores=1,
-  verbose=TRUE
+    object,
+    pairlist,
+    freq,
+    mafcut=0.05,
+    refsize=10000,
+    batchsize=NULL,
+    ncores=1,
+    verbose=TRUE
 ){
   
   # Check if input is a valid GHap object --------------------------------------
@@ -163,8 +163,8 @@ ghap.ibd <- function(
       stopCluster(cl)
     }else{
       out <- mclapply(FUN = ibdfun, X = 1:nrow(pairlist), mc.cores = ncores)
-      out <- matrix(data = unlist(out), nrow = nrow(pairlist), ncol = 9, byrow = TRUE)
     }
+    out <- matrix(data = unlist(out), nrow = nrow(pairlist), ncol = 9, byrow = TRUE)
     pairlist$IBS0 <- pairlist$IBS0 + out[,1]
     pairlist$IBS1 <- pairlist$IBS1 + out[,2]
     pairlist$IBS2 <- pairlist$IBS2 + out[,3]
