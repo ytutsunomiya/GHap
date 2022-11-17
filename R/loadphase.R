@@ -1,17 +1,17 @@
 #Function: ghap.loadphase
 #License: GPLv3 or later
-#Modification date: 29 Aug 2022
+#Modification date: 17 Nov 2022
 #Written by: Yuri Tani Utsunomiya & Marco Milanesi
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Load phased genotypes
 
 ghap.loadphase <- function(
-  input.file = NULL,
-  samples.file = NULL,
-  markers.file = NULL,
-  phaseb.file = NULL,
-  ncores = 1,
-  verbose = TRUE
+    input.file = NULL,
+    samples.file = NULL,
+    markers.file = NULL,
+    phaseb.file = NULL,
+    ncores = 1,
+    verbose = TRUE
 ){
   
   # Check stem file name -------------------------------------------------------
@@ -185,8 +185,8 @@ ghap.loadphase <- function(
     bitloss[2] <- 0
   }
   nbytes <- file.info(phase$phase)$size
-  ebytes[1] <- phase$nmarkers*(2*phase$nsamples + bitloss[1])/8
-  ebytes[2] <- 2*phase$nsamples*(phase$nmarkers + bitloss[2])/8
+  ebytes[1] <- phase$nmarkers*ceiling(2*phase$nsamples/8)
+  ebytes[2] <- phase$nsamples*ceiling(2*phase$nmarkers/8)
   if(nbytes == ebytes[1]){
     phase$mode <- 0
     if(verbose == TRUE){
@@ -199,15 +199,15 @@ ghap.loadphase <- function(
               origin = 'start',rw = 'r')
     fmt <- readBin(phase.con, what=raw(), size = 1,
                    n = 1, signed = FALSE)
-    fmt <- paste(as.integer(rawToBits(fmt)), collapse="")
+    fmt <- as.integer(fmt)
     close.connection(phase.con)
-    if(fmt == "00000001"){
+    if(fmt == 1){
       phase$mode <- 1
       if(verbose == TRUE){
         cat("Done.\n")
         cat("Phase object format is mode 1 (variants x individuals).\n")
       }
-    }else if(fmt == "0000010"){
+    }else if(fmt == 2){
       phase$mode <- 2
       if(verbose == TRUE){
         cat("Done.\n")
