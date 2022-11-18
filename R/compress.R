@@ -1,6 +1,6 @@
 #Function: ghap.compress
 #License: GPLv3 or later
-#Modification date: 31 Aug 2022
+#Modification date: 18 Nov 2022
 #Written by: Yuri Tani Utsunomiya, Adam Taiti Harth Utsunomiya
 #Contact: ytutsunomiya@gmail.com, adamtaiti@gmail.com
 #Description: Compress phased data into GHap binary
@@ -195,8 +195,9 @@ ghap.compress <- function(
   }
   
   # Process line function ------------------------------------------------------
-  status <- compress(infile = phase.file, outfile = tmp.file, nunits = nlines,
-                     nbits = linelen, tbits = bitloss, fmode = mode)
+  status <- .compressCpp(infile = phase.file, outfile = tmp.file,
+                         nunits = nlines, nbits = linelen,
+                         tbits = bitloss, fmode = mode)
   if(status == 1){
     emsg <- "Please check the format of your phase file.\n\n"
     stop(emsg)
