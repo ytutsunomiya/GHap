@@ -1,21 +1,21 @@
 #Function: ghap.slice
 #License: GPLv3 or later
-#Modification date: 29 Aug 2022
+#Modification date: 17 Nov 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Get a slice of a GHap object
 
 ghap.slice <- function(
-  object,
-  ids,
-  variants,
-  index=FALSE,
-  transposed=FALSE,
-  sparse=TRUE,
-  unphase=FALSE,
-  impute=FALSE,
-  ncores=1,
-  verbose=TRUE
+    object,
+    ids,
+    variants,
+    index=FALSE,
+    transposed=FALSE,
+    sparse=TRUE,
+    unphase=FALSE,
+    impute=FALSE,
+    ncores=1,
+    verbose=TRUE
 ){
   
   # Check if object is a GHap.phase object -------------------------------------
@@ -139,7 +139,7 @@ ghap.slice <- function(
       if(object$mode %in% c(0,1)){
         object.con <- file(object$phase, "rb")
         a <- seek(con = object.con, where = object$mode + offset[1]*(vidx[i]-1),
-                  origin = 'start',rw = 'r')
+                  origin = 'start', rw = 'r')
         geno <- readBin(object.con, what=raw(), size = 1,
                         n = offset[1], signed = FALSE)
         geno <- as.integer(rawToBits(geno))
@@ -211,16 +211,46 @@ ghap.slice <- function(
   
   # Get data -------------------------------------------------------------------
   ncores <- min(c(detectCores(), ncores))
-  if(ncores == 1){
-    X <- unlist(lapply(X = 1:length(vidx), FUN = getBitFun))
-  }else{
-    if(Sys.info()["sysname"] == "Windows"){
-      cl <- makeCluster(ncores)
-      clusterExport(cl = cl, varlist = list("object"), envir=environment())
-      X <- unlist(parLapply(cl = cl, fun = getBitFun, X = 1:length(vidx)))
-      stopCluster(cl)
+  if(inherits(object, "GHap.phase")){
+    if(object$mode %in% c(0,1)){
+      if(ncores == 1){
+        X <- unlist(lapply(X = 1:length(vidx), FUN = getBitFun))
+      }else{
+        if(Sys.info()["sysname"] == "Windows"){
+          cl <- makeCluster(ncores)
+          clusterExport(cl = cl, varlist = list("object"), envir=environment())
+          X <- unlist(parLapply(cl = cl, fun = getBitFun, X = 1:length(vidx)))
+          stopCluster(cl)
+        }else{
+          X <- unlist(mclapply(X = 1:length(vidx), FUN = getBitFun, mc.cores = ncores))
+        }
+      }
     }else{
-      X <- unlist(mclapply(X = 1:length(vidx), FUN = getBitFun, mc.cores = ncores))
+      if(ncores == 1){
+        X <- unlist(lapply(X = 1:length(iidx2), FUN = getBitFun))
+      }else{
+        if(Sys.info()["sysname"] == "Windows"){
+          cl <- makeCluster(ncores)
+          clusterExport(cl = cl, varlist = list("object"), envir=environment())
+          X <- unlist(parLapply(cl = cl, fun = getBitFun, X = 1:length(iidx2)))
+          stopCluster(cl)
+        }else{
+          X <- unlist(mclapply(X = 1:length(iidx2), FUN = getBitFun, mc.cores = ncores))
+        }
+      }
+    }
+  }else{
+    if(ncores == 1){
+      X <- unlist(lapply(X = 1:length(vidx), FUN = getBitFun))
+    }else{
+      if(Sys.info()["sysname"] == "Windows"){
+        cl <- makeCluster(ncores)
+        clusterExport(cl = cl, varlist = list("object"), envir=environment())
+        X <- unlist(parLapply(cl = cl, fun = getBitFun, X = 1:length(vidx)))
+        stopCluster(cl)
+      }else{
+        X <- unlist(mclapply(X = 1:length(vidx), FUN = getBitFun, mc.cores = ncores))
+      }
     }
   }
   
