@@ -1,7 +1,7 @@
 ---
-title: "The **GHap** Package (Version 3.0.0)"
-author: "Yuri Tani Utsunomiya, Andre Vieira do Nascimento, Marco Milanesi and Mario Barbato"
-date: "30 Jun 2022"
+title: "The **GHap** Package (Version 4.0.0beta)"
+author: "Yuri Tani Utsunomiya"
+date: "18 Nov 2022"
 output:
   pdf_document:
     highlight: rstudio
@@ -19,7 +19,11 @@ header-includes: \usepackage{float}
 
 The package was first described in Bioinformatics by Utsunomiya et al. (2016, doi:10.1093/bioinformatics/btw356). Since the v2 release, the package provides functions for unsupervised and supervised detection of ancestry tracks. The methods implemented in these functions were described in an article published in Methods in Ecology and Evolution by Utsunomiya et al. (2020, doi:10.1111/2041-210X.13467).
 
-In the v3 release, the source code was extensively modified for improved performance and inclusion of new functionality for both phased and unphased SNP data, including analysis of runs of homozygosity, sampling methods for virtual gamete mating, mixed model fitting and GWAS. Overall, the package is a comprehensive and versatile tool for the analysis of genomic data.
+In the v3 release, the source code was extensively modified for improved performance and inclusion of new functionality for both phased and unphased SNP data, including analysis of runs of homozygosity, sampling methods for virtual gamete mating, mixed model fitting and GWAS.
+
+For the v4 release, GHap will allow phased genotypes to be organized as a matrix of individuals x variants in the input file, apart from the default variants x individuals. The source code will also integrate C++ to boost performance through Rcpp. New functionality will also be incorporated.
+
+Overall, the package is a comprehensive and versatile tool for the analysis of genomic data. Please notice that this specific version of the package is a development (beta) version, so some functions may still contain bugs and behave unexpectedly.
 
 \pagebreak
 
@@ -91,6 +95,8 @@ See below an example using the Human HapMap3 chromosome 2 data. Five individuals
 ```
 
 This format can be obtained from Oxford HAPS/SAMPLE files with the `ghap.oxford2phase` function, from fastPHASE v1.4.0 files with the `ghap.fast2phase` function, or from VCF files with the `ghap.vcf2phase` function. Since v2 **GHap** requires the **.phase** file to be converted into a binary file with suffix **.phaseb** with the `ghap.compress` function prior to loading in R. Each allele is stored as a bit in that file. Bits for any given marker are arranged in a sequence of bytes. Since each marker requires storage of 2\*nsamples bits, the number of bytes consumed by a single marker in the output file is ceiling(2\*nsamples). If the number of alleles is not a multiple of 8, bits in the remainder of the last byte are filled with 0. All functions in **GHap** were carefully designed to decode the bytes of a marker in such a way that trailing bits are ignored if present.
+
+Since the v4 release, the **.phase** file can be alternatively organized as a $n$ x 2$m$ matrix of phased genotypes, i.e., each individual in a single row, and each phased marker represented by two columns (one for each haplotype). The `ghap.compress` function will then print a "magic number" to the **.phaseb** file during conversion, namely 00000001 for the original GHap format (variant x individual) and 00000010 for the new format (individual x variant). For backward compatibility, GHap also considers the (variant x individual) **.phaseb** file without a leading byte.
 
 \pagebreak
 
@@ -170,7 +176,7 @@ ghap.compress(samples.file = "example.samples",
 
 ## Tutorial 2 - Manipulating phased objects
 
-The `ghap.loadphase()` function is responsible for loading phased chromosomes from an input file and converting them into a native **GHap.phase** object. A detailed describtion of this object can be found in the documentation of the function. To load the example data in the package we can run:
+The `ghap.loadphase()` function is responsible for loading phased chromosomes from an input file and converting them into a native **GHap.phase** object. A detailed description of this object can be found in the documentation of the function. To load the example data in the package we can run:
 
 ```r
 # Load data using prefix
@@ -1019,7 +1025,7 @@ model3 <- ghap.lmm(formula = pheno ~ 1 + (1|id) + (1|rep),
                    invcov = TRUE)
 ```
 
-If variance components are estimated from the data, standard errors and confidence intervals of any arbitrary function of variance components can be approximated using the sampling-based method implemented in the `ghap.remlci()` function. For example, if one wishes to estimate standard errors and confidence intervals for the heritability, the follow code can be used:
+If variance components are estimated from the data, standard errors and confidence intervals of any arbitrary function of variance components can be approximated using the sampling-based method implemented in the `ghap.remlci()` function. For example, if one wishes to estimate standard errors and confidence intervals for the heritability, the following code can be used:
 
 ```r
 # Compute confidence interval for heritability
@@ -1104,7 +1110,7 @@ cor(blup[test,"SCORE"], model1$random$id[test,"Estimate"])
 
 ## Tutorial 13 - Association analysis
 
-The `ghap.assoc()` implements methods for Genome-Wide Association Studies (GWAS). The example below shows how to perform GWAS in **GHap**:
+The `ghap.assoc()` function implements methods for Genome-Wide Association Studies (GWAS). The example below shows how to perform GWAS in **GHap**:
 
 ```r
 # Load plink data
