@@ -1,6 +1,6 @@
 #Function: ghap.slice
 #License: GPLv3 or later
-#Modification date: 17 Nov 2022
+#Modification date: 25 Nov 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Get a slice of a GHap object
@@ -59,10 +59,23 @@ ghap.slice <- function(
     vidx <- variants
     
     # Organize indices for ids
-    if(max(iidx) > 2*object$nsamples & inherits(object, "GHap.phase")){
-      stop("Some of the provided ids are out of range")
-    }else if(max(iidx) > object$nsamples & inherits(object, "GHap.phase") == FALSE){
-      stop("Some of the provided ids are out of range")
+    if(inherits(object, "GHap.phase")){
+      if(max(iidx) > 2*object$nsamples){
+        stop("Some of the provided ids are out of range")
+      }
+      if(object$mode == 2){
+        idstmp <- object$id[ids]
+        idstmp <- idstmp[duplicated(idstmp) == FALSE]
+        iidxtmp <- which(object$id %in% idstmp)
+        iidx1 <- iidxtmp[1:length(iidxtmp) %% 2 == 1]
+        iidx2 <- iidxtmp[1:length(iidxtmp) %% 2 == 0]
+        names(iidx1) <- object$id[iidx1]
+        names(iidx2) <- object$id[iidx2]
+      }
+    }else{
+      if(max(iidx) > object$nsamples){
+        stop("Some of the provided ids are out of range")
+      }
     }
     names(iidx) <- object$id[iidx]
     
@@ -277,18 +290,18 @@ ghap.slice <- function(
       }
     }else if(object$mode == 2){
       if(transposed == FALSE){
-        X <- Matrix(data = X, nrow = length(vidx), ncol = length(iidx),
+        X <- Matrix(data = X, nrow = length(vidx), ncol = 2*length(iidx2),
                     byrow = FALSE, sparse = TRUE)
-        colnames(X) <- names(iidx)
+        colnames(X) <- rep(names(iidx2), each = 2)
         rownames(X) <- names(vidx)
         if(unphase == TRUE){
           cols <- 1:ncol(X) %% 2
           X <- X[,which(cols == 1)] + X[,which(cols == 0)]
         }
       }else{
-        X <- Matrix(data = X, ncol = length(vidx), nrow = length(iidx),
+        X <- Matrix(data = X, ncol = length(vidx), nrow = 2*length(iidx2),
                     byrow = TRUE, sparse = TRUE)
-        rownames(X) <- names(iidx)
+        rownames(X) <- rep(names(iidx2), each = 2)
         colnames(X) <- names(vidx)
         if(unphase == TRUE){
           rows <- 1:nrow(X) %% 2
