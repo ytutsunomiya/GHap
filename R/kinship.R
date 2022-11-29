@@ -1,6 +1,6 @@
 #Function: ghap.kinship
 #License: GPLv3 or later
-#Modification date: 10 Nov 2022
+#Modification date: 29 Nov 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute relationship matrix
@@ -12,6 +12,8 @@ ghap.kinship <- function(
     type=1,
     batchsize=NULL,
     freq=NULL,
+    idrow=NULL,
+    idcol=NULL,
     only.active.samples=TRUE,
     only.active.variants=TRUE,
     ncores=1,
@@ -41,9 +43,27 @@ ghap.kinship <- function(
     object$nsamples.in <- length(which(object$id.in))/fac[class(object)]
   }
   
+  # Map individuals ------------------------------------------------------------
+  if(is.null(idrow) & is.null(idcol)){
+    id.n <- object$nsamples.in
+    id.in <- which(object$id.in)
+  }else if(is.null(idrow) == FALSE & is.null(idcol) == FALSE){
+    ids <- c(idrow,idcol)
+    id.n <- length(which(ids %in% object$id))
+    if(id.n != length(ids)){
+      stop("\nSome of the provided ids were not found")
+    }
+    id.in <- which(object$id %in% ids)
+    if(is.null(freq) | type != 3){
+      emsg <- paste0("\nSpecific ids for rows and columns are currently ",
+                     "allowed only if freq is provided with type = 3")
+      stop()
+    }
+  }else{
+    stop("\nIDs must be provided for both rows and columns")
+  }
+  
   # Map number of variants -----------------------------------------------------
-  id.n <- object$nsamples.in
-  id.in <- which(object$id.in)
   if(inherits(object, "GHap.haplo")){
     var.n <- object$nalleles.in
     var.in <- which(object$allele.in)
@@ -169,10 +189,17 @@ ghap.kinship <- function(
   
   #Initialize kinship matrix ---------------------------------------------------
   if(verbose == TRUE){
-    cat("Preparing", id.n, "x", id.n, "kinship matrix.\n")
+    if(is.null(idrow) & is.null(idcol)){
+      cat("Preparing", id.n, "x", id.n, "kinship matrix.\n")
+    }else{
+      cat("Preparing", length(idrow), "x", length(idcol), "kinship matrix.\n")
+    }
   }
-  K <- Matrix(data = 0, nrow = id.n, ncol = id.n, doDiag = F)
-  K <- as(as(K,"dsyMatrix"),"dspMatrix")
+  if(is.null(idrow) & is.null(idcol)){
+    K <- Matrix(data = 0, nrow = id.n, ncol = id.n, doDiag = F)
+  }else{
+    K <- Matrix(data = 0, nrow = length(idrow), ncol = length(idcol), doDiag = F)
+  }
   
   #Kinship iterate function ----------------------------------------------------
   ncores <- min(c(detectCores(), ncores))
@@ -203,10 +230,13 @@ ghap.kinship <- function(
       q <- q + scaleval[[type]]() 
     }
     Ztmp <- apply(X = Ztmp, MARGIN = 1, FUN = scalefun[[type]])
-    if(is.null(weights)){
+    if(is.null(weights) == FALSE){
+      Ztmp*sqrt(weights[idx])
+    }
+    if(is.null(idrow) & is.null(idcol)){
       K <- K + tcrossprod(Ztmp)
     }else{
-      K <- K + tcrossprod(Ztmp*sqrt(weights[idx]))
+      K <- K + tcrossprod(Ztmp[idrow,],Ztmp[idcol,])
     }
     if(verbose == TRUE){
       sumvariants <- sumvariants + length(idx)
@@ -219,8 +249,13 @@ ghap.kinship <- function(
     q <- scaleval[[type]]() 
   }
   K <- K/q
-  colnames(K) <- zids
-  rownames(K) <- colnames(K)
+  if(is.null(idrow) & is.null(idcol)){
+    colnames(K) <- zids
+    rownames(K) <- colnames(K)
+  }else{
+    rownames(K) <- idrow
+    colnames(K) <- idcol
+  }
   
   #Induce sparsity ------------------------------------------------------------
   if(is.null(sparsity) == FALSE){
