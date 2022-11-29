@@ -9,9 +9,9 @@ This function computes marker-based and HapAllele-based relationship matrices.
 }
 \usage{
 ghap.kinship(object, weights = NULL,
-             sparsity = NULL,
-             type = 1, batchsize = NULL,
-             freq = NULL,
+             sparsity = NULL, type = 1,
+             batchsize = NULL, freq = NULL,
+             idrow = NULL, idcol = NULL,
              only.active.samples = TRUE,
              only.active.variants = TRUE,
              ncores = 1, verbose = TRUE)
@@ -36,6 +36,12 @@ ghap.kinship(object, weights = NULL,
   \item{freq}{
     A named numeric vector with (A1) allele frequencies computed in a reference sample. If not provided, frequencies will be computed using the active individuals.
   }
+  \item{idrow}{
+    A character vector providing ids of individuals to be included in rows (default = NULL, see details).
+  }
+  \item{idcol}{
+    A character vector providing ids of individuals to be included in columns (default = NULL, see details).
+  }  
   \item{only.active.samples}{
     A logical value specifying whether only active samples should be included in the output (default = TRUE).
   }
@@ -91,6 +97,9 @@ Genotype transformation:\cr
 2 = -2*(1-p[j])^2\cr
 Scaling factor:\cr
 \eqn{tr(\mathbf{MDM}')^{-1}n}.
+
+The idrow and idcol arguments are intended for faster calculations when the user wishes to obtain a non-symmetric relationship matrix with a set of individuals in rows and a different set of individuals in columns. For example, training x testing samples, males x females, etc. Currently only supported if freq != NULL and for type 3 matrices.
+
 }
 \author{
 Yuri Tani Utsunomiya <ytutsunomiya@gmail.com> \cr
