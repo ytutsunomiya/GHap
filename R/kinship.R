@@ -57,7 +57,7 @@ ghap.kinship <- function(
     if(is.null(freq) | type != 3){
       emsg <- paste0("\nSpecific ids for rows and columns are currently ",
                      "allowed only if freq is provided with type = 3")
-      stop()
+      stop(emsg)
     }
   }else{
     stop("\nIDs must be provided for both rows and columns")
