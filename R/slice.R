@@ -1,6 +1,6 @@
 #Function: ghap.slice
 #License: GPLv3 or later
-#Modification date: 25 Nov 2022
+#Modification date: 29 Nov 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Get a slice of a GHap object
@@ -66,11 +66,12 @@ ghap.slice <- function(
       if(object$mode == 2){
         idstmp <- object$id[ids]
         idstmp <- idstmp[duplicated(idstmp) == FALSE]
-        iidxtmp <- which(object$id %in% idstmp)
-        iidx1 <- iidxtmp[1:length(iidxtmp) %% 2 == 1]
-        iidx2 <- iidxtmp[1:length(iidxtmp) %% 2 == 0]
+        iidx <- which(object$id %in% idstmp)
+        iidx1 <- iidx[1:length(iidx) %% 2 == 1]
+        iidx2 <- iidx[1:length(iidx) %% 2 == 0]
         names(iidx1) <- object$id[iidx1]
         names(iidx2) <- object$id[iidx2]
+        names(ids) <- object$id[ids]
       }
     }else{
       if(max(iidx) > object$nsamples){
@@ -173,7 +174,20 @@ ghap.slice <- function(
         geno2 <- geno[1:length(geno) %% 2 == 0]
         geno1 <- geno1[vidx]
         geno2 <- geno2[vidx]
-        geno <- c(geno1,geno2)
+        if(index == TRUE){
+          iidxtmp <- ids[which(names(ids) == names(iidx2)[i])]
+          if(length(iidxtmp) == 2){
+            geno <- c(geno1,geno2)
+          }else{
+            if(iidxtmp %% 2 == 1){
+              geno <- geno1
+            }else{
+              geno <- geno2
+            }
+          }
+        }else{
+          geno <- c(geno1,geno2)
+        }
         close.connection(object.con)
       }
       return(geno)
@@ -290,19 +304,36 @@ ghap.slice <- function(
       }
     }else if(object$mode == 2){
       if(transposed == FALSE){
-        X <- Matrix(data = X, nrow = length(vidx), ncol = 2*length(iidx2),
-                    byrow = FALSE, sparse = TRUE)
-        colnames(X) <- rep(names(iidx2), each = 2)
-        rownames(X) <- names(vidx)
+        if(index == TRUE){
+          X <- Matrix(data = X, nrow = length(vidx), ncol = length(ids),
+                      byrow = FALSE, sparse = TRUE)
+          colnames(X) <- names(sort(rank(ids)))
+          rownames(X) <- names(vidx)
+          X <- X[,rank(ids)]
+        }else{
+          X <- Matrix(data = X, nrow = length(vidx), ncol = 2*length(iidx2),
+                      byrow = FALSE, sparse = TRUE)
+          colnames(X) <- rep(names(iidx2), each = 2)
+          rownames(X) <- names(vidx)
+        }
         if(unphase == TRUE){
           cols <- 1:ncol(X) %% 2
           X <- X[,which(cols == 1)] + X[,which(cols == 0)]
         }
       }else{
-        X <- Matrix(data = X, ncol = length(vidx), nrow = 2*length(iidx2),
-                    byrow = TRUE, sparse = TRUE)
-        rownames(X) <- rep(names(iidx2), each = 2)
-        colnames(X) <- names(vidx)
+        if(index == TRUE){
+          X <- Matrix(data = X, ncol = length(vidx), nrow = length(ids),
+                      byrow = TRUE, sparse = TRUE)
+          rownames(X) <- names(sort(rank(ids)))
+          colnames(X) <- names(vidx)
+          X <- X[,rank(ids)]
+        }else{
+          X <- Matrix(data = X, ncol = length(vidx), nrow = 2*length(iidx2),
+                      byrow = TRUE, sparse = TRUE)
+          rownames(X) <- rep(names(iidx2), each = 2)
+          colnames(X) <- names(vidx)
+          X <- X[,rank(ids)]
+        }
         if(unphase == TRUE){
           rows <- 1:nrow(X) %% 2
           X <- X[which(rows == 1),] + X[which(rows == 0),]
