@@ -1,6 +1,6 @@
 #Function: ghap.kinship
 #License: GPLv3 or later
-#Modification date: 29 Nov 2022
+#Modification date: 05 Dec 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute relationship matrix
@@ -229,7 +229,11 @@ ghap.kinship <- function(
     if(type %in% c(3,5)){
       q <- q + scaleval[[type]]() 
     }
-    Ztmp <- apply(X = Ztmp, MARGIN = 1, FUN = scalefun[[type]])
+    if(type == 3 & is.null(freq) == FALSE){
+      Ztmp <- t(Ztmp - 2*p)
+    }else{
+      Ztmp <- apply(X = Ztmp, MARGIN = 1, FUN = scalefun[[type]])
+    }
     if(is.null(weights) == FALSE){
       Ztmp*sqrt(weights[idx])
     }
