@@ -10,8 +10,7 @@
 \usage{
 ghap.slice(object, ids, variants, index=FALSE,
            transposed=FALSE, sparse=TRUE,
-           unphase=FALSE, impute=FALSE,
-           ncores=1, verbose=TRUE)
+           unphase=FALSE, impute=FALSE)
 }
 
 \arguments{
@@ -39,12 +38,6 @@ ghap.slice(object, ids, variants, index=FALSE,
   \item{impute}{
    A logical value specfying if missing genotypes should be replaced by 0 (i.e., A0/A0 genotypes, default = FALSE). Only meaningful for "GHap.plink" objects.
   }
-  \item{ncores}{
-   A numeric value specifying the number of cores to be used in parallel computations (default = 1).
-  }
-  \item{verbose}{
-    A logical value specfying whether log messages should be printed (default = TRUE).
-  }
 }
 
 \value{
@@ -56,7 +49,7 @@ ghap.slice(object, ids, variants, index=FALSE,
 }
 
 \author{
-  Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
+  Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>, Adam Taiti Harth Utsunomiya <adamtaiti@gmail.com>
 }
 
 \examples{
