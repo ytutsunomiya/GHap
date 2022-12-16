@@ -1,6 +1,6 @@
 #Function: ghap.simadmix
 #License: GPLv3 or later
-#Modification date: 3 Jun 2022
+#Modification date: 12 Dec 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Simulate admixed individuals
@@ -169,7 +169,7 @@ ghap.simadmix <- function(
     mkrsidx <- which(object$marker.in & object$chr == chr)
     mkrs <- object$marker[mkrsidx]
     anchap <- ghap.slice(object = object, ids = unlist(ancestors),
-                         variants = mkrs, ncores = ncores)
+                         variants = mkrs)
     l <- (100/(2*n.generations))*chrdens[chr]
     if(Sys.info()["sysname"] == "Windows"){
       cl <- makeCluster(ncores)
