@@ -1,6 +1,6 @@
 #Function: ghap.phase2plink
 #License: GPLv3 or later
-#Modification date: 3 Jun 2022
+#Modification date: 16 Dec 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Convert phase object into plink file
@@ -145,8 +145,7 @@ ghap.phase2plink <- function(
                        variants = var.in[idx],
                        index = TRUE,
                        unphase = TRUE,
-                       impute = TRUE,
-                       ncores = ncores)
+                       impute = TRUE)
     if(Sys.info()["sysname"] == "Windows"){
       cl <- makeCluster(ncores)
       bed.file.out <- unlist(parLapply(cl = cl, fun = toBitFUN, X = 1:nrow(Ztmp)))
