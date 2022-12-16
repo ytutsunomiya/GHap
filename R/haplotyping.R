@@ -1,6 +1,6 @@
 #Function: ghap.haplotyping
 #License: GPLv3 or later
-#Modification date: 5 Jun 2022
+#Modification date: 16 Dec 2022
 #Written by: Yuri Tani Utsunomiya & Marco Milanesi
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Output haplotype genotype matrix for user-defined haplotype blocks
