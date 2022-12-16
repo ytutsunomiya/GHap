@@ -104,7 +104,8 @@ ghap.slice <- function(
       names(iidx) <- object$id[ids]
       hidx <- iidx
       vidx <- variants
-      names(vidx) <- object$allele[vidx]
+      names(vidx) <- paste(object$block[vidx],object$bp1[vidx],
+                           object$bp2[vidx],object$allele[vidx], sep="_")
     }else{
       iidx <- 1:object$nsamples
       names(iidx) <- object$id
