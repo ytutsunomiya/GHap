@@ -1,6 +1,6 @@
 #Function: ghap.anctrain
 #License: GPLv3 or later
-#Modification date: 3 Jun 2022
+#Modification date: 16 Dec 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Create prototype alleles for ancestry predictions
@@ -165,7 +165,7 @@ ghap.anctrain <- function(
   proto.fun <- function(k){
     x <- X[k,]
     dfp <- data.frame(geno = x, pop = y)
-    res <- aggregate(formula = geno ~ pop, data = dfp, FUN = mean)
+    res <- aggregate(geno ~ pop, data = dfp, FUN = mean)
     return(res$geno)
   }
   
