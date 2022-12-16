@@ -81,7 +81,7 @@ ghap.anctest <- function(
     
     #Get test haplotypes
     Mtst <- ghap.slice(object = object, ids = test.idx, variants = snps,
-                       index = TRUE, verbose = FALSE)
+                       index = TRUE)
     Mref <- prototypes[snps,-1]
     
     #Prediction
