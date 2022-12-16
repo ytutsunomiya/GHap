@@ -79,7 +79,7 @@ ghap.anctrain <- function(
   if(method == "unsupervised"){
     mkr <- sample(x = which(object$marker.in), size = param$nmarkers, replace = FALSE)
     Mkm <- ghap.slice(object = object, ids = train.idx, variants = mkr, transposed = TRUE,
-                      index = TRUE, ncores = ncores, verbose = FALSE)
+                      index = TRUE)
     if(tune == TRUE){
       tune.FUN <- function(i){
         clk <- kmeans(x = Mkm, centers = i,
@@ -189,8 +189,7 @@ ghap.anctrain <- function(
       X <- ghap.slice(object = object,
                       ids = train.idx,
                       variants = snps.in[id1[i]:id2[i]],
-                      index = TRUE,
-                      ncores = ncores)
+                      index = TRUE)
       #Compute blocks
       if(ncores == 1){
         p <- unlist(lapply(FUN = proto.fun, X = 1:nrow(X)))
