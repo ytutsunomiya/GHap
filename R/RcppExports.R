@@ -4,3 +4,7 @@
 .compressCpp <- function(infile, outfile, nunits, nbits, tbits, fmode) {
     .Call(`_GHap_compressCpp`, infile, outfile, nunits, nbits, tbits, fmode)
 }
+
+.sliceCpp <- function(binfile, mode, nvars, nids, phased, imp, iidx, hidx, vidx) {
+    .Call(`_GHap_sliceCpp`, binfile, mode, nvars, nids, phased, imp, iidx, hidx, vidx)
+}
