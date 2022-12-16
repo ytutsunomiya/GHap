@@ -94,7 +94,7 @@ ghap.slice <- function(
   }
   if(inherits(object, "GHap.haplo")){
     binfile <- object$genotypes
-    mode <- 3
+    mode <- 4
     nvars <- object$nalleles
     nids <- object$nsamples
     phased <- 1
@@ -123,7 +123,7 @@ ghap.slice <- function(
   
   # Get slice of data ----------------------------------------------------------
   X <- .sliceCpp(binfile, mode, nvars, nids, phased, imp, iidx, hidx, vidx)
-
+  
   # Organize output matrix -----------------------------------------------------
   if(transposed == FALSE){
     X <- Matrix(data = X, nrow = nrows, ncol = ncols,
@@ -153,7 +153,7 @@ ghap.slice <- function(
   if(sparse == FALSE){
     X <- as.matrix(X)
   }
-
+  
   # Return X -------------------------------------------------------------------
   return(X)
   
