@@ -1,6 +1,6 @@
 #Function: ghap.ancplot
 #License: GPLv3 or later
-#Modification date: 25 Feb 2022
+#Modification date: 16 Dec 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Plot ancestry proportions
@@ -64,9 +64,9 @@ ghap.ancplot <- function(
                xaxt="n", ylim=c(0,125), yaxt = "n")
   axis(side = 2, at = seq(0,100,by=20), labels = seq(0,100,by=20), las =1)
   admix$POS <- p
-  p <- aggregate(formula = POS ~ POP, data = admix, FUN = median)
-  xmin <- aggregate(formula = POS ~ POP, data = admix, FUN = min)
-  xmax <- aggregate(formula = POS ~ POP, data = admix, FUN = max)
+  p <- aggregate(POS ~ POP, data = admix, FUN = median)
+  xmin <- aggregate(POS ~ POP, data = admix, FUN = min)
+  xmax <- aggregate(POS ~ POP, data = admix, FUN = max)
   u <- par("usr")
   if(labels == TRUE){
     text(x=p$POS, y=u[3]-0.1*(u[4]-u[3]),
