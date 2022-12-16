@@ -61,7 +61,7 @@
 }
 
 \author{
-  Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>
+  Yuri Tani Utsunomiya <ytutsunomiya@gmail.com>, Adam Taiti Harth Utsunomiya <adamtaiti@gmail.com>
 }
 
 \examples{
