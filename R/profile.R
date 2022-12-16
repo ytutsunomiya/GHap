@@ -1,6 +1,6 @@
 #Function: ghap.profile
 #License: GPLv3 or later
-#Modification date: 3 Jun 2022
+#Modification date: 16 Dec 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute individual profiles based on HapAllele or marker scores
@@ -113,7 +113,7 @@ ghap.profile <- function(
       if(nrow(scoretmpA0) > 0){
         Ztmp <- ghap.slice(object = object, ids = out$ID,
                            variants = scoretmpA0$MARKER, transposed = FALSE,
-                           impute = TRUE, ncores = ncores, unphase = TRUE)
+                           impute = TRUE, unphase = TRUE)
         Ztmp <- apply(X = Ztmp, MARGIN = 2, FUN = flip.FUN)
         Ztmp <- (Ztmp - scoretmpA0$CENTER)/scoretmpA0$SCALE
         out$SCORE <- out$SCORE + as.numeric(scoretmpA0$SCORE%*%Ztmp)
@@ -121,7 +121,7 @@ ghap.profile <- function(
       if(nrow(scoretmpA1) > 0){
         Ztmp <- ghap.slice(object = object, ids = out$ID,
                            variants = scoretmpA1$MARKER, transposed = FALSE,
-                           impute = TRUE, ncores = ncores, unphase = TRUE)
+                           impute = TRUE, unphase = TRUE)
         Ztmp <- (Ztmp - scoretmpA1$CENTER)/scoretmpA1$SCALE
         out$SCORE <- out$SCORE + as.numeric(scoretmpA1$SCORE%*%Ztmp)
       }
