@@ -1,6 +1,6 @@
 #Function: ghap.kinship
 #License: GPLv3 or later
-#Modification date: 05 Dec 2022
+#Modification date: 16 Dec 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute relationship matrix
@@ -212,8 +212,7 @@ ghap.kinship <- function(
                        variants = var.in[idx],
                        index = TRUE,
                        unphase = TRUE,
-                       impute = TRUE,
-                       ncores = ncores)
+                       impute = TRUE)
     zids <- colnames(Ztmp)
     if(is.null(freq)){
       p <- apply(X = Ztmp, MARGIN = 1, FUN = freqfun)
