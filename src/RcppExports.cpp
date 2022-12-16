@@ -21,9 +21,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// sliceCpp
+IntegerVector sliceCpp(const char* binfile, const int mode, const int nvars, const int nids, const int phased, const int imp, IntegerVector iidx, IntegerVector hidx, IntegerVector vidx);
+RcppExport SEXP _GHap_sliceCpp(SEXP binfileSEXP, SEXP modeSEXP, SEXP nvarsSEXP, SEXP nidsSEXP, SEXP phasedSEXP, SEXP impSEXP, SEXP iidxSEXP, SEXP hidxSEXP, SEXP vidxSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const char* >::type binfile(binfileSEXP);
+    Rcpp::traits::input_parameter< const int >::type mode(modeSEXP);
+    Rcpp::traits::input_parameter< const int >::type nvars(nvarsSEXP);
+    Rcpp::traits::input_parameter< const int >::type nids(nidsSEXP);
+    Rcpp::traits::input_parameter< const int >::type phased(phasedSEXP);
+    Rcpp::traits::input_parameter< const int >::type imp(impSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type iidx(iidxSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type hidx(hidxSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type vidx(vidxSEXP);
+    rcpp_result_gen = Rcpp::wrap(sliceCpp(binfile, mode, nvars, nids, phased, imp, iidx, hidx, vidx));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_GHap_compressCpp", (DL_FUNC) &_GHap_compressCpp, 6},
+    {"_GHap_sliceCpp", (DL_FUNC) &_GHap_sliceCpp, 9},
     {NULL, NULL, 0}
 };
 
