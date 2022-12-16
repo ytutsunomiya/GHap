@@ -122,7 +122,7 @@ IntegerVector sliceCpp(const char* binfile,
     }
     
     // Plink or Haplo
-    if(mode == 3){
+    if(mode == 3 | mode == 4){
       
       int tbits = 2*nids % 8;
       int nbytes = (2*nids + tbits)/8;
@@ -133,8 +133,13 @@ IntegerVector sliceCpp(const char* binfile,
       // IntegerVector code = IntegerVector::create(Named("11",0), Named("01",1),
       //                                            Named("00",2), Named("10",miss));
       unordered_map<std::string, int>code;
-      code.insert({"11", 0});code.insert({"01", 1});
-      code.insert({"00", 2});code.insert({"10", miss});
+      if(mode == 3){
+        code.insert({"11", 0});code.insert({"01", 1});
+        code.insert({"00", 2});code.insert({"10", miss});
+      }else{
+        code.insert({"00", 0});code.insert({"01", 1});
+        code.insert({"11", 2});code.insert({"10", 1});
+      }
       
       // Loop by variant
       for(int i = 0; i < nvars_in; i++){
@@ -143,7 +148,7 @@ IntegerVector sliceCpp(const char* binfile,
         IntegerVector gen(nbytes*4);
         
         // Position pointer in binary file
-        int start = (vidx[i]-1)*nbytes + mode;
+        int start = (vidx[i]-1)*nbytes + 3;
         binfilecon.seekg(start, binfilecon.beg);
         
         // Read individual into memory
