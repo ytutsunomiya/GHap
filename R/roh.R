@@ -1,6 +1,6 @@
 #Function: ghap.roh
 #License: GPLv3 or later
-#Modification date: 3 Jun 2022
+#Modification date: 16 Dec 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Map streches of homozygous genotypes
@@ -189,7 +189,7 @@ ghap.roh <- function(
       genposchr <- genpos[mkrs]
       gendistchr <- c(genposchr[1],diff(genposchr))/100
     }
-    geno <- ghap.slice(object = object, ids = ids, ncores = ncores,
+    geno <- ghap.slice(object = object, ids = ids,
                        variants = mkrs, unphase = TRUE, impute = TRUE)
     if(Sys.info()["sysname"] == "Windows"){
       cl <- makeCluster(ncores)
