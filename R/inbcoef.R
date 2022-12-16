@@ -1,6 +1,6 @@
 #Function: ghap.inbcoef
 #License: GPLv3 or later
-#Modification date: 3 Jun 2022
+#Modification date: 12 Dec 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute inbreeding coeficients
@@ -109,8 +109,7 @@ ghap.inbcoef <- function(
                        variants = var.in[idx],
                        index = FALSE,
                        unphase = TRUE,
-                       impute = FALSE,
-                       ncores = ncores)
+                       impute = FALSE)
     tmp <- apply(X = Ztmp, MARGIN = 2, FUN = inbcoef,
                  p = freq[var.in[idx]])
     tmp <- matrix(data = unlist(tmp), ncol = 6, byrow = TRUE)
