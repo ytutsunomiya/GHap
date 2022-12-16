@@ -1,6 +1,6 @@
 #Function: ghap.ancsvm
 #License: GPLv3 or later
-#Modification date: 3 Jun 2022
+#Modification date: 16 Dec 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Predict ancestry of haplotypes using machine learning
@@ -95,9 +95,9 @@ ghap.ancsvm <- function(
     
     #Build model matrices
     Mtst <- ghap.slice(object = object, ids = test.idx, variants = snps,
-                       index = TRUE, transposed = TRUE, verbose = FALSE)
+                       index = TRUE, transposed = TRUE)
     Mref <- ghap.slice(object = object, ids = train.idx, variants = snps,
-                       index = TRUE, transposed = TRUE, verbose = FALSE)
+                       index = TRUE, transposed = TRUE)
     
     #Model training
     if(param$gamma == "1/blocksize"){
