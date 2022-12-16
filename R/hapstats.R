@@ -1,6 +1,6 @@
 #Function: ghap.hapstats
 #License: GPLv3 or later
-#Modification date: 3 Jun 2022
+#Modification date: 16 Dec 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Summary statistics for haplotype alleles
@@ -80,7 +80,7 @@ ghap.hapstats <- function(
     slice <- activealleles[idx]
     hap.geno <- ghap.slice(object = object, ids = which(object$id.in),
                            variants = slice,
-                           index = TRUE, ncores = ncores)
+                           index = TRUE)
     if(Sys.info()["sysname"] == "Windows"){
       cl <- makeCluster(ncores)
       a <- unlist(parLapply(cl = cl, fun = hapstats.FUN, X = 1:nrow(hap.geno)))
