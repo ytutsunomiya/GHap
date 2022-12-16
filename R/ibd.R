@@ -1,6 +1,6 @@
 #Function: ghap.ibd
 #License: GPLv3 or later
-#Modification date: 10 Nov 2022
+#Modification date: 16 Dec 2022
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: IBD estimates
@@ -152,8 +152,7 @@ ghap.ibd <- function(
                        variants = var.in[idx],
                        index = FALSE,
                        unphase = TRUE,
-                       impute = FALSE,
-                       ncores = ncores)
+                       impute = FALSE)
     if(Sys.info()["sysname"] == "Windows"){
       cl <- makeCluster(ncores)
       clusterEvalQ(cl, library(Matrix))
