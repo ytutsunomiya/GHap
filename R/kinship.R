@@ -1,6 +1,6 @@
 #Function: ghap.kinship
 #License: GPLv3 or later
-#Modification date: 16 Dec 2022
+#Modification date: 13 Feb 2023
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute relationship matrix
@@ -239,7 +239,12 @@ ghap.kinship <- function(
     if(is.null(idrow) & is.null(idcol)){
       K <- K + tcrossprod(Ztmp)
     }else{
-      K <- K + tcrossprod(Ztmp[idrow,],Ztmp[idcol,])
+      if(nrow(K) == 1 & ncol(K) == 1){
+        K <- K + crossprod(Ztmp[idrow,],Ztmp[idcol,])
+      }else{
+        K <- K + tcrossprod(Ztmp[idrow,],Ztmp[idcol,])
+      }
+      
     }
     if(verbose == TRUE){
       sumvariants <- sumvariants + length(idx)
