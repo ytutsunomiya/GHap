@@ -6,7 +6,7 @@
 
 // Function: sliceCpp
 // License: GPLv3 or later
-// Modification date: 16 Dec 2022
+// Modification date: 01 Mar 2023
 // Written by: Yuri Tani Utsunomiya, Adam Taiti Harth Utsunomiya
 // Contact: ytutsunomiya@gmail.com, adamtaiti@gmail.com
 // Description: slice GHap object
@@ -42,9 +42,11 @@ IntegerVector sliceCpp(const char* binfile,
     // Phase: variant by individual mode
     if(mode == 0 | mode == 1){
       
-      int tbits = 2*nids % 8;
+      int tbits = 8 - ((2*nids) % 8);
+      if(tbits == 8){
+        tbits = 0;
+      }
       int nbytes = (2*nids + tbits)/8;
-      
       // Loop by variant
       for(int i = 0; i < nvars_in; i++){
         
@@ -81,7 +83,10 @@ IntegerVector sliceCpp(const char* binfile,
     // Phase: individual by variant mode
     if(mode == 2){
       
-      int tbits = 2*nvars % 8;
+      int tbits = 8 - ((2*nvars) % 8);
+      if(tbits == 8){
+        tbits = 0;
+      }
       int nbytes = (2*nvars + tbits)/8;
       
       // Loop by individual
