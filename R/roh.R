@@ -1,6 +1,6 @@
 #Function: ghap.roh
 #License: GPLv3 or later
-#Modification date: 16 Dec 2022
+#Modification date: 08 Mar 2023
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Map streches of homozygous genotypes
@@ -163,7 +163,7 @@ ghap.roh <- function(
   if(method == "hmm" & is.null(freq) == TRUE){
     stop('\nMethod "hmm" requires reference allele frequencies.\n')
   }
-  if(method == "hmm" & is.null(freq) == TRUE){
+  if(method == "hmm" & is.null(inbcoef) == TRUE){
     emsg <- '\nMethod "hmm" requires starting values for genomic inbreeding.\n'
     emsg <- paste0(emsg, "(i.e., proportion of the genome covered by ROH)")
     stop(emsg)
