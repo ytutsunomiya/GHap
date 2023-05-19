@@ -1,19 +1,19 @@
 #Function: ghap.compress
 #License: GPLv3 or later
-#Modification date: 18 Nov 2022
+#Modification date: 19 May 2023
 #Written by: Yuri Tani Utsunomiya, Adam Taiti Harth Utsunomiya
 #Contact: ytutsunomiya@gmail.com, adamtaiti@gmail.com
 #Description: Compress phased data into GHap binary
 
 ghap.compress <- function(
-  input.file=NULL,
-  out.file,
-  samples.file=NULL,
-  markers.file=NULL,
-  phase.file=NULL,
-  mode=1,
-  ncores=1,
-  verbose=TRUE
+    input.file=NULL,
+    out.file,
+    samples.file=NULL,
+    markers.file=NULL,
+    phase.file=NULL,
+    mode=1,
+    ncores=1,
+    verbose=TRUE
 ){
   
   # Check input file prefix ----------------------------------------------------
@@ -110,9 +110,11 @@ ghap.compress <- function(
   chr <- unique(marker$V1)
   nchr <- length(chr)
   chrorder <- chr[order(nchar(chr),chr)]
-  negpos <- diff(marker$V3)
-  negpos <- length(which(negpos < 0)) + 1
-  if(identical(chr,chrorder) == FALSE | negpos != nchr){
+  negpos <- aggregate(V3 ~ V1,
+                      FUN = function(x){length(which(diff(x) < 0))},
+                      data = marker)
+  negpos <- sum(negpos[,2])
+  if(identical(chr,chrorder) == FALSE | negpos != 0){
     stop("\n\nMarkers are not sorted by chromosome and base pair position")
   }
   
@@ -216,6 +218,5 @@ ghap.compress <- function(
   if(verbose == TRUE){
     cat("Phase file succesfully compressed.\n\n")
   }
-  
   
 }
