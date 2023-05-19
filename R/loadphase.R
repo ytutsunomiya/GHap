@@ -1,6 +1,6 @@
 #Function: ghap.loadphase
 #License: GPLv3 or later
-#Modification date: 17 Nov 2022
+#Modification date: 19 May 2023
 #Written by: Yuri Tani Utsunomiya & Marco Milanesi
 #Contact: ytutsunomiya@gmail.com, marco.milanesi.mm@gmail.com
 #Description: Load phased genotypes
@@ -82,9 +82,11 @@ ghap.loadphase <- function(
   chr <- unique(marker$V1)
   nchr <- length(chr)
   chrorder <- chr[order(nchar(chr),chr)]
-  negpos <- diff(marker$V3)
-  negpos <- length(which(negpos < 0)) + 1
-  if(identical(chr,chrorder) == FALSE | negpos != nchr){
+  negpos <- aggregate(V3 ~ V1,
+                      FUN = function(x){length(which(diff(x) < 0))},
+                      data = marker)
+  negpos <- sum(negpos[,2])
+  if(identical(chr,chrorder) == FALSE | negpos != 0){
     stop("\n\nMarkers are not sorted by chromosome and base pair position")
   }
   
