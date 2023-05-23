@@ -1,6 +1,6 @@
 #Function: ghap.freq
 #License: GPLv3 or later
-#Modification date: 3 Jun 2022
+#Modification date: 23 May 2023
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute marker allele frequencies
@@ -8,28 +8,44 @@
 ghap.freq <- function(
   object,
   type="maf",
+  batchsize=NULL,
   only.active.samples=TRUE,
   only.active.markers=TRUE,
-  ncores=1,
   verbose=TRUE
 ){
   
   # Check if input is a valid GHap object --------------------------------------
-  obtype <- c("GHap.phase","GHap.plink")
+  obtype <- c("GHap.phase","GHap.plink","GHap.haplo")
   if(inherits(object, obtype) == FALSE){
     stop("\nInput must be a valid GHap object.")
   }
-  fac <- c(2,1)
+  fac <- c(2,1,1)
   names(fac) <- obtype
   
-  # Check if inactive markers and samples should be reactived ------------------
-  if(only.active.markers == FALSE){
-    object$marker.in <- rep(TRUE,times=object$nmarkers)
-    object$nmarkers.in <- length(which(object$marker.in))
+  # Check if inactive variants and samples should be reactived -----------------
+  if(only.active.variants == FALSE){
+    if(inherits(object, "GHap.haplo")){
+      object$allele.in <- rep(TRUE,times=object$nalleles)
+      object$nalleles.in <- length(which(object$allele.in))
+    }else{
+      object$marker.in <- rep(TRUE,times=object$nmarkers)
+      object$nmarkers.in <- length(which(object$marker.in))
+    }
   }
   if(only.active.samples == FALSE){
     object$id.in <- rep(TRUE,times=fac[class(object)]*object$nsamples)
     object$nsamples.in <- length(which(object$id.in))/fac[class(object)]
+  }
+  
+  # Map individuals and variants -----------------------------------------------
+  id.n <- object$nsamples.in
+  id.in <- which(object$id.in)
+  if(inherits(object, "GHap.haplo")){
+    var.n <- object$nalleles.in
+    var.in <- which(object$allele.in)
+  }else{
+    var.n <- object$nmarkers.in
+    var.in <- which(object$marker.in)
   }
   
   # Check if type is valid -----------------------------------------------------
@@ -37,78 +53,57 @@ ghap.freq <- function(
     stop("\nArgument type must be 'maf', 'A0' or 'A1'.")
   }
   
-  # Calculate offset and bitloss -----------------------------------------------
-  offset <- ceiling((2*object$nsamples)/8)
-  bitloss <- 8 - ((2*object$nsamples) %% 8)
-  if(bitloss == 8){
-    bitloss <- 0
+  # Generate batch index -------------------------------------------------------
+  if(is.null(batchsize) == TRUE){
+    batchsize <- ceiling(var.n/10)
   }
-  lookup <- rep(NA, times=offset*8)
-  for(i in 1:offset){
-    idx1 <- i*8
-    idx2 <- idx1-7
-    lookup[idx1:idx2] <- idx2:idx1
+  if(batchsize > var.n){
+    batchsize <- var.n
   }
-  
-  # Frequency function ---------------------------------------------------------
-  if(inherits(object, "GHap.plink")){
-    freqFun <- function(i){
-      object.con <- file(object$plink, "rb")
-      a <- seek(con = object.con, where = 3 + offset*(vidx[i]-1),
-                origin = 'start',rw = 'r')
-      geno <- readBin(object.con, what=raw(), size = 1,
-                      n = offset, signed = FALSE)
-      geno <- as.integer(rawToBits(geno))
-      geno1 <- geno[1:length(geno) %% 2 == 1]
-      geno2 <- geno[1:length(geno) %% 2 == 0]
-      geno <- vector(mode = "integer", length = length(geno)/2)
-      geno[which(geno1 == 0 & geno2 == 0)] <- 2
-      geno[which(geno1 == 0 & geno2 == 1)] <- 1
-      geno[which(geno1 == 1 & geno2 == 1)] <- 0
-      geno[which(geno1 == 1 & geno2 == 0)] <- NA
-      geno <- geno[1:object$nsamples]
-      geno <- geno[iidx]
-      geno <- geno[which(is.na(geno) == FALSE)]
-      p <- sum(geno)/(2*length(geno))
-      close.connection(object.con)
-      return(p)
-    }
-  }else{
-    freqFun <- function(i){
-      object.con <- file(object$phase, "rb")
-      a <- seek(con = object.con, where = offset*(vidx[i]-1),
-                origin = 'start',rw = 'r')
-      geno <- readBin(object.con, what=raw(), size = 1,
-                      n = offset, signed = FALSE)
-      geno <- as.integer(rawToBits(geno))
-      geno <- geno[lookup]
-      geno <- geno[1:(2*object$nsamples)]
-      geno <- geno[iidx]
-      geno1 <- geno[1:length(geno) %% 2 == 0]
-      geno2 <- geno[1:length(geno) %% 2 == 1]
-      geno <- geno1 + geno2
-      p <- sum(geno)/(2*length(geno))
-      close.connection(object.con)
-      return(p)
-    }
+  id1 <- seq(1,var.n,by=batchsize)
+  id2 <- (id1+batchsize)-1
+  id1 <- id1[id2<=var.n]
+  id2 <- id2[id2<=var.n]
+  id1 <- c(id1,id2[length(id2)]+1)
+  id2 <- c(id2,var.n)
+  if(id1[length(id1)] > var.n){
+    id1 <- id1[-length(id1)]; id2 <- id2[-length(id2)]
   }
   
-  # Frequency calculation ------------------------------------------------------
-  iidx <- which(object$id.in)
-  vidx <- which(object$marker.in)
-  freq <- rep(NA, times=object$nmarkers.in)
-  ncores <- min(c(detectCores(), ncores))
-  if(Sys.info()["sysname"] == "Windows"){
-    cl <- makeCluster(ncores)
-    clusterExport(cl = cl, varlist = list("object","iidx","vidx"), envir=environment())
-    freq <- unlist(parLapply(cl = cl, fun = freqFun, X = 1:length(vidx)))
-    stopCluster(cl)
-  }else{
-    freq <- unlist(mclapply(X = 1:length(vidx), FUN = freqFun, mc.cores = ncores))
+  #Log message -----------------------------------------------------------------
+  if(verbose == TRUE){
+    cat("Processing ", var.n, " variants in ", length(id1), " batches.\n", sep="")
+    cat("Inactive variants will be ignored.\n")
+  }
+  
+  #Initialize allele frequency function ----------------------------------------
+  freqfun <- function(x){
+    n <- length(which(is.na(x) == FALSE))
+    p <- sum(x, na.rm = TRUE)/(2*n)
+    return(p)
+  }
+  
+  # Frequency iterate function -------------------------------------------------
+  sumvariants <- 0
+  freq <- rep(NA, times = var.n)
+  names(freq) <- object$marker[var.in]
+  for(i in 1:length(id1)){
+    idx <- id1[i]:id2[i]
+    Ztmp <- ghap.slice(object = object,
+                       ids = id.in,
+                       variants = var.in[idx],
+                       index = TRUE,
+                       unphase = TRUE,
+                       impute = TRUE)
+    zids <- colnames(Ztmp)
+    freq[idx] <- apply(X = Ztmp, MARGIN = 1, FUN = freqfun)
+    if(verbose == TRUE){
+      sumvariants <- sumvariants + length(idx)
+      cat(sumvariants, "variants processed.\r")
+    }
   }
   
   # Results --------------------------------------------------------------------
-  names(freq) <- object$marker[vidx]
   if(type == "maf"){
     freq <- pmin(freq,1-freq)
   }else if(type == "A0"){
