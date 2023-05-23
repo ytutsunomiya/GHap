@@ -9,9 +9,10 @@
 }
 \usage{
   ghap.freq(object, type = "maf",
+            batchsize = NULL,
             only.active.samples = TRUE,
             only.active.markers = TRUE,
-            ncores = 1, verbose = TRUE)
+            verbose = TRUE)
 }
 
 \arguments{
@@ -21,14 +22,14 @@
   \item{type}{
     A character value indicating which allele frequency to compute. Valid options are minor allele frequency ('maf', default), frequency of allele 0 ('A0') and frequency of allele 1 ('A1').
   }
+  \item{batchsize}{
+    A numeric value controlling the number of variants to be processed at a time (default = nalleles/10).
+  }
   \item{only.active.samples}{
     A logical value specifying whether only active samples should be used for calculations (default = TRUE).
   }
   \item{only.active.markers}{
     A logical value specifying whether only active markers should be included in the output (default = TRUE).
-  }
-  \item{ncores}{
-   A numeric value specifying the number of cores to be used in parallel computing (default = 1).
   }
   \item{verbose}{
    A logical value specfying whether log messages should be printed (default = TRUE).
