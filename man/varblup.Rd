@@ -8,7 +8,8 @@ Convert BLUP of individuals into BLUP of variants
 Given genomic estimated breeding values (GEBVs), compute Best Linear Unbiased Predictor (BLUP) solutions for variant effects.
 }
 \usage{
-ghap.varblup(object, gebv, covmat, type = 1,
+ghap.varblup(object, gebv, covmat,
+             type = 1, batchsize = NULL,
              only.active.variants = TRUE,
              weights = NULL, tol = 1e-12,
              vcp = NULL, errormat = NULL, 
@@ -28,6 +29,9 @@ ghap.varblup(object, gebv, covmat, type = 1,
   }
   \item{type}{
     A numeric value indicating the type of relationship matrix (see details in the \code{\link{ghap.kinship}} function).
+  }
+  \item{batchsize}{
+   A numeric value controlling the number of variants to be processed at a time (default = nalleles/10).
   }
   \item{only.active.variants}{
     A logical value specifying whether only active variants should be included in the calculations (default = TRUE).
