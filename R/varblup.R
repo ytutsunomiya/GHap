@@ -1,31 +1,36 @@
 #Function: ghap.varblup
 #License: GPLv3 or later
-#Modification date: 8 Jun 2022
+#Modification date: 23 May 2023
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: convert blup of individuals into blup of variants
 
 ghap.varblup <- function(
-  object,
-  gebv,
-  covmat,
-  type=1,
-  only.active.variants = TRUE,
-  weights = NULL,
-  tol = 1e-12,
-  vcp = NULL,
-  errormat = NULL, 
-  errorname = "",
-  nlambda = 1000,
-  ncores = 1,
-  verbose = TRUE
+    object,
+    gebv,
+    covmat,
+    type = 1,
+    batchsize = NULL,
+    only.active.variants = TRUE,
+    weights = NULL,
+    tol = 1e-12,
+    vcp = NULL,
+    errormat = NULL, 
+    errorname = "",
+    nlambda = 1000,
+    ncores = 1,
+    verbose = TRUE
 ){
   
-  # Sanity check for input objects ---------------------------------------------
+  # Check if input is a valid GHap object --------------------------------------
   obtype <- c("GHap.phase","GHap.plink","GHap.haplo")
   if(inherits(object, obtype) == FALSE){
     stop("\nInput must be a valid GHap object.")
   }
+  fac <- c(2,1,1)
+  names(fac) <- obtype
+  
+  # Sanity check for input objects ---------------------------------------------
   if(is.null(names(gebv))){
     stop("\nArgument 'gebv' must be a named vector.\n")
   }
@@ -53,7 +58,7 @@ ghap.varblup <- function(
     stop("Covariance matrix types currently supported are 1, 2, 3 or 4.")
   }
   
-  # Check if inactive variants should be reactivated ---------------------------
+  # Check if inactive variants and samples should be reactived -----------------
   if(only.active.variants == FALSE){
     if(inherits(object, "GHap.haplo")){
       object$allele.in <- rep(TRUE,times=object$nalleles)
@@ -63,33 +68,30 @@ ghap.varblup <- function(
       object$nmarkers.in <- length(which(object$marker.in))
     }
   }
-  if(inherits(object, "GHap.haplo")){
-    vidx <- which(object$allele.in)
-  }else{
-    vidx <- which(object$marker.in)
+  if(only.active.samples == FALSE){
+    object$id.in <- rep(TRUE,times=fac[class(object)]*object$nsamples)
+    object$nsamples.in <- length(which(object$id.in))/fac[class(object)]
   }
+  
+  # Map individuals and variants -----------------------------------------------
+  id.n <- object$nsamples.in
+  id.in <- which(object$id.in)
+  if(inherits(object, "GHap.haplo")){
+    var.n <- object$nalleles.in
+    var.in <- which(object$allele.in)
+  }else{
+    var.n <- object$nmarkers.in
+    var.in <- which(object$marker.in)
+  }  
   
   # Check weights --------------------------------------------------------------
   if(is.null(weights) == TRUE){
-    weights <- rep(1,times=length(vidx))
+    weights <- rep(1,times=var.n)
   }
-  if(length(weights) != length(vidx)){
+  if(length(weights) != var.n){
     stop("\nNumber of variant weights differs from the number of active variants.")
   }
   weights <- weights/mean(weights)
-  
-  # Calculate offset and bitloss -----------------------------------------------
-  offset <- ceiling((2*object$nsamples)/8)
-  bitloss <- 8 - ((2*object$nsamples) %% 8)
-  if(bitloss == 8){
-    bitloss <- 0
-  }
-  lookup <- rep(NA, times=offset*8)
-  for(i in 1:offset){
-    idx1 <- i*8
-    idx2 <- idx1-7
-    lookup[idx1:idx2] <- idx2:idx1
-  }
   
   # Invert reference matrix ----------------------------------------------------
   covmat <- covmat[names(gebv),names(gebv)]
@@ -168,123 +170,115 @@ ghap.varblup <- function(
   # Initialize denominators ----------------------------------------------------
   scaleval <- vector(mode = "list", length = 4)
   scaleval[[1]] <- function(){return(sum(vareff[,5]^2))}
-  scaleval[[2]] <- function(){return(length(vidx))}
+  scaleval[[2]] <- function(){return(length(var.in))}
   scaleval[[3]] <- scaleval[[1]]
   scaleval[[4]] <- scaleval[[2]]
   
-  # Auxiliary functions --------------------------------------------------------
-  if(inherits(object, c("GHap.plink","GHap.haplo"))){
-    varFun <- function(i){
-      object.con <- file(unlist(object[length(object)]), "rb")
-      a <- seek(con = object.con, where = 3 + offset*(vidx[i]-1),
-                origin = 'start',rw = 'r')
-      x <- readBin(object.con, what=raw(), size = 1,
-                   n = offset, signed = FALSE)
-      x <- as.integer(rawToBits(x))
-      x1 <- x[1:length(x) %% 2 == 1]
-      x2 <- x[1:length(x) %% 2 == 0]
-      x <- vector(mode = "integer", length = length(x)/2)
-      x[which(x1 == 0 & x2 == 0)] <- 2
-      x[which(x1 == 0 & x2 == 1)] <- 1
-      x[which(x1 == 1 & x2 == 1)] <- 0
-      x[which(x1 == 1 & x2 == 0)] <- 0
-      x <- x[1:object$nsamples]
-      names(x) <- object$id
-      x <- x[names(gebv)]
-      x <- scalefun[[type]](x)
-      m <- x[1]
-      s <- x[2]
-      p <- x[3]
-      x <- x[-c(1:3)]
-      b <- sum(weights[i]*x*k)
-      varxb <- var(x*b)
-      varx <- weights[i]*var(x)
-      if(is.null(errormat) == FALSE){
-        varb <- (weights[i]^2)*as.numeric(t(x)%*%B%*%x)
-      }else{
-        varb <- NA
-      }
-      close.connection(object.con)
-      return(c(p,b,varxb,m,s,varx,varb))
+  # Generate batch index -------------------------------------------------------
+  if(is.null(batchsize) == TRUE){
+    batchsize <- ceiling(var.n/10)
+  }
+  if(batchsize > var.n){
+    batchsize <- var.n
+  }
+  id1 <- seq(1,var.n,by=batchsize)
+  id2 <- (id1+batchsize)-1
+  id1 <- id1[id2<=var.n]
+  id2 <- id2[id2<=var.n]
+  id1 <- c(id1,id2[length(id2)]+1)
+  id2 <- c(id2,var.n)
+  if(id1[length(id1)] > var.n){
+    id1 <- id1[-length(id1)]; id2 <- id2[-length(id2)]
+  }
+  
+  # Effect solver --------------------------------------------------------------
+  varFun <- function(i){
+    x <- scalefun[[type]](Ztmp[i,])
+    m <- x[1]
+    s <- x[2]
+    p <- x[3]
+    x <- x[-c(1:3)]
+    b <- sum(weights[idx[i]]*x*k)
+    varxb <- var(x*b)
+    varx <- weights[i]*var(x)
+    if(is.null(errormat) == FALSE){
+      varb <- (weights[i]^2)*as.numeric(t(x)%*%B%*%x)
+    }else{
+      varb <- NA
     }
-  }else{
-    varFun <- function(i){
-      object.con <- file(object$phase, "rb")
-      a <- seek(con = object.con, where = offset*(vidx[i]-1),
-                origin = 'start',rw = 'r')
-      x <- readBin(object.con, what=raw(), size = 1,
-                   n = offset, signed = FALSE)
-      x <- as.integer(rawToBits(x))
-      x <- x[lookup]
-      x <- x[1:(2*object$nsamples)]
-      x1 <- x[1:length(x) %% 2 == 0]
-      x2 <- x[1:length(x) %% 2 == 1]
-      x <- x1 + x2
-      names(x) <- object$id[1:length(object$id) %% 2 == 0]
-      x <- x[names(gebv)]
-      x <- scalefun[[type]](x)
-      m <- x[1]
-      s <- x[2]
-      p <- x[3]
-      x <- x[-c(1:3)]
-      b <- sum(weights[i]*x*k)
-      varxb <- var(x*b)
-      varx <- weights[i]*var(x)
-      if(is.null(errormat) == FALSE){
-        varb <- (weights[i]^2)*as.numeric(t(x)%*%B%*%x)
-      }else{
-        varb <- NA
+    return(c(p,b,varxb,m,s,varx,varb))
+  }
+  
+  # Log message ----------------------------------------------------------------
+  if(verbose == TRUE){
+    cat("Processing ", var.n, " variants in ", length(id1), " batches.\n", sep="")
+    cat("Inactive variants will be ignored.\n")
+    if(is.null(errormat) == FALSE){
+      if(verbose == TRUE){
+        cat("Calculation of standard errors and test statistics activated.\n")
       }
-      close.connection(object.con)
-      return(c(p,b,varxb,m,s,varx,varb))
+    }
+    cat("Converting breeding values into variant effects...\n")
+  }
+  
+  # Batch iterate function -----------------------------------------------------
+  sumvariants <- 0
+  vareff <- rep(NA, times = 7*var.n)
+  ncores <- min(c(detectCores(), ncores))
+  for(i in 1:length(id1)){
+    idx <- id1[i]:id2[i]
+    Ztmp <- ghap.slice(object = object,
+                       ids = id.in,
+                       variants = var.in[idx],
+                       index = TRUE,
+                       unphase = TRUE,
+                       impute = TRUE)
+    zids <- colnames(Ztmp)
+    ii <- ((id1[i]-1)*7) + 1
+    fi <- ((id2[i]-1)*7) + 7
+    if(Sys.info()["sysname"] == "Windows"){
+      cl <- makeCluster(ncores)
+      mylist <- list("Ztmp","idx","k","weights","B","scalefun")
+      clusterExport(cl = cl, varlist = mylist, envir=environment())
+      vareff <- unlist(parLapply(cl = cl, fun = varFun, X = 1:length(idx)))
+      stopCluster(cl)
+    }else{
+      vareff[ii:fi] <- unlist(mclapply(X = 1:length(idx), FUN = varFun, mc.cores = ncores))
+    }
+    if(verbose == TRUE){
+      sumvariants <- sumvariants + length(idx)
+      cat(sumvariants, "variants processed.\r")
     }
   }
   
-  # Association analysis -------------------------------------------------------
-  if(is.null(errormat) == FALSE){
-    if(verbose == TRUE){
-      cat("Calculation of standard errors and test statistics activated.\n")
-    }
-  }
+  # Build output ---------------------------------------------------------------
   if(verbose == TRUE){
-    cat("Converting breeding values into variant effects... ")
-  }
-  if(Sys.info()["sysname"] == "Windows"){
-    cl <- makeCluster(ncores)
-    mylist <- list("object","vidx","k","weights","B")
-    clusterExport(cl = cl, varlist = mylist, envir=environment())
-    vareff <- unlist(parLapply(cl = cl, fun = varFun, X = 1:length(vidx)))
-    stopCluster(cl)
-  }else{
-    vareff <- unlist(mclapply(X = 1:length(vidx), FUN = varFun, mc.cores = ncores))
-  }
-  if(verbose == TRUE){
-    cat("Done.\n")
+    cat("Done! All variantes processed.\n")
   }
   vareff <- matrix(data = vareff, ncol = 7, byrow = T)
   if(inherits(object, "GHap.haplo")){
-    results <- matrix(data = NA, nrow = length(vidx), ncol = 17)
+    results <- matrix(data = NA, nrow = length(var.in), ncol = 17)
     results <- as.data.frame(results)
     colnames(results) <- c("CHR","BLOCK","BP1","BP2","ALLELE","FREQ",
                            "SCORE","VAR","pVAR","CENTER","SCALE",
                            "SE","CHISQ.EXP","CHISQ.OBS", "CHISQ.GC",
                            "LOGP","LOGP.GC")
-    results$CHR <- object$chr[vidx]
-    results$BLOCK <- object$block[vidx]
-    results$BP1 <- object$bp1[vidx]
-    results$BP2 <- object$bp2[vidx]
-    results$ALLELE <- object$allele[vidx]
+    results$CHR <- object$chr[var.in]
+    results$BLOCK <- object$block[var.in]
+    results$BP1 <- object$bp1[var.in]
+    results$BP2 <- object$bp2[var.in]
+    results$ALLELE <- object$allele[var.in]
   }else{
-    results <- matrix(data = NA, nrow = length(vidx), ncol = 16)
+    results <- matrix(data = NA, nrow = length(var.in), ncol = 16)
     results <- as.data.frame(results)
     colnames(results) <- c("CHR","MARKER","BP","ALLELE","FREQ",
                            "SCORE","VAR","pVAR","CENTER","SCALE",
                            "SE","CHISQ.EXP","CHISQ.OBS", "CHISQ.GC",
                            "LOGP","LOGP.GC")
-    results$CHR <- object$chr[vidx]
-    results$MARKER <- object$marker[vidx]
-    results$BP <- object$bp[vidx]
-    results$ALLELE <- object$A1[vidx]
+    results$CHR <- object$chr[var.in]
+    results$MARKER <- object$marker[var.in]
+    results$BP <- object$bp[var.in]
+    results$ALLELE <- object$A1[var.in]
   }
   results$FREQ <- vareff[,1]
   sumvar <- scaleval[[type]]()
