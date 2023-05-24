@@ -45,7 +45,7 @@ ghap.simpheno<-function(
   
   # Compute allele frequencies -------------------------------------------------
   p <- ghap.freq(object = object, type = "A1", only.active.samples = TRUE,
-                 only.active.markers = TRUE)
+                 only.active.variants = TRUE)
   p[which(p < 0.01)] <- 0.01
   p[which(p > 0.99)] <- 0.99
   
