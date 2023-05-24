@@ -10,7 +10,7 @@ ghap.freq <- function(
   type="maf",
   batchsize=NULL,
   only.active.samples=TRUE,
-  only.active.markers=TRUE,
+  only.active.variants=TRUE,
   verbose=TRUE
 ){
   
