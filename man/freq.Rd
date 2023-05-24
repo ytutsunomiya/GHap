@@ -11,7 +11,7 @@
   ghap.freq(object, type = "maf",
             batchsize = NULL,
             only.active.samples = TRUE,
-            only.active.markers = TRUE,
+            only.active.variants = TRUE,
             verbose = TRUE)
 }
 
@@ -28,8 +28,8 @@
   \item{only.active.samples}{
     A logical value specifying whether only active samples should be used for calculations (default = TRUE).
   }
-  \item{only.active.markers}{
-    A logical value specifying whether only active markers should be included in the output (default = TRUE).
+  \item{only.active.variants}{
+    A logical value specifying whether only active variants should be included in the output (default = TRUE).
   }
   \item{verbose}{
    A logical value specfying whether log messages should be printed (default = TRUE).
