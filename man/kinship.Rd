@@ -106,7 +106,10 @@ Yuri Tani Utsunomiya <ytutsunomiya@gmail.com> \cr
 Marco Milanesi <marco.milanesi.mm@gmail.com>
 }
 \references{
+J. F. Taylor. Implementation and accuracy of genomic selection. Aquaculture 2014. 420, S8-S14.
 P. M. VanRaden. Efficient methods to compute genomic predictions. J. Dairy. Sci. 2008. 91:4414-4423.
+J. Yang et al. GCTA: A Tool for Genome-wide Complex Trait Analysis. Am. J. Hum. Genet. 2011. 88:76–82.
+Z. G. Vitezica et al. On the additive and dominant variance and covariance of individuals within the genomic selection scope. Genetics. 2013. 195:1223-1230.
 }
 \examples{
 
