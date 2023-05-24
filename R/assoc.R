@@ -1,23 +1,24 @@
 #Function: ghap.assoc
 #License: GPLv3 or later
-#Modification date: 5 Jun 2022
+#Modification date: 24 May 2023
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: phenotype-genotype association analysis
 
 ghap.assoc <- function(
-  object,
-  formula,
-  data,
-  covmat,
-  ngamma = 100,
-  nlambda = 1000,
-  recalibrate = 0.01,
-  only.active.variants=TRUE,
-  tol = 1e-12,
-  ncores=1,
-  verbose=TRUE,
-  ...
+    object,
+    formula,
+    data,
+    covmat,
+    batchsize = NULL,
+    ngamma = 100,
+    nlambda = 1000,
+    recalibrate = 0.01,
+    only.active.variants=TRUE,
+    tol = 1e-12,
+    ncores=1,
+    verbose=TRUE,
+    ...
 ){
   
   # Check if input is a valid GHap object --------------------------------------
@@ -25,8 +26,10 @@ ghap.assoc <- function(
   if(inherits(object, obtype) == FALSE){
     stop("\nInput must be a valid GHap object.")
   }
+  fac <- c(2,1,1)
+  names(fac) <- obtype
   
-  # Check if inactive variants should be reactivated ---------------------------
+  # Check if inactive variants should be reactived -----------------------------
   if(only.active.variants == FALSE){
     if(inherits(object, "GHap.haplo")){
       object$allele.in <- rep(TRUE,times=object$nalleles)
@@ -36,10 +39,14 @@ ghap.assoc <- function(
       object$nmarkers.in <- length(which(object$marker.in))
     }
   }
+  
+  # Map variants ---------------------------------------------------------------
   if(inherits(object, "GHap.haplo")){
-    vidx <- which(object$allele.in)
+    var.n <- object$nalleles.in
+    var.in <- which(object$allele.in)
   }else{
-    vidx <- which(object$marker.in)
+    var.n <- object$nmarkers.in
+    var.in <- which(object$marker.in)
   }
   
   # Fit mixed model ------------------------------------------------------------
@@ -56,184 +63,71 @@ ghap.assoc <- function(
       stop(emsg)
     }
   }
-  rm(model)  
+  rm(model)
   
-  # Calculate offset and bitloss -----------------------------------------------
-  offset <- ceiling((2*object$nsamples)/8)
-  bitloss <- 8 - ((2*object$nsamples) %% 8)
-  if(bitloss == 8){
-    bitloss <- 0
-  }
-  lookup <- rep(NA, times=offset*8)
-  for(i in 1:offset){
-    idx1 <- i*8
-    idx2 <- idx1-7
-    lookup[idx1:idx2] <- idx2:idx1
-  }
+  # Map individuals ------------------------------------------------------------
+  id.in <- which(object$id %in% names(y))
+  id.n <- length(unique(names(y)))
   
   # Compute rotated response ---------------------------------------------------
   k <- as.numeric(Vi%*%y)
   
   # Auxiliary functions --------------------------------------------------------
-  if(inherits(object, c("GHap.plink","GHap.haplo"))){
-    assocFun <- function(i){
-      object.con <- file(unlist(object[length(object)]), "rb")
-      a <- seek(con = object.con, where = 3 + offset*(vidx[i]-1),
-                origin = 'start',rw = 'r')
-      x <- readBin(object.con, what=raw(), size = 1,
-                   n = offset, signed = FALSE)
-      x <- as.integer(rawToBits(x))
-      x1 <- x[1:length(x) %% 2 == 1]
-      x2 <- x[1:length(x) %% 2 == 0]
-      x <- vector(mode = "integer", length = length(x)/2)
-      x[which(x1 == 0 & x2 == 0)] <- 2
-      x[which(x1 == 0 & x2 == 1)] <- 1
-      x[which(x1 == 1 & x2 == 1)] <- 0
-      x[which(x1 == 1 & x2 == 0)] <- NA
-      x <- x[1:object$nsamples]
-      names(x) <- object$id
-      x <- x[names(y)]
-      ridx <- which(is.na(x) == FALSE)
-      x <- x[ridx]
-      freq <- sum(x)/(2*length(x))
-      x <- x - mean(x)
-      varb <- as.numeric(1/(t(x)%*%Vi[ridx,ridx]%*%x))
-      b <- varb*sum(x*k[ridx])
-      close.connection(object.con)
-      return(c(length(x),freq,b,sqrt(varb)))
-    }
-    gammaFun <- function(i){
-      object.con <- file(unlist(object[length(object)]), "rb")
-      a <- seek(con = object.con, where = 3 + offset*(vidx[i]-1),
-                origin = 'start',rw = 'r')
-      x <- readBin(object.con, what=raw(), size = 1,
-                   n = offset, signed = FALSE)
-      x <- as.integer(rawToBits(x))
-      x1 <- x[1:length(x) %% 2 == 1]
-      x2 <- x[1:length(x) %% 2 == 0]
-      x <- vector(mode = "integer", length = length(x)/2)
-      x[which(x1 == 0 & x2 == 0)] <- 2
-      x[which(x1 == 0 & x2 == 1)] <- 1
-      x[which(x1 == 1 & x2 == 1)] <- 0
-      x[which(x1 == 1 & x2 == 0)] <- NA
-      x <- x[1:object$nsamples]
-      names(x) <- object$id
-      x <- x[names(y)]
-      ridx <- which(is.na(x) == FALSE)
-      x <- x[ridx]
-      x <- x - mean(x)
-      g <- (t(x)%*%Vi[ridx,ridx]%*%x)/sum(x^2)
-      close.connection(object.con)
-      return(as.numeric(g))
-    }
-    assocgammaFun <- function(i){
-      object.con <- file(unlist(object[length(object)]), "rb")
-      a <- seek(con = object.con, where = 3 + offset*(vidx[i]-1),
-                origin = 'start',rw = 'r')
-      x <- readBin(object.con, what=raw(), size = 1,
-                   n = offset, signed = FALSE)
-      x <- as.integer(rawToBits(x))
-      x1 <- x[1:length(x) %% 2 == 1]
-      x2 <- x[1:length(x) %% 2 == 0]
-      x <- vector(mode = "integer", length = length(x)/2)
-      x[which(x1 == 0 & x2 == 0)] <- 2
-      x[which(x1 == 0 & x2 == 1)] <- 1
-      x[which(x1 == 1 & x2 == 1)] <- 0
-      x[which(x1 == 1 & x2 == 0)] <- NA
-      x <- x[1:object$nsamples]
-      names(x) <- object$id
-      x <- x[names(y)]
-      ridx <- which(is.na(x) == FALSE)
-      x <- x[ridx]
-      freq <- sum(x)/(2*length(x))
-      x <- x - mean(x)
-      varb <- 1/sum(x^2)
-      b <- varb*sum(x*k[ridx])
-      close.connection(object.con)
-      return(return(c(length(x),freq,b/gamma,sqrt(varb/gamma))))
-    }
-  }else{
-    assocFun <- function(i){
-      object.con <- file(object$phase, "rb")
-      a <- seek(con = object.con, where = offset*(vidx[i]-1),
-                origin = 'start',rw = 'r')
-      x <- readBin(object.con, what=raw(), size = 1,
-                   n = offset, signed = FALSE)
-      x <- as.integer(rawToBits(x))
-      x <- x[lookup]
-      x <- x[1:(2*object$nsamples)]
-      x1 <- x[1:length(x) %% 2 == 0]
-      x2 <- x[1:length(x) %% 2 == 1]
-      x <- x1 + x2
-      names(x) <- object$id[1:length(object$id) %% 2 == 0]
-      x <- x[names(y)]
-      ridx <- which(is.na(x) == FALSE)
-      x <- x[ridx]
-      freq <- sum(x)/(2*length(x))
-      x <- x - mean(x)
-      varb <- as.numeric(1/(t(x)%*%Vi[ridx,ridx]%*%x))
-      b <- varb*sum(x*k[ridx])
-      close.connection(object.con)
-      return(c(length(x),freq,b,sqrt(varb)))
-    }
-    gammaFun <- function(i){
-      object.con <- file(object$phase, "rb")
-      a <- seek(con = object.con, where = offset*(vidx[i]-1),
-                origin = 'start',rw = 'r')
-      x <- readBin(object.con, what=raw(), size = 1,
-                   n = offset, signed = FALSE)
-      x <- as.integer(rawToBits(x))
-      x <- x[lookup]
-      x <- x[1:(2*object$nsamples)]
-      x1 <- x[1:length(x) %% 2 == 0]
-      x2 <- x[1:length(x) %% 2 == 1]
-      x <- x1 + x2
-      names(x) <- object$id[1:length(object$id) %% 2 == 0]
-      x <- x[names(y)]
-      ridx <- which(is.na(x) == FALSE)
-      x <- x[ridx]
-      x <- x - mean(x)
-      g <- (t(x)%*%Vi[ridx,ridx]%*%x)/sum(x^2)
-      close.connection(object.con)
-      return(as.numeric(g))
-    }
-    assocgammaFun <- function(i){
-      object.con <- file(object$phase, "rb")
-      a <- seek(con = object.con, where = offset*(vidx[i]-1),
-                origin = 'start',rw = 'r')
-      x <- readBin(object.con, what=raw(), size = 1,
-                   n = offset, signed = FALSE)
-      x <- as.integer(rawToBits(x))
-      x <- x[lookup]
-      x <- x[1:(2*object$nsamples)]
-      x1 <- x[1:length(x) %% 2 == 0]
-      x2 <- x[1:length(x) %% 2 == 1]
-      x <- x1 + x2
-      names(x) <- object$id[1:length(object$id) %% 2 == 0]
-      x <- x[names(y)]
-      ridx <- which(is.na(x) == FALSE)
-      x <- x[ridx]
-      freq <- sum(x)/(2*length(x))
-      x <- x - mean(x)
-      varb <- 1/sum(x^2)
-      b <- varb*sum(x*k[ridx])
-      close.connection(object.con)
-      return(return(c(length(x),freq,b/gamma,sqrt(varb/gamma))))
-    }
+  assocFun <- function(i){
+    x <- Ztmp[i,unique(names(y))]
+    ridx <- which(is.na(x) == FALSE)
+    x <- x[ridx]
+    freq <- sum(x)/(2*length(x))
+    n <- length(x)
+    x <- Ztmp[i,names(y)]
+    ridx <- which(is.na(x) == FALSE)
+    x <- x[ridx]
+    x <- x - mean(x)
+    varb <- as.numeric(1/(t(x)%*%Vi[ridx,ridx]%*%x))
+    b <- varb*sum(x*k[ridx])
+    return(c(length(x),n,freq,b,sqrt(varb)))
+  }
+  gammaFun <- function(i){
+    x <- Ztmp[i,names(y)]
+    ridx <- which(is.na(x) == FALSE)
+    x <- x[ridx]
+    x <- x - mean(x)
+    g <- (t(x)%*%Vi[ridx,ridx]%*%x)/sum(x^2)
+    return(as.numeric(g))
+  }
+  assocgammaFun <- function(i){
+    x <- Ztmp[i,unique(names(y))]
+    ridx <- which(is.na(x) == FALSE)
+    x <- x[ridx]
+    freq <- sum(x)/(2*length(x))
+    n <- length(x)
+    x <- Ztmp[i,names(y)]
+    ridx <- which(is.na(x) == FALSE)
+    x <- x[ridx]
+    x <- x - mean(x)
+    varb <- 1/sum(x^2)
+    b <- varb*sum(x*k[ridx])
+    return(return(c(length(x),n,freq,b/gamma,sqrt(varb/gamma))))
   }
   
   # Gamma factor calculation ---------------------------------------------------
   ncores <- min(c(detectCores(), ncores))
   if(ngamma > 0){
-    ranvars <- sample(x = 1:length(vidx), size = ngamma)
+    ranvars <- sample(x = 1:var.n, size = ngamma)
+    Ztmp <- ghap.slice(object = object,
+                       ids = id.in,
+                       variants = var.in[ranvars],
+                       index = TRUE,
+                       unphase = TRUE,
+                       impute = TRUE)
     if(Sys.info()["sysname"] == "Windows"){
       cl <- makeCluster(ncores)
-      clusterExport(cl = cl, varlist = list("object","vidx","k","covmat"),
+      clusterExport(cl = cl, varlist = list("Ztmp","Vi","y"),
                     envir=environment())
-      gamma <- unlist(parLapply(cl = cl, fun = gammaFun, X = ranvars))
+      gamma <- unlist(parLapply(cl = cl, fun = gammaFun, X = 1:ngamma))
       stopCluster(cl)
     }else{
-      gamma <- unlist(mclapply(X = ranvars, FUN = gammaFun, mc.cores = ncores))
+      gamma <- unlist(mclapply(X = 1:ngamma, FUN = gammaFun, mc.cores = ncores))
     }
     gamma <- gamma[which(is.na(gamma) == FALSE & is.nan(gamma) == FALSE)]
     if(verbose == TRUE){
@@ -251,64 +145,104 @@ ghap.assoc <- function(
     }
   }
   
-  # Association analysis -------------------------------------------------------
+  # Generate batch index -------------------------------------------------------
+  if(is.null(batchsize) == TRUE){
+    batchsize <- ceiling(var.n/10)
+  }
+  if(batchsize > var.n){
+    batchsize <- var.n
+  }
+  id1 <- seq(1,var.n,by=batchsize)
+  id2 <- (id1+batchsize)-1
+  id1 <- id1[id2<=var.n]
+  id2 <- id2[id2<=var.n]
+  id1 <- c(id1,id2[length(id2)]+1)
+  id2 <- c(id2,var.n)
+  if(id1[length(id1)] > var.n){
+    id1 <- id1[-length(id1)]; id2 <- id2[-length(id2)]
+  }
+  
+  # Batch iterate function -----------------------------------------------------
+  sumvariants <- 0
+  vareff <- rep(NA, times = 5*var.n)
+  ncores <- min(c(detectCores(), ncores))
   if(verbose == TRUE){
-    cat("Performing phenotype-genotype association analysis... ")
+    cat("Performing phenotype-genotype association analysis...\n")
   }
-  if(ngamma > 0){
-    if(Sys.info()["sysname"] == "Windows"){
-      cl <- makeCluster(ncores)
-      clusterExport(cl = cl, varlist = list("object","vidx","k","gamma"),
-                    envir=environment())
-      assoc <- unlist(parLapply(cl = cl, fun = assocgammaFun, X = 1:length(vidx)))
-      stopCluster(cl)
+  for(i in 1:length(id1)){
+    idx <- id1[i]:id2[i]
+    Ztmp <- ghap.slice(object = object,
+                       ids = id.in,
+                       variants = var.in[idx],
+                       index = TRUE,
+                       unphase = TRUE,
+                       impute = TRUE)
+    ii <- ((id1[i]-1)*5) + 1
+    fi <- ((id2[i]-1)*5) + 5
+    if(ngamma > 0){
+      if(Sys.info()["sysname"] == "Windows"){
+        cl <- makeCluster(ncores)
+        clusterExport(cl = cl, varlist = list("Ztmp","y","k","gamma"),
+                      envir=environment())
+        vareff[ii:fi] <- unlist(parLapply(cl = cl, fun = assocgammaFun, X = 1:length(idx)))
+        stopCluster(cl)
+      }else{
+        vareff[ii:fi] <- unlist(mclapply(X = 1:length(idx), FUN = assocgammaFun, mc.cores = ncores))
+      }
     }else{
-      assoc <- unlist(mclapply(X = 1:length(vidx), FUN = assocgammaFun, mc.cores = ncores))
+      if(Sys.info()["sysname"] == "Windows"){
+        cl <- makeCluster(ncores)
+        clusterExport(cl = cl, varlist =  list("Ztmp","y","k","Vi"),
+                      envir=environment())
+        vareff[ii:fi] <- unlist(parLapply(cl = cl, fun = assocFun, X = 1:length(idx)))
+        stopCluster(cl)
+      }else{
+        vareff[ii:fi] <- unlist(mclapply(X = 1:length(idx), FUN = assocFun, mc.cores = ncores))
+      }
     }
-  }else{
-    if(Sys.info()["sysname"] == "Windows"){
-      cl <- makeCluster(ncores)
-      clusterExport(cl = cl, varlist = list("object","vidx","k","Vi"),
-                    envir=environment())
-      assoc <- unlist(parLapply(cl = cl, fun = assocFun, X = 1:length(vidx)))
-      stopCluster(cl)
-    }else{
-      assoc <- unlist(mclapply(X = 1:length(vidx), FUN = assocFun, mc.cores = ncores))
+    if(verbose == TRUE){
+      sumvariants <- sumvariants + length(idx)
+      cat(sumvariants, "variants processed.\r")
     }
   }
+  
+  # Build output ---------------------------------------------------------------
   if(verbose == TRUE){
-    cat("Done.\n")
+    cat("Done! All variantes processed.\n")
   }
-  assoc <- matrix(data = assoc, ncol = 4, byrow = T)
+  vareff <- matrix(data = vareff, ncol = 5, byrow = T)
   if(inherits(object, "GHap.haplo")){
-    results <- matrix(data = NA, nrow = length(vidx), ncol = 14)
+    results <- matrix(data = NA, nrow = var.n, ncol = 15)
     results <- as.data.frame(results)
     colnames(results) <- c("CHR","BLOCK","BP1","BP2","ALLELE","FREQ",
-                           "N","BETA","SE","CHISQ.EXP","CHISQ.OBS",
-                           "CHISQ.GC","LOGP","LOGP.GC")
-    results$CHR <- object$chr[vidx]
-    results$BLOCK <- object$block[vidx]
-    results$BP1 <- object$bp1[vidx]
-    results$BP2 <- object$bp2[vidx]
-    results$ALLELE <- object$allele[vidx]
+                           "N.PHENO","N.GENO","BETA","SE","CHISQ.EXP",
+                           "CHISQ.OBS", "CHISQ.GC","LOGP","LOGP.GC")
+    results$CHR <- object$chr[var.in]
+    results$BLOCK <- object$block[var.in]
+    results$BP1 <- object$bp1[var.in]
+    results$BP2 <- object$bp2[var.in]
+    results$ALLELE <- object$allele[var.in]
   }else{
-    results <- matrix(data = NA, nrow = length(vidx), ncol = 13)
+    results <- matrix(data = NA, nrow = var.n, ncol = 14)
     results <- as.data.frame(results)
     colnames(results) <- c("CHR","MARKER","BP","ALLELE","FREQ",
-                           "N","BETA","SE","CHISQ.EXP","CHISQ.OBS",
-                           "CHISQ.GC","LOGP","LOGP.GC")
-    results$CHR <- object$chr[vidx]
-    results$MARKER <- object$marker[vidx]
-    results$BP <- object$bp[vidx]
-    results$ALLELE <- object$A1[vidx]
+                           "N.PHENO","N.GENO","BETA","SE","CHISQ.EXP",
+                           "CHISQ.OBS", "CHISQ.GC","LOGP","LOGP.GC")
+    results$CHR <- object$chr[var.in]
+    results$MARKER <- object$marker[var.in]
+    results$BP <- object$bp[var.in]
+    results$ALLELE <- object$A1[var.in]
   }
-  results$N <- assoc[,1]
-  results$FREQ <- assoc[,2]
-  results$BETA <- assoc[,3]
-  results$SE <- assoc[,4]
+  results$N.PHENO <- vareff[,1]
+  results$N.GENO <- vareff[,2]
+  results$FREQ <- vareff[,3]
+  results$BETA <- vareff[,4]
+  results$SE <- vareff[,5]
   results$CHISQ.OBS <- (results$BETA/results$SE)^2
   results$LOGP <- -1*pchisq(q = results$CHISQ.OBS, df = 1,
                             lower.tail = FALSE, log.p = TRUE)/log(10)
+  
+  # Check if recalibration is required -----------------------------------------
   if(ngamma > 0  & recalibrate > 0){
     ntop <- ceiling(recalibrate*nrow(results))
     top <- order(results$LOGP, decreasing = TRUE)[1:ntop]
@@ -316,18 +250,35 @@ ghap.assoc <- function(
       cat("Recalibrating statistics for the top ", recalibrate*100,
           "% (", ntop, ") variants... ", sep = "")
     }
+    if(inherits(object, "GHap.haplo")){
+      vidx <- 1:object$nalleles
+      names(vidx) <- paste0(object$chr, object$block, object$bp1,
+                            object$bp2, object$allele)
+      vidx <- vidx[paste0(results$CHR,results$BLOCK,results$BP1,
+                          results$BP2,results$ALLELE)[top]]
+    }else{
+      vidx <- 1:object$nmarkers
+      names(vidx) <- object$marker
+      vidx <- vidx[results$MARKER[top]]
+    }
+    Ztmp <- ghap.slice(object = object,
+                       ids = id.in,
+                       variants = vidx,
+                       index = TRUE,
+                       unphase = TRUE,
+                       impute = TRUE)
     if(Sys.info()["sysname"] == "Windows"){
       cl <- makeCluster(ncores)
-      clusterExport(cl = cl, varlist = list("object","vidx","k","Vi"),
+      clusterExport(cl = cl, varlist = list("Ztmp","y","k","Vi"),
                     envir=environment())
-      assoc <- unlist(parLapply(cl = cl, fun = assocFun, X = top))
+      vareff <- unlist(parLapply(cl = cl, fun = assocFun, X = 1:ntop))
       stopCluster(cl)
     }else{
-      assoc <- unlist(mclapply(X = top, FUN = assocFun, mc.cores = ncores))
+      vareff <- unlist(mclapply(X = 1:ntop, FUN = assocFun, mc.cores = ncores))
     }
-    assoc <- matrix(data = assoc, ncol = 4, byrow = T)
-    results$BETA[top] <- assoc[,3]
-    results$SE[top] <- assoc[,4]
+    vareff <- matrix(data = vareff, ncol = 5, byrow = T)
+    results$BETA[top] <- vareff[,4]
+    results$SE[top] <- vareff[,5]
     results$CHISQ.OBS[top] <- (results$BETA[top]/results$SE[top])^2
     results$LOGP[top] <- -1*pchisq(q = results$CHISQ.OBS[top], df = 1,
                                    lower.tail = FALSE, log.p = TRUE)/log(10)
@@ -345,7 +296,7 @@ ghap.assoc <- function(
   chisq.mean <- mean(results$CHISQ.OBS, na.rm = TRUE)
   chisq.dev <- sd(results$CHISQ.OBS, na.rm = TRUE)
   chisq.sub <- which(is.na(results$CHISQ.EXP) == FALSE & 
-                     results$CHISQ.OBS < chisq.mean + 3*chisq.dev)
+                       results$CHISQ.OBS < chisq.mean + 3*chisq.dev)
   ranvars <- sample(x = chisq.sub, size = nlambda)
   lambda <- lm(formula = CHISQ.OBS ~ CHISQ.EXP, data = results[ranvars,])
   lambda <- as.numeric(lambda$coefficients[2])
