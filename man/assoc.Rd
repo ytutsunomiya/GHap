@@ -8,7 +8,8 @@ Genome-wide association analysis
 This function performs phenotype-genotype association analysis based on mixed models.
 }
 \usage{
-ghap.assoc(object, formula, data, covmat,
+ghap.assoc(object, formula, data,
+           covmat, batchsize = NULL,
            ngamma = 100, nlambda = 1000,
            recalibrate = 0.01,
            only.active.variants=TRUE,
@@ -28,7 +29,10 @@ ghap.assoc(object, formula, data, covmat,
   }
   \item{covmat}{
    A list of covariance matrices for each group of random effects. If a matrix is not defined for a given group, an identity matrix will be used. Inverse covariance matrices can also be provided, as long as argument invcov = TRUE is used.
- }
+  }
+  \item{batchsize}{
+   A numeric value controlling the number of variants to be processed at a time (default = nalleles/10)
+  }
   \item{ngamma}{
    A numeric value for the number of variants to be used in the estimation of the gamma factor (default = 100). The grammar-gamma approximation is turned off if ngamma = 0.
  }
@@ -80,20 +84,23 @@ The function returns a data frame with results from the genome-wide association 
   Block end position.
  }
  The remaining columns of the data frame will be equal for any class of GHap objects:
-  \item{ALLELE}{
+ \item{ALLELE}{
   Identity of the counted (A1 or haplotype) allele.
  }
  \item{FREQ}{
-  Frequency of the allele.
+  Frequency of the allele in the sample of genotypes.
  }
- \item{N}{
-  Number of non-missing observations.
+ \item{N.PHENO}{
+  Number of non-missing phenotypic observations.
+ }
+ \item{N.GENO}{
+  Number of non-missing genotypic observations.
  }
  \item{BETA}{
-  Estimated allele substitution effect.
+  Estimated allele effect.
  }
  \item{SE}{
-  Standard error for the allele substitution effect.
+  Standard error for the allele effect.
  }
  \item{CHISQ.EXP}{
   Expected values for the test statistics.
