@@ -1,11 +1,11 @@
 #Function: ghap.varblup
 #License: GPLv3 or later
-#Modification date: 23 May 2023
+#Modification date: 09 Aug 2023
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: convert blup of individuals into blup of variants
 
-ghap.varblup <- function(
+ghap.varblup2 <- function(
     object,
     gebv,
     covmat,
@@ -68,14 +68,9 @@ ghap.varblup <- function(
       object$nmarkers.in <- length(which(object$marker.in))
     }
   }
-  if(only.active.samples == FALSE){
-    object$id.in <- rep(TRUE,times=fac[class(object)]*object$nsamples)
-    object$nsamples.in <- length(which(object$id.in))/fac[class(object)]
-  }
   
   # Map individuals and variants -----------------------------------------------
-  id.n <- object$nsamples.in
-  id.in <- which(object$id.in)
+  id.in <- which(object$id %in% names(gebv))
   if(inherits(object, "GHap.haplo")){
     var.n <- object$nalleles.in
     var.in <- which(object$allele.in)
@@ -233,7 +228,7 @@ ghap.varblup <- function(
                        index = TRUE,
                        unphase = TRUE,
                        impute = TRUE)
-    zids <- colnames(Ztmp)
+    Ztmp <- Ztmp[,names(gebv)]
     ii <- ((id1[i]-1)*7) + 1
     fi <- ((id2[i]-1)*7) + 7
     if(Sys.info()["sysname"] == "Windows"){
@@ -253,7 +248,7 @@ ghap.varblup <- function(
   
   # Build output ---------------------------------------------------------------
   if(verbose == TRUE){
-    cat("Done! All variantes processed.\n")
+    cat("Done! All variants processed.\n")
   }
   vareff <- matrix(data = vareff, ncol = 7, byrow = T)
   if(inherits(object, "GHap.haplo")){
