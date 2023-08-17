@@ -1,11 +1,11 @@
 #Function: ghap.varblup
 #License: GPLv3 or later
-#Modification date: 09 Aug 2023
+#Modification date: 17 Aug 2023
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: convert blup of individuals into blup of variants
 
-ghap.varblup2 <- function(
+ghap.varblup <- function(
     object,
     gebv,
     covmat,
