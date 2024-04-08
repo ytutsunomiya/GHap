@@ -86,7 +86,9 @@ ghap.getHinv <- function(
   }
   ped <- ped[which(ped$id %in% ids),]
   ids <- ids[which(ids %in% ped$id == FALSE)]
-  ped <- rbind(ped, data.frame(id = ids, sire = NA, dam = NA, stringsAsFactors = FALSE))
+  if(length(ids) != 0){
+    ped <- rbind(ped, data.frame(id = ids, sire = NA, dam = NA, stringsAsFactors = FALSE))
+  }
   if(verbose == TRUE){
     ids <- unique(c(ped$id,ped$sire,ped$dam))
     ids <- ids[which(is.na(ids) == FALSE)]
