@@ -6,7 +6,7 @@
 
 // Function: sliceCpp
 // License: GPLv3 or later
-// Modification date: 01 Mar 2023
+// Modification date: 08 Apr 2024
 // Written by: Yuri Tani Utsunomiya, Adam Taiti Harth Utsunomiya
 // Contact: ytutsunomiya@gmail.com, adamtaiti@gmail.com
 // Description: slice GHap object
@@ -129,8 +129,10 @@ IntegerVector sliceCpp(const char* binfile,
     // Plink or Haplo
     if(mode == 3 | mode == 4){
       
-      int tbits = 2*nids % 8;
-      int nbytes = (2*nids + tbits)/8;
+      int tbits = 8 - ((2*nids) % 8);
+      if(tbits == 8){
+        tbits = 0;
+      }
       int miss = 0;
       if(imp == 0){
         miss = NA_INTEGER;
