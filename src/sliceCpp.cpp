@@ -133,6 +133,7 @@ IntegerVector sliceCpp(const char* binfile,
       if(tbits == 8){
         tbits = 0;
       }
+      int nbytes = (2*nids + tbits)/8;
       int miss = 0;
       if(imp == 0){
         miss = NA_INTEGER;
