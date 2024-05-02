@@ -6,7 +6,7 @@
 
 // Function: sliceCpp
 // License: GPLv3 or later
-// Modification date: 08 Apr 2024
+// Modification date: 02 May 2024
 // Written by: Yuri Tani Utsunomiya, Adam Taiti Harth Utsunomiya
 // Contact: ytutsunomiya@gmail.com, adamtaiti@gmail.com
 // Description: slice GHap object
@@ -17,8 +17,8 @@ using namespace std;
 // [[Rcpp::export(.sliceCpp)]]
 IntegerVector sliceCpp(const char* binfile,
                        const int mode,
-                       const int nvars,
-                       const int nids,
+                       const unsigned long int nvars,
+                       const unsigned long int nids,
                        const int phased,
                        const int imp,
                        IntegerVector iidx,
@@ -26,8 +26,8 @@ IntegerVector sliceCpp(const char* binfile,
                        IntegerVector vidx){
   
   // Control variables
-  const int nids_in = iidx.length();
-  const int nvars_in = vidx.length();
+  const unsigned long int nids_in = iidx.length();
+  const unsigned long int nvars_in = vidx.length();
   
   // Output vector
   IntegerVector geno(phased*nids_in*nvars_in);
@@ -46,23 +46,24 @@ IntegerVector sliceCpp(const char* binfile,
       if(tbits == 8){
         tbits = 0;
       }
-      int nbytes = (2*nids + tbits)/8;
+      unsigned long int nbytes = (2*nids + tbits)/8;
+      
       // Loop by variant
-      for(int i = 0; i < nvars_in; i++){
+      for(unsigned long int i = 0; i < nvars_in; i++){
         
         // Initialize haplotypes
         IntegerVector hap(nbytes*8);
-
+        
         // Position pointer in binary file
-        int start = (vidx[i]-1)*nbytes + mode;
+        unsigned long int start = (vidx[i]-1)*nbytes + mode;
         binfilecon.seekg(start, binfilecon.beg);
         
         // Read individual into memory
         char* buffer = new char [nbytes];
         binfilecon.read(buffer, nbytes);
         bitset<8> bits;
-        int a = 0;
-        for(int b = 0; b < nbytes; b++){
+        unsigned long int a = 0;
+        for(unsigned long int b = 0; b < nbytes; b++){
           bits = buffer[b];
           hap[a] = bits[7];
           hap[a + 1] = bits[6];
@@ -87,25 +88,25 @@ IntegerVector sliceCpp(const char* binfile,
       if(tbits == 8){
         tbits = 0;
       }
-      int nbytes = (2*nvars + tbits)/8;
+      unsigned long int nbytes = (2*nvars + tbits)/8;
       
       // Loop by individual
-      for(int i = 0; i < nids_in; i++){
+      for(unsigned long int i = 0; i < nids_in; i++){
         
         // Initialize haplotypes
         IntegerVector hap1(nbytes*4);
         IntegerVector hap2(nbytes*4);
         
         // Position pointer in binary file
-        int start = (iidx[i]-1)*nbytes + 1;
+        unsigned long int start = (iidx[i]-1)*nbytes + 1;
         binfilecon.seekg(start, binfilecon.beg);
         
         // Read individual into memory
         char* buffer = new char [nbytes];
         binfilecon.read(buffer, nbytes);
         bitset<8> bits;
-        int a = 0;
-        for(int b = 0; b < nbytes; b++){
+        unsigned long int a = 0;
+        for(unsigned long int b = 0; b < nbytes; b++){
           bits = buffer[b];
           hap1[a] = bits[7];
           hap2[a] = bits[6];
@@ -133,7 +134,7 @@ IntegerVector sliceCpp(const char* binfile,
       if(tbits == 8){
         tbits = 0;
       }
-      int nbytes = (2*nids + tbits)/8;
+      unsigned long int nbytes = (2*nids + tbits)/8;
       int miss = 0;
       if(imp == 0){
         miss = NA_INTEGER;
@@ -150,21 +151,21 @@ IntegerVector sliceCpp(const char* binfile,
       }
       
       // Loop by variant
-      for(int i = 0; i < nvars_in; i++){
+      for(unsigned long int i = 0; i < nvars_in; i++){
         
         // Initialize genotypes
         IntegerVector gen(nbytes*4);
         
         // Position pointer in binary file
-        int start = (vidx[i]-1)*nbytes + 3;
+        unsigned long int start = (vidx[i]-1)*nbytes + 3;
         binfilecon.seekg(start, binfilecon.beg);
         
         // Read individual into memory
         char* buffer = new char [nbytes];
         binfilecon.read(buffer, nbytes);
         bitset<8> bits;
-        int a = 0;
-        for(int b = 0; b < nbytes; b++){
+        unsigned long int a = 0;
+        for(unsigned long int b = 0; b < nbytes; b++){
           bits = buffer[b];
           // gen[a] = code[to_string(bits[0]) + to_string(bits[1])];
           // gen[a + 1] = code[to_string(bits[2]) + to_string(bits[3])];
