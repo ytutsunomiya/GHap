@@ -5,6 +5,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // compressCpp
 int compressCpp(const char* infile, const char* outfile, const int nunits, const int nbits, const int tbits, const int fmode);
 RcppExport SEXP _GHap_compressCpp(SEXP infileSEXP, SEXP outfileSEXP, SEXP nunitsSEXP, SEXP nbitsSEXP, SEXP tbitsSEXP, SEXP fmodeSEXP) {
@@ -22,15 +27,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // sliceCpp
-IntegerVector sliceCpp(const char* binfile, const int mode, const int nvars, const int nids, const int phased, const int imp, IntegerVector iidx, IntegerVector hidx, IntegerVector vidx);
+IntegerVector sliceCpp(const char* binfile, const int mode, const unsigned long int nvars, const unsigned long int nids, const int phased, const int imp, IntegerVector iidx, IntegerVector hidx, IntegerVector vidx);
 RcppExport SEXP _GHap_sliceCpp(SEXP binfileSEXP, SEXP modeSEXP, SEXP nvarsSEXP, SEXP nidsSEXP, SEXP phasedSEXP, SEXP impSEXP, SEXP iidxSEXP, SEXP hidxSEXP, SEXP vidxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const char* >::type binfile(binfileSEXP);
     Rcpp::traits::input_parameter< const int >::type mode(modeSEXP);
-    Rcpp::traits::input_parameter< const int >::type nvars(nvarsSEXP);
-    Rcpp::traits::input_parameter< const int >::type nids(nidsSEXP);
+    Rcpp::traits::input_parameter< const unsigned long int >::type nvars(nvarsSEXP);
+    Rcpp::traits::input_parameter< const unsigned long int >::type nids(nidsSEXP);
     Rcpp::traits::input_parameter< const int >::type phased(phasedSEXP);
     Rcpp::traits::input_parameter< const int >::type imp(impSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type iidx(iidxSEXP);
