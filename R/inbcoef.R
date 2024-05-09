@@ -1,6 +1,6 @@
 #Function: ghap.inbcoef
 #License: GPLv3 or later
-#Modification date: 12 Dec 2022
+#Modification date: 09 May 2024
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute inbreeding coeficients
@@ -90,7 +90,7 @@ ghap.inbcoef <- function(
     mysum1 <- sum(((x - 2*p)^2/P.het.ibs))
     mysum2 <- sum(x*(2-x)/P.het.ibs)
     mysum3 <- sum((x^2 - (1+2*p)*x + 2*p^2)/P.het.ibs)
-    mysum4 <- length(het)
+    mysum4 <- sum(2*p[het])
     mysum5 <- sum(P.het.ibs)
     return(c(mysum1,mysum2,mysum3,mysum4,mysum5,length(usable)))
   }
@@ -127,7 +127,9 @@ ghap.inbcoef <- function(
   fhat1 <- (fhat1/n)-1
   fhat2 <- 1-(fhat2/n)
   fhat3 <- fhat3/n
-  fhat4 <- 1-(fhat4/ibsexp)
+  Hexp <- ibsexp/sum(2*freq)
+  Hobs <- fhat4/n
+  fhat4 <- 1 - Hobs/Hexp
   tmp <- object$pop
   names(tmp) <- object$id
   tmp <- tmp[which(duplicated(names(tmp)) == FALSE)]
