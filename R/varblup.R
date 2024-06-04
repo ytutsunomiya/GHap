@@ -1,6 +1,6 @@
 #Function: ghap.varblup
 #License: GPLv3 or later
-#Modification date: 17 Aug 2023
+#Modification date: 04 Jun 2024
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: convert blup of individuals into blup of variants
@@ -17,6 +17,7 @@ ghap.varblup <- function(
     vcp = NULL,
     errormat = NULL, 
     errorname = "",
+    invcov = FALSE,
     nlambda = 1000,
     ncores = 1,
     verbose = TRUE
@@ -89,16 +90,21 @@ ghap.varblup <- function(
   weights <- weights/mean(weights)
   
   # Invert reference matrix ----------------------------------------------------
-  covmat <- covmat[names(gebv),names(gebv)]
-  icovmat <- try(solve(covmat), silent = TRUE)
-  if(inherits(icovmat, "try-error")){
-    icovmat <- try(solve(covmat + Diagonal(length(gebv))*tol), silent = TRUE)
+  if(invcov == FALSE){
+    covmat <- covmat[names(gebv),names(gebv)]
+    icovmat <- try(solve(covmat), silent = TRUE)
     if(inherits(icovmat, "try-error")){
-      emsg <- paste0("\nUnable to invert the covariance matrix",
-                     " even after adding a tolerance of ",
-                     tol)
-      stop(emsg)
+      icovmat <- try(solve(covmat + Diagonal(length(gebv))*tol), silent = TRUE)
+      if(inherits(icovmat, "try-error")){
+        emsg <- paste0("\nUnable to invert the covariance matrix",
+                       " even after adding a tolerance of ",
+                       tol)
+        stop(emsg)
+      }
     }
+  }else{
+    icovmat <- covmat
+    gebv <- gebv[rownames(icovmat)]
   }
   
   # Compute rotated response ---------------------------------------------------
