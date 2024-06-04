@@ -13,8 +13,9 @@ ghap.varblup(object, gebv, covmat,
              only.active.variants = TRUE,
              weights = NULL, tol = 1e-12,
              vcp = NULL, errormat = NULL, 
-             errorname = "", nlambda = 1000,
-             ncores = 1, verbose = TRUE)
+             errorname = "", invcov = FALSE,
+             nlambda = 1000, ncores = 1,
+             verbose = TRUE)
 }
 
 \arguments{
@@ -50,6 +51,9 @@ ghap.varblup(object, gebv, covmat,
   }
   \item{errorname}{
     The name used for the random effect representing GEBVs in the \code{\link{ghap.lmm}} function. If the error matrix was imported from somewhere else, this argument can be ignored provided that the names in the error matrix match the ones in the relationship matrix.
+  }
+  \item{invcov}{
+    A logic value indicating whether the provided covariance matrix is an inverse.
   }
   \item{nlambda}{
   A numeric value for the number of variants to be used in the estimation of the inflation factor (default = 1000).
