@@ -10,7 +10,8 @@
 \usage{
 ghap.slice(object, ids, variants, index=FALSE,
            transposed=FALSE, sparse=TRUE,
-           unphase=FALSE, impute=FALSE)
+           unphase=FALSE, impute=FALSE,
+           counted="A1")
 }
 
 \arguments{
@@ -37,6 +38,9 @@ ghap.slice(object, ids, variants, index=FALSE,
   }
   \item{impute}{
    A logical value specfying if missing genotypes should be replaced by 0 (i.e., A0/A0 genotypes, default = FALSE). Only meaningful for "GHap.plink" objects.
+  }
+  \item{impute}{
+   A character value specfying the allele to be counted (i.e., A0 or A1, default = "A1").
   }
 }
 
