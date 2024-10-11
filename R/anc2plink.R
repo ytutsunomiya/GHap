@@ -62,6 +62,9 @@ ghap.anc2plink <- function(
   pop <- pop[1:length(pop) %% 2 == 0]
   ids.n <- length(id)
   anchaplotypes <- ancsmooth$haplotypes[which(ancsmooth$haplotypes$ID %in% id),]
+  poplist <- unique(anchaplotypes$ANCESTRY)
+  poplist <- poplist[which(!is.na(poplist))]
+  anchaplotypes$ANCESTRY <- factor(x = anchaplotypes$ANCESTRY, levels = poplist)
   
   # Identify activated markers
   snp <- which(object$marker.in)
