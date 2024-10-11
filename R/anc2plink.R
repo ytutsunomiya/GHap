@@ -1,23 +1,23 @@
 #Function: ghap.anc2plink
 #License: GPLv3 or later
-#Modification date: 3 Jun 2021
+#Modification date: 11 Oct 2024
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Output ancestry genotype matrix
 
 ghap.anc2plink <- function(
-  object,
-  ancsmooth,
-  ancestry,
-  outfile,
-  freq=c(0,1),
-  missingness=1,
-  only.active.samples=TRUE,
-  only.active.markers=TRUE,
-  batchsize=NULL,
-  binary=TRUE,
-  ncores=1,
-  verbose=TRUE
+    object,
+    ancsmooth,
+    ancestry,
+    outfile,
+    freq=c(0,1),
+    missingness=1,
+    only.active.samples=TRUE,
+    only.active.markers=TRUE,
+    batchsize=NULL,
+    binary=TRUE,
+    ncores=1,
+    verbose=TRUE
 ){
   
   # Check if object is a GHap.phase object
@@ -151,9 +151,9 @@ ghap.anc2plink <- function(
     
     # Calculate frequency
     x2 <- x[which(is.na(x) == FALSE)]
-    p <- sum(x2)/length(x2)
+    p <- sum(x2)/(2*length(x2))
     
-    # Calculate number of missing values
+    # Calculate proportion of missing values
     nmiss <- length(miss)/length(x)
     
     # Output line
