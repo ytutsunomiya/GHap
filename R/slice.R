@@ -1,6 +1,6 @@
 #Function: ghap.slice
 #License: GPLv3 or later
-#Modification date: 16 Dec 2022
+#Modification date: 11 Oct 2024
 #Written by: Yuri Tani Utsunomiya, Adam Taiti Harth Utsunomiya
 #Contact: ytutsunomiya@gmail.com, adamtaiti@gmail.com
 #Description: Get a slice of a GHap object
@@ -13,7 +13,8 @@ ghap.slice <- function(
     transposed=FALSE,
     sparse=TRUE,
     unphase=FALSE,
-    impute=FALSE
+    impute=FALSE,
+    counted="A1"
 ){
   
   # Check object type ----------------------------------------------------------
@@ -153,6 +154,15 @@ ghap.slice <- function(
   # Check if output should be sparse -------------------------------------------
   if(sparse == FALSE){
     X <- as.matrix(X)
+  }
+  
+  # Check if direction of allele count should be changed -----------------------
+  if(counted == "A0"){
+    if(phased == 2 & unphase == FALSE){
+      X <- -1*(X + 1) + 2
+    }else{
+      X <- -1*(X + 1) + 3
+    }
   }
   
   # Return X -------------------------------------------------------------------
