@@ -11,7 +11,8 @@ This function computes marker-based and HapAllele-based relationship matrices.
 ghap.kinship(object, weights = NULL,
              sparsity = NULL, type = 1,
              batchsize = NULL, freq = NULL,
-             idrow = NULL, idcol = NULL,
+             ancestry=NULL, idrow = NULL,
+             idcol = NULL, outputM = FALSE,
              only.active.samples = TRUE,
              only.active.variants = TRUE,
              ncores = 1, verbose = TRUE)
@@ -34,14 +35,20 @@ ghap.kinship(object, weights = NULL,
    A numeric value controlling the number of variants to be processed at a time (default = nalleles/10).
   }
   \item{freq}{
-    A named numeric vector with (A1) allele frequencies computed in a reference sample. If not provided, frequencies will be computed using the active individuals.
+    A named numeric vector with (A1) allele frequencies computed in a reference sample. If not provided, frequencies will be computed using the active individuals. If type = 7, this argument must be a data.frame with rownames indicating marker names and one column per ancestral population.
+  }
+  \item{ancestry}{
+    A data.frame containing individual ancestry proportions, with rownames indicating individual names and one column per ancestral population.
   }
   \item{idrow}{
     A character vector providing ids of individuals to be included in rows (default = NULL, see details).
   }
   \item{idcol}{
     A character vector providing ids of individuals to be included in columns (default = NULL, see details).
-  }  
+  }
+  \item{outputM}{
+    A logical value indicating if the transformed genotype matrix should be returned (default = FALSE, see details).
+  }
   \item{only.active.samples}{
     A logical value specifying whether only active samples should be included in the output (default = TRUE).
   }
@@ -64,41 +71,44 @@ The function returns a \emph{n} x \emph{n} relationship matrix, where \emph{n} i
 
 Let \eqn{\mathbf{M}} be the \emph{n} x \emph{m} matrix of genotypes, where \emph{n} is the number of individuals and \emph{m} is the number of variants (i.e, markers or HapAlleles). Prior to computation, genotypes in matrix \eqn{\mathbf{M}} are transformed according to the desired relationship type. After that transformation, the relationship matrix is computed as:
 
-\deqn{\mathbf{K} = q^{-1}\mathbf{MDM}'}
-where \eqn{\mathbf{D} = diag(d_i)}, \eqn{d_i} is the weight of variant \emph{i} (default \eqn{d_i = 1}), and \eqn{q} is a scaling factor. The argument type controls the genotype transformation and the scaling factor, and includes the following option:
-\cr
+\deqn{\mathbf{K} = q^{-1}\mathbf{MDM}^{T}}
+where \eqn{\mathbf{D} = diag(d_j)}, \eqn{d_j} is the weight of variant \emph{j} (default \eqn{d_j = 1}), and \eqn{q} is a scaling factor. The argument type controls the genotype transformation and the scaling factor, and includes the following options:
+
 Type = 1 (General additive 1)\cr
-Genotype transformation: m - mean(m)\cr
+Genotype transformation: \eqn{\mathbf{M}_{ij} - \text{mean}(\mathbf{M}_j)}\cr
 Scaling factor: \eqn{tr(\mathbf{MDM}')^{-1}n}
 
 Type = 2 (General additive 2)\cr
-Genotype transformation: (m - mean(m))/sd(m)\cr
-Scaling factor: m
+Genotype transformation: \eqn{(\mathbf{M}_{ij} - \text{mean}(\mathbf{M}_j))/\text{sd}(\mathbf{M}_j)}\cr
+Scaling factor: \emph{m}
 
 Type = 3 (VanRaden, 2008)\cr
-Genotype transformation: m - 2*p[j]\cr
-Scaling factor: 2*sum(p*(1-p))
+Genotype transformation: \eqn{\mathbf{M}_{ij} - 2p_j}\cr
+Scaling factor: \eqn{2\sum p_j(1-p_j)}
 
 Type = 4 (GCTA)\cr
-Genotype transformation: (m - 2*p[j])/sqrt(2*p[j]*(1-p[j]))\cr
-Scaling factor: m
+Genotype transformation: \eqn{(\mathbf{M}_{ij} - 2p_j)/\sqrt{2p_j(1-p_j)}}\cr
+Scaling factor: \emph{m}
 
 Type = 5 (Dominance 1)\cr
 Genotype transformation:\cr
-0 = -2*p[j]^2\cr
-1 = 2*p[j]*(1-p[j])\cr
-2 = -2*(1-p[j])^2\cr
-Scaling factor: 4*sum(p^2*(1-p)^2).
+\eqn{\mathbf{M}_{ij} = 0 \rightarrow -2p_j^2}\cr
+\eqn{\mathbf{M}_{ij} = 1 \rightarrow 2p_j(1-p)}\cr
+\eqn{\mathbf{M}_{ij} = 2 \rightarrow -2(1-p_j)^2}\cr
+Scaling factor: \eqn{4\sum p^2(1-p)^2}
 
 Type = 6 (Dominance 2)\cr
 Genotype transformation:\cr
-0 = -2*p[j]^2\cr
-1 = 2*p[j]*(1-p[j])\cr
-2 = -2*(1-p[j])^2\cr
-Scaling factor:\cr
-\eqn{tr(\mathbf{MDM}')^{-1}n}.
+\eqn{\mathbf{M}_{ij} = 0 \rightarrow -2p_j^2}\cr
+\eqn{\mathbf{M}_{ij} = 1 \rightarrow 2p_j(1-p)}\cr
+\eqn{\mathbf{M}_{ij} = 2 \rightarrow -2(1-p_j)^2}\cr
+Scaling factor: \eqn{tr(\mathbf{MDM}')^{-1}n}
 
-The idrow and idcol arguments are intended for faster calculations when the user wishes to obtain a non-symmetric relationship matrix with a set of individuals in rows and a different set of individuals in columns. For example, training x testing samples, males x females, etc. Currently only supported if freq != NULL and for type 3 matrices.
+Type = 7 (Ancestry-weighted additive)\cr
+Genotype transformation:\eqn{(\mathbf{M}_{ij} - 2p_{ij})/\sqrt{2p_{ij}(1-p_{ij})}}\cr
+Scaling factor: \emph{m}
+
+Where subscript \emph{i} refers to an individual. For relationship types 3 through 6, \eqn{p_j} is the counted allele frequency at variant site \emph{j}. For relationship type 7, we have \eqn{p_{ij} = \sum_{k=1}^{K} p_{jk}\pi_{ik}}, where \emph{K} is the number of ancestral populations, \eqn{p_{jk}} is the counted allele frequency at variant site \emph{j} in population \emph{k}, and \eqn{\pi_{ik}} is the ancestry proportion of population \emph{k} in individual \emph{i}. The idrow and idcol arguments are intended for faster calculations when the user wishes to obtain a non-symmetric relationship matrix with a set of individuals in rows and a different set of individuals in columns. For example, training x testing samples, males x females, etc. Currently only supported if freq != NULL and for type 3 matrices.
 
 }
 \author{
