@@ -1,6 +1,6 @@
 #Function: ghap.kinship
 #License: GPLv3 or later
-#Modification date: 17 Jul 2025
+#Modification date: 18 Aug 2025
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Compute relationship matrix
@@ -81,7 +81,7 @@ ghap.kinship <- function(
         stop("\ntype = 7 requires data frames for arguments 'freq' and 'ancestry'.")
       }else if(identical(colnames(freq),colnames(ancestry)) == FALSE){
         stop("\ntype = 7 requires columns in 'freq' and 'ancestry' to be identical.")
-      }else if(ncol(freq) <= 2){
+      }else if(ncol(freq) < 2){
         stop("\ntype = 7 requires at least two columns in data frames 'freq' and 'ancestry'.")
       }
     }else{
