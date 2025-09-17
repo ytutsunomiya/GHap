@@ -1,6 +1,6 @@
 #Function: ghap.roh
 #License: GPLv3 or later
-#Modification date: 08 Mar 2023
+#Modification date: 26 May 2025
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Map streches of homozygous genotypes
@@ -216,7 +216,7 @@ ghap.roh <- function(
   results$LENGTH <- as.integer(results$LENGTH)
   
   # Include individuals without ROHs
-  ids.t = as.data.frame(unique(cbind(object$pop, object$id)[object$id.in,]))
+  ids.t = unique(as.data.frame(cbind(object$pop, object$id))[object$id.in,])
   if (nrow(ids.t) != nrow(unique(results[,c("POP", "ID")]))){
     idx = which(paste0(ids.t$V1, ids.t$V2) %in% paste0(results$POP, results$ID))
     ids.t = ids.t[-idx,]
