@@ -1,6 +1,6 @@
 #Function: ghap.blockgen
 #License: GPLv3 or later
-#Modification date: 24 Oct 2022
+#Modification date: 23 Mar 2026
 #Written by: Yuri Tani Utsunomiya
 #Contact: ytutsunomiya@gmail.com
 #Description: Generate blocks based on sliding windows
@@ -37,6 +37,7 @@ ghap.blockgen<-function(
     for(k in unique(object$chr)){
       cmkr <- which(object$marker.in & object$chr == k)
       nmkr <- length(cmkr)
+      if(nmkr==0){next}
       bp <- object$bp[cmkr]
       minbp <- bp[1]
       maxbp <- bp[nmkr]
@@ -65,6 +66,7 @@ ghap.blockgen<-function(
     for(k in unique(object$chr)){
       cmkr <- which(object$marker.in & object$chr == k)
       nmkr <- length(cmkr)
+      if(nmkr==0){next}
       id1<-seq(1,nmkr,by=slide)
       id2<-id1+(windowsize-1)
       id1<-id1[id2 <= nmkr]
